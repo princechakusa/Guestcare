@@ -29,7 +29,7 @@
     }
     #app { height: 100vh; }
 
-    /* ----- LOGIN ----- */
+    /* ----- LOGIN (sign-in only, no signup) ----- */
     .login-view {
       display: flex; align-items: center; justify-content: center; min-height: 100vh;
       padding: 20px; background: var(--bg);
@@ -49,18 +49,20 @@
       outline: none; font-family: inherit; background: var(--surface);
     }
     .field:focus { border-color: var(--accent); }
+    .password-wrapper { position: relative; }
+    .password-wrapper .field { padding-right: 45px; }
+    .toggle-password {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-3); cursor: pointer;
+      font-size: 18px; display: flex; align-items: center;
+    }
     .btn {
       width: 100%; padding: 12px; background: var(--accent); color: white;
       border: none; border-radius: 12px; font-size: 15px; font-weight: 500;
       cursor: pointer; margin-top: 8px; transition: opacity 0.2s;
     }
     .btn:hover { opacity: 0.9; }
-    .btn-secondary {
-      background: white; color: var(--text); border: 1px solid var(--border); margin-top: 12px;
-    }
     .error { color: var(--red); font-size: 13px; margin-bottom: 12px; }
-    .toggle-text { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-3); }
-    .toggle-link { color: var(--accent); cursor: pointer; font-weight: 500; margin-left: 6px; }
 
     /* ----- DASHBOARD ----- */
     .dashboard-view { display: none; height: 100vh; }
@@ -143,7 +145,6 @@
     .stat-label { font-size: 11.5px; color: var(--text-3); margin-bottom: 6px; }
     .stat-value { font-size: 22px; font-weight: 400; color: var(--text); }
     .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 22px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .panel {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 14px; margin-bottom: 16px; overflow: hidden;
@@ -181,7 +182,6 @@
     }
     .badge-red { background: var(--red-bg); color: var(--red); }
     .badge-green { background: var(--green-bg); color: var(--green); }
-    .badge-amber { background: var(--amber-bg); color: var(--amber); }
     .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
     .dot-green { background: var(--green); }
     .dot-red { background: var(--red); }
@@ -221,36 +221,30 @@
       .mobile-btn { display: flex; }
       .overlay { display: block; }
       .stat-row { grid-template-columns: 1fr 1fr; }
-      .grid-3-1, .grid-2 { grid-template-columns: 1fr; }
+      .grid-3-1 { grid-template-columns: 1fr; }
       .content { padding: 16px; }
     }
   </style>
 </head>
 <body>
 <div id="app">
-  <!-- LOGIN -->
+  <!-- LOGIN (sign-in only) -->
   <div id="loginView" class="login-view">
     <div class="login-card">
       <div class="logo">
         <div class="logo-mark"><i class="ph ph-house-line"></i></div>
         <h1>GuestCare</h1>
       </div>
-      <div class="subtitle" id="formTitle">Sign in to your account</div>
+      <div class="subtitle">Sign in to your account</div>
       <div id="loginError" class="error"></div>
       <form id="authForm">
         <input type="email" id="loginEmail" class="field" placeholder="Email" required>
-        <input type="password" id="loginPassword" class="field" placeholder="Password" required>
-        <div id="signupFields" style="display: none;">
-          <input type="text" id="signupUsername" class="field" placeholder="Username" required>
-          <input type="text" id="signupFullName" class="field" placeholder="Full name (optional)">
+        <div class="password-wrapper">
+          <input type="password" id="loginPassword" class="field" placeholder="Password" required>
+          <button type="button" class="toggle-password" id="toggleLoginPassword"><i class="ph ph-eye"></i></button>
         </div>
-        <button type="submit" class="btn" id="submitAuthBtn">Sign In</button>
+        <button type="submit" class="btn">Sign In</button>
       </form>
-      <button class="btn btn-secondary" id="toggleAuthModeBtn">Create an account</button>
-      <div class="toggle-text">
-        <span id="toggleMessage">Don't have an account?</span>
-        <span class="toggle-link" id="toggleAuthLink">Sign up</span>
-      </div>
     </div>
   </div>
 
@@ -275,7 +269,10 @@
         <input type="hidden" id="editUserId">
         <input type="text" id="userUsername" class="field-modal" placeholder="Username">
         <input type="email" id="userEmail" class="field-modal" placeholder="Email">
-        <input type="password" id="userPassword" class="field-modal" placeholder="Password">
+        <div class="password-wrapper" style="position:relative;">
+          <input type="password" id="userPassword" class="field-modal" placeholder="Password">
+          <button type="button" class="toggle-password" id="toggleUserPassword" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-3); cursor:pointer;"><i class="ph ph-eye"></i></button>
+        </div>
         <div id="userFormErr" style="color:var(--red);font-size:12px;"></div>
         <div class="modal-actions" style="margin-top:20px;">
           <button class="topbar-btn" id="cancelUserForm">Cancel</button>
@@ -444,10 +441,12 @@
       },
       async insertMessages(msgs) {
         const withUser = msgs.map(m => ({ ...m, created_by: this.user.id }));
-        await supabase.from('messages').insert(withUser);
+        const { error } = await supabase.from('messages').insert(withUser);
+        if (error) { toast('Error: ' + error.message); return; }
         await this.loadMessages();
         await supabase.rpc('refresh_sla_breaches');
         await this.loadBreaches();
+        toast(`Imported ${msgs.length} messages`);
       },
       get active() { return new Set(this.messages.filter(m => !m.responded).map(m => m.guest_name)).size; },
       get avgResponse() {
@@ -520,7 +519,7 @@
       });
     }
 
-    // ---------- RENDER FUNCTIONS (ALL SECTIONS) ----------
+    // ---------- RENDER FUNCTIONS ----------
     function msgFeed(limit=20) {
       return store.messages.slice(0,limit).map(m => `
         <div class="msg-item ${m.flagged?'sla-breach':''}">
@@ -545,7 +544,7 @@
       </table></div></div>
       <div class="panel"><div class="panel-head">Delay trend</div><div class="panel-body"><canvas id="rootChart" style="height:150px;"></canvas></div></div>`;
     }
-    // Additional view functions (full set)
+    // Additional view functions (identical to previous, omitted for brevity but fully present)
     function renderResponseFirst() { return `<div class="panel"><div class="panel-head">First response time</div><div class="panel-body">Prince 3.2m · Kudzanayi 4.8m</div></div><div class="panel"><div class="panel-head">Trend</div><div class="panel-body"><canvas id="frtChart" style="height:150px;"></canvas></div></div>`; }
     function renderResponseAvg() { return `<div class="panel"><div class="panel-head">Average response</div><div class="panel-body">Prince 3.8m · Kudzanayi 5.2m</div></div>`; }
     function renderResponseDelay() { return `<div class="panel"><div class="panel-head">Delays >10min</div><div class="panel-body">Prince 2 · Kudzanayi 5</div></div>`; }
@@ -615,12 +614,10 @@
       document.getElementById('simulateBtn').style.display = (currentView==='overview'||currentView==='ai-messages')?'flex':'none';
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active','parent-active'));
       document.querySelector(`[data-view="${currentView}"]`)?.classList.add('active');
-      // Charts init
-      if (currentView === 'overview') mkChart('channelChart', { type:'bar', data:{ labels:['Airbnb','Booking','Direct'], datasets:[{ label:'CSAT', data:[96,91,98], backgroundColor:'#2563eb20', borderColor:'#2563eb' }] } });
+      if (currentView === 'overview') mkChart('channelChart', { type:'bar', data:{ labels:['Airbnb','Booking','Direct'], datasets:[{ label:'CSAT', data:[96,91,98], backgroundColor:'#2563eb20', borderColor:'#2563eb', barPercentage: 0.6 }] } });
       if (currentView === 'root-cause') mkChart('rootChart', { type:'line', data:{ labels:['Mon','Tue','Wed','Thu','Fri'], datasets:[{ label:'Prince', data:[0,1,0,0,1], borderColor:'#2563eb' },{ label:'Kudzanayi', data:[2,1,0,2,1], borderColor:'#64748b' }] } });
       if (currentView === 'response-first') mkChart('frtChart', { type:'line', data:{ labels:['Mon','Tue','Wed','Thu','Fri'], datasets:[{ label:'Prince', data:[2.8,3.1,3.5,2.9,3.2], borderColor:'#2563eb' }] } });
       if (currentView === 'ai-messages') { const h = store.messages.filter(m=>m.urgency==='high').length; const l = store.messages.filter(m=>m.urgency==='low').length; mkChart('urgencyChart', { type:'doughnut', data:{ labels:['High','Low'], datasets:[{ data:[h,l], backgroundColor:['#dc262620','#2563eb20'], borderColor:['#dc2626','#2563eb'] }] } }); }
-      // Admin upload listeners
       if (currentView === 'admin') {
         const wa = document.getElementById('waFile'), ha = document.getElementById('haFile');
         const waBtn = document.getElementById('parseWaBtn'), haBtn = document.getElementById('parseHaBtn');
@@ -629,12 +626,12 @@
         waBtn?.addEventListener('click', async () => {
           const f = wa.files[0]; if(!f) return;
           const text = await f.text(); const msgs = parseWA(text);
-          await store.insertMessages(msgs); toast(`Imported ${msgs.length} messages`); renderCurrent();
+          await store.insertMessages(msgs); renderCurrent();
         });
         haBtn?.addEventListener('click', async () => {
           const f = ha.files[0]; if(!f) return;
           const text = await f.text(); const msgs = await parseHA(text);
-          await store.insertMessages(msgs); toast(`Imported ${msgs.length} messages`); renderCurrent();
+          await store.insertMessages(msgs); renderCurrent();
         });
       }
     }
@@ -655,10 +652,10 @@
     document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => navigateTo(b.dataset.view));
     document.getElementById('simulateBtn').onclick = async () => {
       await store.insertMessages([{ channel:'WhatsApp', guest_name:'Test Guest', message_text:'Simulated message', timestamp:new Date(), intent:'Test', urgency:'low', agent_id:null, responded:false, flagged:false }]);
-      toast('Message added'); renderCurrent();
+      renderCurrent();
     };
 
-    // User management
+    // User management (uses profiles table)
     function renderUserList() {
       const c = document.getElementById('userListContainer');
       c.innerHTML = store.users.map(u => `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid var(--border-light);"><div><strong>${u.full_name||u.username}</strong><br><small>${u.email}</small></div><div>${u.role!=='admin'?`<button data-edit="${u.id}" class="icon-btn"><i class="ph ph-pencil"></i></button><button data-delete="${u.id}" class="icon-btn"><i class="ph ph-trash"></i></button>`:'<span class="master-badge">Master</span>'}</div></div>`).join('');
@@ -676,7 +673,7 @@
       document.getElementById('userUsername').value=u.username; document.getElementById('userEmail').value=u.email; document.getElementById('userPassword').value='';
       document.getElementById('userFormModal').style.display='flex';
     }
-    async function deleteUser(id) { if(!confirm('Delete?')) return; await supabase.auth.admin.deleteUser(id); await store.loadProfiles(); renderUserList(); toast('Deleted'); }
+    async function deleteUser(id) { if(!confirm('Delete?')) return; const { error } = await supabase.from('profiles').delete().eq('id', id); if(error) { toast(error.message); return; } await store.loadProfiles(); renderUserList(); toast('User deleted'); }
     async function saveUser() {
       const id = document.getElementById('editUserId').value;
       const username = document.getElementById('userUsername').value.trim();
@@ -684,9 +681,14 @@
       const password = document.getElementById('userPassword').value.trim();
       if(!username||!email||(!id&&!password)) { document.getElementById('userFormErr').textContent='All fields required'; return; }
       if(id) {
-        await supabase.auth.admin.updateUserById(id, { email, password: password||undefined, user_metadata: { username, full_name: username } });
+        const updates = { username, email, full_name: username };
+        if(password) updates.password = password;
+        const { error } = await supabase.auth.admin.updateUserById(id, { email, password, user_metadata: { username, full_name: username } });
+        if(error) { document.getElementById('userFormErr').textContent=error.message; return; }
+        await supabase.from('profiles').update({ username, full_name: username, email }).eq('id', id);
       } else {
-        await supabase.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { username, full_name: username, role:'agent' } });
+        const { data, error } = await supabase.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { username, full_name: username, role:'agent' } });
+        if(error) { document.getElementById('userFormErr').textContent=error.message; return; }
       }
       document.getElementById('userFormModal').style.display='none';
       await store.loadProfiles(); renderUserList(); toast('User saved');
@@ -699,33 +701,23 @@
     document.getElementById('saveUser').onclick = saveUser;
     document.getElementById('logoutBtn').onclick = async () => { await supabase.auth.signOut(); showLogin(); };
 
-    // Auth
-    let authMode = 'signin';
+    // Password toggle
+    document.getElementById('toggleLoginPassword').onclick = () => {
+      const pwd = document.getElementById('loginPassword');
+      pwd.type = pwd.type === 'password' ? 'text' : 'password';
+    };
+    document.getElementById('toggleUserPassword').onclick = () => {
+      const pwd = document.getElementById('userPassword');
+      pwd.type = pwd.type === 'password' ? 'text' : 'password';
+    };
+
+    // Auth (sign-in only)
     const loginView = document.getElementById('loginView'), dashView = document.getElementById('dashboardView');
-    function updateAuthUI() {
-      document.getElementById('formTitle').textContent = authMode==='signin'?'Sign in to your account':'Create an account';
-      document.getElementById('submitAuthBtn').textContent = authMode==='signin'?'Sign In':'Sign Up';
-      document.getElementById('signupFields').style.display = authMode==='signin'?'none':'block';
-      document.getElementById('toggleMessage').textContent = authMode==='signin'?'Don\'t have an account?':'Already have an account?';
-      document.getElementById('toggleAuthLink').textContent = authMode==='signin'?'Sign up':'Sign in';
-    }
-    document.getElementById('toggleAuthModeBtn').onclick = document.getElementById('toggleAuthLink').onclick = () => { authMode = authMode==='signin'?'signup':'signin'; updateAuthUI(); };
     document.getElementById('authForm').onsubmit = async e => {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value, password = document.getElementById('loginPassword').value;
-      try {
-        if (authMode === 'signup') {
-          const username = document.getElementById('signupUsername').value;
-          if (!username) throw new Error('Username required');
-          const fullName = document.getElementById('signupFullName').value;
-          const { error } = await supabase.auth.signUp({ email, password, options: { data: { username, full_name: fullName||username, role:'agent' } } });
-          if (error) throw error;
-          document.getElementById('loginError').textContent = 'Check your email to confirm.';
-        } else {
-          const { error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-        }
-      } catch (err) { document.getElementById('loginError').textContent = err.message; }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) document.getElementById('loginError').textContent = error.message;
     };
 
     async function showDashboard() {
@@ -741,7 +733,6 @@
 
     supabase.auth.onAuthStateChange((e, session) => session ? showDashboard() : showLogin());
     supabase.auth.getSession().then(({ data }) => data.session ? showDashboard() : showLogin());
-    updateAuthUI();
   })();
 </script>
 </body>
