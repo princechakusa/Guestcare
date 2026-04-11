@@ -13,13 +13,14 @@
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ----- MINIMAL, HIGH-CONTRAST ----- */
+    /* ----- MINIMAL, HIGH-CONTRAST, HOSTAWAY STYLE ----- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0; --border-light: #f1f5f9;
       --text: #0f172a; --text-2: #334155; --text-3: #64748b; --accent: #2563eb;
       --accent-bg: #eff6ff; --red: #dc2626; --red-bg: #fef2f2; --green: #16a34a;
-      --green-bg: #f0fdf4; --sidebar-w: 240px; --header-h: 56px;
+      --green-bg: #f0fdf4; --amber: #d97706; --amber-bg: #fffbeb;
+      --sidebar-w: 240px; --header-h: 56px;
     }
     body {
       font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400;
@@ -28,7 +29,7 @@
     }
     #app { height: 100vh; }
 
-    /* ----- LOGIN (centered card) ----- */
+    /* ----- LOGIN ----- */
     .login-view {
       display: flex; align-items: center; justify-content: center; min-height: 100vh;
       padding: 20px; background: var(--bg);
@@ -61,7 +62,7 @@
     .toggle-text { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-3); }
     .toggle-link { color: var(--accent); cursor: pointer; font-weight: 500; margin-left: 6px; }
 
-    /* ----- DASHBOARD (hidden until auth) ----- */
+    /* ----- DASHBOARD ----- */
     .dashboard-view { display: none; height: 100vh; }
     .layout { display: flex; height: 100vh; overflow: hidden; }
 
@@ -74,14 +75,12 @@
     .sidebar-header {
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 16px; height: var(--header-h); border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
     }
     .logo-area { display: flex; align-items: center; gap: 10px; }
     .sidebar-close-btn {
       display: none; background: none; border: none; font-size: 20px; color: var(--text-3);
       cursor: pointer; padding: 6px; border-radius: 6px;
     }
-    .sidebar-close-btn:hover { background: var(--bg); }
     .sidebar-section-label {
       font-size: 10.5px; font-weight: 500; color: var(--text-3);
       letter-spacing: 0.4px; text-transform: uppercase; padding: 18px 16px 6px;
@@ -91,7 +90,7 @@
       color: var(--text-2); cursor: pointer; border: none; background: none; width: 100%;
       text-align: left; white-space: nowrap; transition: background 0.1s;
     }
-    .nav-item i { font-size: 16px; color: var(--text-3); width: 20px; flex-shrink: 0; }
+    .nav-item i { font-size: 16px; color: var(--text-3); width: 20px; }
     .nav-item:hover { background: var(--bg); color: var(--text); }
     .nav-item.active { background: var(--accent-bg); color: var(--accent); }
     .nav-item.active i { color: var(--accent); }
@@ -119,11 +118,11 @@
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .topbar {
       height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0;
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
     }
     .mobile-btn {
       display: none; background: none; border: none; cursor: pointer;
-      color: var(--text-2); font-size: 20px; padding: 6px; border-radius: 8px;
+      color: var(--text-2); font-size: 20px; padding: 6px;
     }
     .page-title { font-size: 15px; font-weight: 500; color: var(--text); }
     .topbar-right { margin-left: auto; display: flex; gap: 10px; }
@@ -144,6 +143,7 @@
     .stat-label { font-size: 11.5px; color: var(--text-3); margin-bottom: 6px; }
     .stat-value { font-size: 22px; font-weight: 400; color: var(--text); }
     .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 22px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .panel {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 14px; margin-bottom: 16px; overflow: hidden;
@@ -156,7 +156,7 @@
     .panel-body { padding: 16px 18px; }
     .no-pad { padding: 0; }
 
-    /* TABLE (sticky first column) */
+    /* TABLE with sticky first column */
     .table-responsive { overflow-x: auto; }
     .data-table {
       width: 100%; border-collapse: collapse; min-width: 800px;
@@ -181,6 +181,7 @@
     }
     .badge-red { background: var(--red-bg); color: var(--red); }
     .badge-green { background: var(--green-bg); color: var(--green); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); }
     .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
     .dot-green { background: var(--green); }
     .dot-red { background: var(--red); }
@@ -206,7 +207,6 @@
       width: 100%; padding: 10px 14px; border: 1px solid var(--border);
       border-radius: 10px; font-size: 13px; margin-bottom: 10px;
     }
-
     .toast {
       position: fixed; bottom: 24px; right: 24px; background: #0f172a;
       color: #fff; padding: 10px 18px; border-radius: 40px; z-index: 200;
@@ -221,14 +221,14 @@
       .mobile-btn { display: flex; }
       .overlay { display: block; }
       .stat-row { grid-template-columns: 1fr 1fr; }
-      .grid-3-1 { grid-template-columns: 1fr; }
+      .grid-3-1, .grid-2 { grid-template-columns: 1fr; }
       .content { padding: 16px; }
     }
   </style>
 </head>
 <body>
 <div id="app">
-  <!-- LOGIN VIEW -->
+  <!-- LOGIN -->
   <div id="loginView" class="login-view">
     <div class="login-card">
       <div class="logo">
@@ -241,7 +241,7 @@
         <input type="email" id="loginEmail" class="field" placeholder="Email" required>
         <input type="password" id="loginPassword" class="field" placeholder="Password" required>
         <div id="signupFields" style="display: none;">
-          <input type="text" id="signupUsername" class="field" placeholder="Username">
+          <input type="text" id="signupUsername" class="field" placeholder="Username" required>
           <input type="text" id="signupFullName" class="field" placeholder="Full name (optional)">
         </div>
         <button type="submit" class="btn" id="submitAuthBtn">Sign In</button>
@@ -254,7 +254,7 @@
     </div>
   </div>
 
-  <!-- DASHBOARD VIEW -->
+  <!-- DASHBOARD -->
   <div id="dashboardView" class="dashboard-view">
     <div class="overlay" id="overlay"></div>
     <div class="toast" id="toast"></div>
@@ -264,11 +264,10 @@
       <div class="modal-box" style="width:500px;">
         <div class="modal-title">👥 User Management</div>
         <div id="userListContainer" style="max-height:280px;overflow-y:auto;border:1px solid var(--border-light);border-radius:10px;"></div>
-        <button class="topbar-btn" id="addUserBtn" style="width:100%;margin-top:16px;"><i class="ph ph-plus"></i> Add New User</button>
+        <button class="topbar-btn" id="addUserBtn" style="width:100%;margin-top:16px;"><i class="ph ph-plus"></i> Add User</button>
         <div class="modal-actions" style="margin-top:20px;"><button class="topbar-btn" id="closeUserMgmt">Close</button></div>
       </div>
     </div>
-
     <!-- Add/Edit User Modal -->
     <div class="modal-backdrop" id="userFormModal">
       <div class="modal-box" style="width:380px;">
@@ -277,7 +276,7 @@
         <input type="text" id="userUsername" class="field-modal" placeholder="Username">
         <input type="email" id="userEmail" class="field-modal" placeholder="Email">
         <input type="password" id="userPassword" class="field-modal" placeholder="Password">
-        <div id="userFormErr" class="error-msg" style="color:var(--red);font-size:12px;"></div>
+        <div id="userFormErr" style="color:var(--red);font-size:12px;"></div>
         <div class="modal-actions" style="margin-top:20px;">
           <button class="topbar-btn" id="cancelUserForm">Cancel</button>
           <button class="topbar-btn primary" id="saveUser">Save</button>
@@ -295,21 +294,90 @@
           </div>
           <button class="sidebar-close-btn" id="sidebarCloseBtn"><i class="ph ph-x"></i></button>
         </div>
-        <div style="flex:1; overflow-y:auto;">
+        <div style="flex:1; overflow-y:auto; padding-bottom:8px;">
           <div class="sidebar-section-label">Main</div>
           <button class="nav-item" data-view="overview"><i class="ph ph-squares-four"></i> Overview</button>
+
           <div class="sidebar-section-label">Response</div>
           <div class="nav-section">
             <button class="nav-item parent" data-parent="response"><span class="nav-left"><i class="ph ph-clock"></i> Response</span><i class="ph ph-caret-right chevron"></i></button>
             <div class="subnav" id="subnav-response">
               <button class="nav-item" data-view="response-first">First response</button>
-              <button class="nav-item" data-view="response-avg">Average</button>
+              <button class="nav-item" data-view="response-avg">Average response</button>
               <button class="nav-item" data-view="response-delay">Delays</button>
               <button class="nav-item" data-view="response-missed">Missed</button>
               <button class="nav-item" data-view="root-cause">Root cause</button>
             </div>
           </div>
-          <!-- additional sections omitted for brevity but present in full code below -->
+
+          <div class="sidebar-section-label">Satisfaction</div>
+          <div class="nav-section">
+            <button class="nav-item parent" data-parent="satisfaction"><span class="nav-left"><i class="ph ph-star"></i> Satisfaction</span><i class="ph ph-caret-right chevron"></i></button>
+            <div class="subnav" id="subnav-satisfaction">
+              <button class="nav-item" data-view="sat-reviews">Reviews</button>
+              <button class="nav-item" data-view="sat-complaints">Complaints</button>
+              <button class="nav-item" data-view="sat-nps">NPS / CSAT</button>
+              <button class="nav-item" data-view="sat-repeat">Repeat guests</button>
+              <button class="nav-item" data-view="sat-resolution">Resolution</button>
+              <button class="nav-item" data-view="sat-reopened">Reopened</button>
+            </div>
+          </div>
+
+          <div class="sidebar-section-label">Operations</div>
+          <div class="nav-section">
+            <button class="nav-item parent" data-parent="operations"><span class="nav-left"><i class="ph ph-list-checks"></i> Operations</span><i class="ph ph-caret-right chevron"></i></button>
+            <div class="subnav" id="subnav-operations">
+              <button class="nav-item" data-view="ops-closed">Tickets closed</button>
+              <button class="nav-item" data-view="ops-active">Active issues</button>
+              <button class="nav-item" data-view="ops-escalations">Escalations</button>
+              <button class="nav-item" data-view="ops-maintenance">Maintenance</button>
+              <button class="nav-item" data-view="ops-inspections">Inspections</button>
+              <button class="nav-item" data-view="ops-deepclean">Deep cleaning</button>
+              <button class="nav-item" data-view="ai-messages">AI intel</button>
+            </div>
+          </div>
+
+          <div class="sidebar-section-label">Revenue</div>
+          <div class="nav-section">
+            <button class="nav-item parent" data-parent="revenue"><span class="nav-left"><i class="ph ph-currency-dollar"></i> Revenue</span><i class="ph ph-caret-right chevron"></i></button>
+            <div class="subnav" id="subnav-revenue">
+              <button class="nav-item" data-view="rev-upsell">Upsell</button>
+              <button class="nav-item" data-view="rev-addon">Add-ons</button>
+              <button class="nav-item" data-view="rev-retention">Retention</button>
+              <button class="nav-item" data-view="rev-leakage">Leakage</button>
+              <button class="nav-item" data-view="rev-recovery">Recovery cost</button>
+            </div>
+          </div>
+
+          <div class="sidebar-section-label">Channels</div>
+          <div class="nav-section">
+            <button class="nav-item parent" data-parent="channel"><span class="nav-left"><i class="ph ph-share-network"></i> Channel intel</span><i class="ph ph-caret-right chevron"></i></button>
+            <div class="subnav" id="subnav-channel">
+              <button class="nav-item" data-view="chan-airbnb">Airbnb</button>
+              <button class="nav-item" data-view="chan-booking">Booking.com</button>
+              <button class="nav-item" data-view="chan-direct">Direct</button>
+            </div>
+          </div>
+
+          <div class="sidebar-section-label">Engagement</div>
+          <div class="nav-section">
+            <button class="nav-item parent" data-parent="proactive"><span class="nav-left"><i class="ph ph-bell-ringing"></i> Proactive</span><i class="ph ph-caret-right chevron"></i></button>
+            <div class="subnav" id="subnav-proactive">
+              <button class="nav-item" data-view="pro-prearrival">Pre-arrival</button>
+              <button class="nav-item" data-view="pro-midstay">Mid-stay</button>
+            </div>
+          </div>
+
+          <div class="sidebar-section-label">Team</div>
+          <div class="nav-section">
+            <button class="nav-item parent" data-parent="agent"><span class="nav-left"><i class="ph ph-users"></i> Agents</span><i class="ph ph-caret-right chevron"></i></button>
+            <div class="subnav" id="subnav-agent">
+              <button class="nav-item" data-view="agent-scorecard">Scorecard</button>
+              <button class="nav-item" data-view="agent-availability">Availability</button>
+              <button class="nav-item" data-view="agent-efficiency">Efficiency</button>
+            </div>
+          </div>
+
           <div class="sidebar-section-label">Settings</div>
           <button class="nav-item" data-view="admin"><i class="ph ph-gear"></i> Integrations</button>
           <button class="nav-item" data-view="help"><i class="ph ph-question"></i> Help</button>
@@ -337,17 +405,17 @@
 </div>
 
 <script>
-  // ===== CONFIGURATION – REPLACE WITH YOUR SUPABASE CREDENTIALS =====
-  const SUPABASE_URL = 'https://your-project.supabase.co';
-  const SUPABASE_ANON_KEY = 'your-anon-key';
-  // ===================================================================
+  // ===== SUPABASE CREDENTIALS (YOUR PROJECT) =====
+  const SUPABASE_URL = 'https://ttxiutmxtbzcelhajdlc.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0eGl1dG14dGJ6Y2VsaGFqZGxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjAwODIsImV4cCI6MjA5MTQ5NjA4Mn0.Ny5hz6mEXPS8_DKdrAsqpMnlUMLd-Jd8xuqx6efpizw';
+  // ================================================
 
   (function(){
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const SLA = { Hostaway: 5, WhatsApp: 10, default: 10 };
     function getSLA(ch) { return SLA[ch] || SLA.default; }
 
-    // Store
+    // ---------- STORE ----------
     const store = {
       messages: [], breaches: [], users: [], profile: null, user: null,
       async loadMessages() {
@@ -370,7 +438,7 @@
         this.profile = profile;
         await Promise.all([this.loadMessages(), this.loadBreaches(), this.loadProfiles()]);
         supabase.channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
-          this.loadMessages().then(() => { if (currentView === 'overview') renderCurrent(); });
+          this.loadMessages().then(() => { if (currentView === 'overview' || currentView === 'ai-messages') renderCurrent(); });
         }).subscribe();
         return true;
       },
@@ -389,14 +457,14 @@
       get breachesCount() { return this.messages.filter(m => m.flagged).length; }
     };
 
-    // UI helpers
+    // ---------- UI HELPERS ----------
     function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
     function fmt(d) { return new Date(d).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
     let charts = {};
     function destroyCharts() { Object.values(charts).forEach(c => c.destroy()); charts = {}; }
     function mkChart(id, cfg) { if(charts[id]) charts[id].destroy(); const el = document.getElementById(id); if(el) charts[id] = new Chart(el.getContext('2d'), cfg); }
 
-    // Parsers
+    // ---------- PARSERS ----------
     function parseWA(text) {
       const lines = text.split('\n'), msgs = [];
       const re = /^\[(\d{2}\/\d{2}\/\d{4}), (\d{2}:\d{2}:\d{2})\] (.*?): (.*)$/;
@@ -452,9 +520,9 @@
       });
     }
 
-    // Render functions
-    function msgFeed() {
-      return store.messages.slice(0,20).map(m => `
+    // ---------- RENDER FUNCTIONS (ALL SECTIONS) ----------
+    function msgFeed(limit=20) {
+      return store.messages.slice(0,limit).map(m => `
         <div class="msg-item ${m.flagged?'sla-breach':''}">
           <div><span class="dot ${m.urgency==='high'?'dot-red':'dot-green'}"></span></div>
           <div style="flex:1">
@@ -471,24 +539,72 @@
         <div class="panel"><div class="panel-head">Connections</div><div class="panel-body"><span class="dot dot-green"></span> Hostaway · <span class="dot dot-green"></span> WhatsApp</div></div></div></div>`;
     }
     function renderRootCause() {
-      return `<div class="panel"><div class="panel-head">SLA breaches</div><div class="table-responsive"><table class="data-table">
+      return `<div class="panel"><div class="panel-head">SLA breaches · root cause</div><div class="table-responsive"><table class="data-table">
         <tr><th class="sticky-col">Guest</th><th>Channel</th><th>Message</th><th>Time</th><th>Agent</th><th>Response</th><th>Target</th><th>Reason</th></tr>
         ${store.breaches.map(b=>`<tr><td class="sticky-col">${b.guest_name}</td><td>${b.channel}</td><td>${b.message_preview}</td><td>${fmt(b.message_timestamp)}</td><td>${b.agent_id||'—'}</td><td>${b.response_time_minutes}m</td><td>${b.sla_target_minutes}m</td><td><span class="badge badge-red">${b.root_cause}</span></td></tr>`).join('')}
       </table></div></div>
-      <div class="panel"><div class="panel-head">Trend</div><div class="panel-body"><canvas id="rootChart" style="height:150px;"></canvas></div></div>`;
+      <div class="panel"><div class="panel-head">Delay trend</div><div class="panel-body"><canvas id="rootChart" style="height:150px;"></canvas></div></div>`;
     }
+    // Additional view functions (full set)
+    function renderResponseFirst() { return `<div class="panel"><div class="panel-head">First response time</div><div class="panel-body">Prince 3.2m · Kudzanayi 4.8m</div></div><div class="panel"><div class="panel-head">Trend</div><div class="panel-body"><canvas id="frtChart" style="height:150px;"></canvas></div></div>`; }
+    function renderResponseAvg() { return `<div class="panel"><div class="panel-head">Average response</div><div class="panel-body">Prince 3.8m · Kudzanayi 5.2m</div></div>`; }
+    function renderResponseDelay() { return `<div class="panel"><div class="panel-head">Delays >10min</div><div class="panel-body">Prince 2 · Kudzanayi 5</div></div>`; }
+    function renderResponseMissed() { return `<div class="panel"><div class="panel-head">Missed messages</div><div class="panel-body">Prince 1 · Kudzanayi 3</div></div>`; }
+    function renderSatReviews() { return `<div class="panel"><div class="panel-head">Reviews</div><div class="panel-body">Prince 4.9★ · Kudzanayi 4.6★</div></div>`; }
+    function renderSatComplaints() { return `<div class="panel"><div class="panel-head">Complaints</div><div class="panel-body">Total 5 (Prince 1, Kudzanayi 4)</div></div>`; }
+    function renderSatNPS() { return `<div class="panel"><div class="panel-head">NPS & CSAT</div><div class="panel-body">NPS 72 · CSAT 94%</div></div>`; }
+    function renderSatRepeat() { return `<div class="panel"><div class="panel-head">Repeat guests</div><div class="panel-body">34%</div></div>`; }
+    function renderSatResolution() { return `<div class="panel"><div class="panel-head">Resolution</div><div class="panel-body">Prince 94% · Kudzanayi 87%</div></div>`; }
+    function renderSatReopened() { return `<div class="panel"><div class="panel-head">Reopened cases</div><div class="panel-body">Rate 3.8%</div></div>`; }
+    function renderOpsClosed() { return `<div class="panel"><div class="panel-head">Tickets closed</div><div class="panel-body">Prince 28 · Kudzanayi 19</div></div>`; }
+    function renderOpsActive() { return `<div class="panel"><div class="panel-head">Active issues</div><div class="panel-body">Prince 3 · Kudzanayi 5</div></div>`; }
+    function renderOpsEscalations() { return `<div class="panel"><div class="panel-head">Escalations</div><div class="panel-body">Prince 1 · Kudzanayi 3</div></div>`; }
+    function renderOpsMaintenance() { return `<div class="panel"><div class="panel-head">Maintenance</div><div class="panel-body">Emergency 2.1h · Routine 8.5h</div></div>`; }
+    function renderOpsInspections() { return `<div class="panel"><div class="panel-head">Inspections</div><div class="panel-body">Avg cleanliness 4.8/5</div></div>`; }
+    function renderOpsDeepclean() { return `<div class="panel"><div class="panel-head">Deep cleaning</div><div class="panel-body">Villa Azul Apr 12 · Ocean Suite Apr 15</div></div>`; }
+    function renderAIMessages() { return `<div class="grid-3-1"><div class="panel"><div class="panel-head">Live messages</div><div class="msg-feed no-pad">${msgFeed()}</div></div><div><div class="panel"><div class="panel-head">Urgency</div><div class="panel-body"><canvas id="urgencyChart" style="height:150px;"></canvas></div></div><div class="panel"><div class="panel-head">SLA compliance</div><div class="panel-body">78% within target</div></div></div></div>`; }
+    function renderRevUpsell() { return `<div class="panel"><div class="panel-head">Upsell</div><div class="panel-body">Prince 32% · Kudzanayi 22%</div></div>`; }
+    function renderRevAddon() { return `<div class="panel"><div class="panel-head">Add‑on revenue</div><div class="panel-body">$4,280 total</div></div>`; }
+    function renderRevRetention() { return `<div class="panel"><div class="panel-head">Retention</div><div class="panel-body">34%</div></div>`; }
+    function renderRevLeakage() { return `<div class="panel"><div class="panel-head">Revenue leakage</div><div class="panel-body">Refunds $1,240 · Recovery $680</div></div>`; }
+    function renderRevRecovery() { return `<div class="panel"><div class="panel-head">Recovery cost</div><div class="panel-body">$1,820 (4 incidents)</div></div>`; }
+    function renderChanAirbnb() { return `<div class="panel"><div class="panel-head">Airbnb</div><div class="panel-body">CSAT 96% · Prince 38 bookings</div></div>`; }
+    function renderChanBooking() { return `<div class="panel"><div class="panel-head">Booking.com</div><div class="panel-body">CSAT 91% · 42 bookings</div></div>`; }
+    function renderChanDirect() { return `<div class="panel"><div class="panel-head">Direct</div><div class="panel-body">CSAT 98% · 28 bookings</div></div>`; }
+    function renderProPrearrival() { return `<div class="panel"><div class="panel-head">Pre‑arrival</div><div class="panel-body">92% sent · Prince 94% · Kudzanayi 89%</div></div>`; }
+    function renderProMidstay() { return `<div class="panel"><div class="panel-head">Mid‑stay</div><div class="panel-body">68% engaged</div></div>`; }
+    function renderAgentScorecard() { return `<div class="panel"><div class="panel-head">Scorecard</div><div class="panel-body">Prince 94% · Kudzanayi 82%</div></div>`; }
+    function renderAgentAvailability() { return `<div class="panel"><div class="panel-head">Availability</div><div class="panel-body">Prince Online · Kudzanayi Online</div></div>`; }
+    function renderAgentEfficiency() { return `<div class="panel"><div class="panel-head">Efficiency</div><div class="panel-body">Prince 4.2 tix/h · Kudzanayi 3.1</div></div>`; }
     function renderAdmin() {
-      return `<div class="panel"><div class="panel-head">Integrations</div><div class="panel-body"><span class="dot dot-green"></span> Hostaway · WhatsApp live</div></div>
-        <div class="panel"><div class="panel-head">Manual Import</div><div class="panel-body">
+      return `<div class="panel"><div class="panel-head">🔌 Integrations</div><div class="panel-body"><span class="dot dot-green"></span> Hostaway API · WhatsApp Cloud</div></div>
+        <div class="panel"><div class="panel-head">📂 Manual Import</div><div class="panel-body">
           <div style="margin-bottom:16px;"><strong>WhatsApp .txt</strong><div style="margin-top:8px;"><input type="file" id="waFile" accept=".txt"><button class="topbar-btn" id="parseWaBtn" disabled>Parse</button></div></div>
           <div><strong>Hostaway .csv</strong><div style="margin-top:8px;"><input type="file" id="haFile" accept=".csv"><button class="topbar-btn" id="parseHaBtn" disabled>Parse</button></div></div>
         </div></div>
-        <div class="panel"><div class="panel-head">Users</div><div class="panel-body">Click your avatar to manage users.</div></div>`;
+        <div class="panel"><div class="panel-head">👥 Users</div><div class="panel-body">Click your avatar to manage users.</div></div>`;
     }
-    function renderHelp() { return `<div class="panel"><div class="panel-head">Help</div><div class="panel-body">SLA: Hostaway 5m, WhatsApp 10m</div></div>`; }
-    // other view stubs (full list omitted for space but present in actual code)
-    const views = { overview: renderOverview, 'root-cause': renderRootCause, admin: renderAdmin, help: renderHelp };
-    const titles = { overview:'Overview', 'root-cause':'Root cause', admin:'Integrations', help:'Help' };
+    function renderHelp() { return `<div class="panel"><div class="panel-head">Help</div><div class="panel-body">GuestCare Command · SLA: Hostaway 5m, WhatsApp 10m · Admin: guestcare</div></div>`; }
+
+    const views = {
+      overview: renderOverview, 'root-cause': renderRootCause, 'response-first': renderResponseFirst, 'response-avg': renderResponseAvg,
+      'response-delay': renderResponseDelay, 'response-missed': renderResponseMissed, 'sat-reviews': renderSatReviews, 'sat-complaints': renderSatComplaints,
+      'sat-nps': renderSatNPS, 'sat-repeat': renderSatRepeat, 'sat-resolution': renderSatResolution, 'sat-reopened': renderSatReopened,
+      'ops-closed': renderOpsClosed, 'ops-active': renderOpsActive, 'ops-escalations': renderOpsEscalations, 'ops-maintenance': renderOpsMaintenance,
+      'ops-inspections': renderOpsInspections, 'ops-deepclean': renderOpsDeepclean, 'ai-messages': renderAIMessages, 'rev-upsell': renderRevUpsell,
+      'rev-addon': renderRevAddon, 'rev-retention': renderRevRetention, 'rev-leakage': renderRevLeakage, 'rev-recovery': renderRevRecovery,
+      'chan-airbnb': renderChanAirbnb, 'chan-booking': renderChanBooking, 'chan-direct': renderChanDirect,
+      'pro-prearrival': renderProPrearrival, 'pro-midstay': renderProMidstay, 'agent-scorecard': renderAgentScorecard,
+      'agent-availability': renderAgentAvailability, 'agent-efficiency': renderAgentEfficiency, admin: renderAdmin, help: renderHelp
+    };
+    const titles = {
+      overview:'Overview', 'root-cause':'Root cause', 'response-first':'First response', 'response-avg':'Avg response', 'response-delay':'Delays', 'response-missed':'Missed',
+      'sat-reviews':'Reviews', 'sat-complaints':'Complaints', 'sat-nps':'NPS/CSAT', 'sat-repeat':'Repeat', 'sat-resolution':'Resolution', 'sat-reopened':'Reopened',
+      'ops-closed':'Closed', 'ops-active':'Active', 'ops-escalations':'Escalations', 'ops-maintenance':'Maintenance', 'ops-inspections':'Inspections', 'ops-deepclean':'Deep clean', 'ai-messages':'AI intel',
+      'rev-upsell':'Upsell', 'rev-addon':'Add‑ons', 'rev-retention':'Retention', 'rev-leakage':'Leakage', 'rev-recovery':'Recovery',
+      'chan-airbnb':'Airbnb', 'chan-booking':'Booking', 'chan-direct':'Direct', 'pro-prearrival':'Pre‑arrival', 'pro-midstay':'Mid‑stay',
+      'agent-scorecard':'Scorecard', 'agent-availability':'Availability', 'agent-efficiency':'Efficiency', admin:'Integrations', help:'Help'
+    };
     let currentView = 'overview';
 
     function renderCurrent() {
@@ -496,11 +612,15 @@
       const fn = views[currentView] || (() => '<div class="panel">Section ready</div>');
       document.getElementById('content').innerHTML = fn();
       document.getElementById('pageTitle').textContent = titles[currentView] || currentView;
-      document.getElementById('simulateBtn').style.display = (currentView==='overview')?'flex':'none';
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('simulateBtn').style.display = (currentView==='overview'||currentView==='ai-messages')?'flex':'none';
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active','parent-active'));
       document.querySelector(`[data-view="${currentView}"]`)?.classList.add('active');
+      // Charts init
       if (currentView === 'overview') mkChart('channelChart', { type:'bar', data:{ labels:['Airbnb','Booking','Direct'], datasets:[{ label:'CSAT', data:[96,91,98], backgroundColor:'#2563eb20', borderColor:'#2563eb' }] } });
-      if (currentView === 'root-cause') mkChart('rootChart', { type:'line', data:{ labels:['Mon','Tue','Wed','Thu','Fri'], datasets:[{ label:'Prince', data:[0,1,0,0,1], borderColor:'#2563eb' }] } });
+      if (currentView === 'root-cause') mkChart('rootChart', { type:'line', data:{ labels:['Mon','Tue','Wed','Thu','Fri'], datasets:[{ label:'Prince', data:[0,1,0,0,1], borderColor:'#2563eb' },{ label:'Kudzanayi', data:[2,1,0,2,1], borderColor:'#64748b' }] } });
+      if (currentView === 'response-first') mkChart('frtChart', { type:'line', data:{ labels:['Mon','Tue','Wed','Thu','Fri'], datasets:[{ label:'Prince', data:[2.8,3.1,3.5,2.9,3.2], borderColor:'#2563eb' }] } });
+      if (currentView === 'ai-messages') { const h = store.messages.filter(m=>m.urgency==='high').length; const l = store.messages.filter(m=>m.urgency==='low').length; mkChart('urgencyChart', { type:'doughnut', data:{ labels:['High','Low'], datasets:[{ data:[h,l], backgroundColor:['#dc262620','#2563eb20'], borderColor:['#dc2626','#2563eb'] }] } }); }
+      // Admin upload listeners
       if (currentView === 'admin') {
         const wa = document.getElementById('waFile'), ha = document.getElementById('haFile');
         const waBtn = document.getElementById('parseWaBtn'), haBtn = document.getElementById('parseHaBtn');
@@ -508,26 +628,20 @@
         ha?.addEventListener('change', e => haBtn.disabled = !e.target.files.length);
         waBtn?.addEventListener('click', async () => {
           const f = wa.files[0]; if(!f) return;
-          const text = await f.text();
-          const msgs = parseWA(text);
-          await store.insertMessages(msgs);
-          toast(`Imported ${msgs.length} WhatsApp messages`);
-          renderCurrent();
+          const text = await f.text(); const msgs = parseWA(text);
+          await store.insertMessages(msgs); toast(`Imported ${msgs.length} messages`); renderCurrent();
         });
         haBtn?.addEventListener('click', async () => {
           const f = ha.files[0]; if(!f) return;
-          const text = await f.text();
-          const msgs = await parseHA(text);
-          await store.insertMessages(msgs);
-          toast(`Imported ${msgs.length} Hostaway messages`);
-          renderCurrent();
+          const text = await f.text(); const msgs = await parseHA(text);
+          await store.insertMessages(msgs); toast(`Imported ${msgs.length} messages`); renderCurrent();
         });
       }
     }
 
     function navigateTo(view) { currentView = view; renderCurrent(); closeSidebar(); }
 
-    // Sidebar
+    // Sidebar & mobile
     const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');
     function closeSidebar() { sidebar.classList.remove('open'); overlay.style.display = 'none'; }
     document.getElementById('menuToggleBtn').onclick = () => { sidebar.classList.add('open'); overlay.style.display = 'block'; };
@@ -540,18 +654,49 @@
     });
     document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => navigateTo(b.dataset.view));
     document.getElementById('simulateBtn').onclick = async () => {
-      await store.insertMessages([{ channel:'WhatsApp', guest_name:'Test', message_text:'Simulated', timestamp:new Date(), intent:'Test', urgency:'low', agent_id:null, responded:false, flagged:false }]);
-      toast('Message added');
-      renderCurrent();
+      await store.insertMessages([{ channel:'WhatsApp', guest_name:'Test Guest', message_text:'Simulated message', timestamp:new Date(), intent:'Test', urgency:'low', agent_id:null, responded:false, flagged:false }]);
+      toast('Message added'); renderCurrent();
     };
 
-    // User management (simplified)
+    // User management
     function renderUserList() {
       const c = document.getElementById('userListContainer');
-      c.innerHTML = store.users.map(u => `<div style="display:flex;justify-content:space-between;padding:10px;"><div><strong>${u.full_name||u.username}</strong><br><small>${u.email}</small></div><div>${u.role!=='admin'?`<button data-edit="${u.id}">Edit</button><button data-delete="${u.id}">Del</button>`:'🔒'}</div></div>`).join('');
+      c.innerHTML = store.users.map(u => `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid var(--border-light);"><div><strong>${u.full_name||u.username}</strong><br><small>${u.email}</small></div><div>${u.role!=='admin'?`<button data-edit="${u.id}" class="icon-btn"><i class="ph ph-pencil"></i></button><button data-delete="${u.id}" class="icon-btn"><i class="ph ph-trash"></i></button>`:'<span class="master-badge">Master</span>'}</div></div>`).join('');
+      c.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEditUser(b.dataset.edit));
+      c.querySelectorAll('[data-delete]').forEach(b => b.onclick = () => deleteUser(b.dataset.delete));
     }
+    function openAddUser() {
+      document.getElementById('userFormTitle').textContent='Add User'; document.getElementById('editUserId').value='';
+      document.getElementById('userUsername').value=document.getElementById('userEmail').value=document.getElementById('userPassword').value='';
+      document.getElementById('userFormModal').style.display='flex';
+    }
+    function openEditUser(id) {
+      const u = store.users.find(u=>u.id===id); if(!u||u.role==='admin') return;
+      document.getElementById('userFormTitle').textContent='Edit User'; document.getElementById('editUserId').value=u.id;
+      document.getElementById('userUsername').value=u.username; document.getElementById('userEmail').value=u.email; document.getElementById('userPassword').value='';
+      document.getElementById('userFormModal').style.display='flex';
+    }
+    async function deleteUser(id) { if(!confirm('Delete?')) return; await supabase.auth.admin.deleteUser(id); await store.loadProfiles(); renderUserList(); toast('Deleted'); }
+    async function saveUser() {
+      const id = document.getElementById('editUserId').value;
+      const username = document.getElementById('userUsername').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      const password = document.getElementById('userPassword').value.trim();
+      if(!username||!email||(!id&&!password)) { document.getElementById('userFormErr').textContent='All fields required'; return; }
+      if(id) {
+        await supabase.auth.admin.updateUserById(id, { email, password: password||undefined, user_metadata: { username, full_name: username } });
+      } else {
+        await supabase.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { username, full_name: username, role:'agent' } });
+      }
+      document.getElementById('userFormModal').style.display='none';
+      await store.loadProfiles(); renderUserList(); toast('User saved');
+    }
+
     document.getElementById('profileTrigger').onclick = () => { renderUserList(); document.getElementById('userMgmtModal').style.display='flex'; };
     document.getElementById('closeUserMgmt').onclick = () => document.getElementById('userMgmtModal').style.display='none';
+    document.getElementById('addUserBtn').onclick = openAddUser;
+    document.getElementById('cancelUserForm').onclick = () => document.getElementById('userFormModal').style.display='none';
+    document.getElementById('saveUser').onclick = saveUser;
     document.getElementById('logoutBtn').onclick = async () => { await supabase.auth.signOut(); showLogin(); };
 
     // Auth
@@ -561,6 +706,8 @@
       document.getElementById('formTitle').textContent = authMode==='signin'?'Sign in to your account':'Create an account';
       document.getElementById('submitAuthBtn').textContent = authMode==='signin'?'Sign In':'Sign Up';
       document.getElementById('signupFields').style.display = authMode==='signin'?'none':'block';
+      document.getElementById('toggleMessage').textContent = authMode==='signin'?'Don\'t have an account?':'Already have an account?';
+      document.getElementById('toggleAuthLink').textContent = authMode==='signin'?'Sign up':'Sign in';
     }
     document.getElementById('toggleAuthModeBtn').onclick = document.getElementById('toggleAuthLink').onclick = () => { authMode = authMode==='signin'?'signup':'signin'; updateAuthUI(); };
     document.getElementById('authForm').onsubmit = async e => {
