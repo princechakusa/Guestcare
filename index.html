@@ -1,927 +1,1329 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GuestCare Command</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:#ffffff; --bg2:#f7f8fa; --bg3:#f0f2f5;
-      --border:#e4e6ea; --border2:#d0d3d9;
-      --text:#1c2230; --text2:#6b7280; --text3:#9ca3af;
-      --accent:#2563eb; --accent-bg:#eff6ff;
-      --red:#dc2626; --red-bg:#fef2f2;
-      --amber:#d97706; --amber-bg:#fffbeb;
-      --green:#16a34a; --green-bg:#f0fdf4;
-      --sw:220px; --font:'DM Sans',sans-serif;
-    }
-    html,body { height:100%; font-family:var(--font); font-size:12px; color:var(--text); background:var(--bg2); line-height:1.5; font-weight:400; -webkit-font-smoothing:antialiased; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuestCare Command</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f7f8fa;--bg3:#f0f2f5;
+  --border:#e4e6ea;--border2:#d0d3d9;
+  --text:#1c2230;--text2:#6b7280;--text3:#9ca3af;
+  --accent:#2563eb;--accent-bg:#eff6ff;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --sw:224px;--font:'DM Sans',sans-serif
+}
+html,body{height:100%;font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg2);line-height:1.5;font-weight:400;-webkit-font-smoothing:antialiased}
 
-    /* Layout */
-    .shell { display:flex; height:100vh; overflow:hidden; }
-    .sidebar { width:var(--sw); min-width:var(--sw); background:var(--bg); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; z-index:30; }
-    .main { flex:1; overflow-y:auto; min-width:0; }
+/* Layout */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sw);min-width:var(--sw);background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;z-index:30}
+.main{flex:1;overflow-y:auto;min-width:0}
 
-    /* Sidebar */
-    .sb-brand { padding:14px 16px 12px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; }
-    .sb-brand-name { font-size:13px; color:var(--text); letter-spacing:-0.01em; }
-    .sb-brand-sub { font-size:10px; color:var(--text3); margin-top:1px; }
-    .sb-close-btn { display:none; background:none; border:none; cursor:pointer; color:var(--text3); font-size:16px; padding:2px 4px; line-height:1; }
-    .sb-nav { padding:6px 0; flex:1; }
-    .sb-section-label { font-size:10px; color:var(--text3); padding:10px 16px 3px; letter-spacing:0.04em; text-transform:uppercase; }
-    .sb-item { display:flex; align-items:center; gap:8px; padding:5px 16px; font-size:12px; color:var(--text2); cursor:pointer; border:none; background:none; width:100%; text-align:left; border-left:2px solid transparent; }
-    .sb-item:hover { background:var(--bg2); color:var(--text); }
-    .sb-item.active { background:var(--accent-bg); color:var(--accent); border-left-color:var(--accent); }
-    .sb-item.parent-active { color:var(--text); }
-    .sb-item svg { width:13px; height:13px; flex-shrink:0; opacity:0.55; }
-    .sb-item.active svg { opacity:1; }
-    .sb-parent { justify-content:space-between; }
-    .sb-parent-left { display:flex; align-items:center; gap:8px; }
-    .sb-chevron { width:10px; height:10px; opacity:0.4; transition:transform 0.15s; flex-shrink:0; }
-    .sb-parent.open .sb-chevron { transform:rotate(90deg); }
-    .sb-children { display:none; }
-    .sb-children.open { display:block; }
-    .sb-child { padding:4px 16px 4px 36px; font-size:11px; color:var(--text2); cursor:pointer; border:none; background:none; width:100%; text-align:left; display:block; border-left:2px solid transparent; }
-    .sb-child:hover { background:var(--bg2); color:var(--text); }
-    .sb-child.active { color:var(--accent); background:var(--accent-bg); border-left-color:var(--accent); }
-    .sb-footer { border-top:1px solid var(--border); padding:10px 16px; }
-    .sb-user { display:flex; align-items:center; gap:8px; cursor:pointer; padding:4px; border-radius:4px; }
-    .sb-user:hover { background:var(--bg2); }
-    .sb-avatar { width:26px; height:26px; border-radius:4px; background:var(--accent); color:white; font-size:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .sb-user-name { font-size:11px; color:var(--text); }
-    .sb-user-role { font-size:10px; color:var(--text3); }
+/* Sidebar */
+.sb-brand{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between}
+.sb-brand-name{font-size:13px;color:var(--text);letter-spacing:-.01em}
+.sb-brand-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.sb-close{display:none;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 4px;line-height:1}
+.sb-nav{padding:6px 0;flex:1}
+.sb-label{font-size:10px;color:var(--text3);padding:10px 16px 3px;letter-spacing:.04em;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:8px;padding:5px 16px;font-size:12px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;border-left:2px solid transparent}
+.sb-item:hover{background:var(--bg2);color:var(--text)}
+.sb-item.active{background:var(--accent-bg);color:var(--accent);border-left-color:var(--accent)}
+.sb-item.parent-active{color:var(--text)}
+.sb-item svg{width:13px;height:13px;flex-shrink:0;opacity:.55}
+.sb-item.active svg{opacity:1}
+.sb-parent{justify-content:space-between}
+.sb-pl{display:flex;align-items:center;gap:8px}
+.sb-chev{width:10px;height:10px;opacity:.4;transition:transform .15s;flex-shrink:0}
+.sb-parent.open .sb-chev{transform:rotate(90deg)}
+.sb-kids{display:none}
+.sb-kids.open{display:block}
+.sb-kid{padding:4px 16px 4px 36px;font-size:11px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;display:block;border-left:2px solid transparent}
+.sb-kid:hover{background:var(--bg2);color:var(--text)}
+.sb-kid.active{color:var(--accent);background:var(--accent-bg);border-left-color:var(--accent)}
+.sb-footer{border-top:1px solid var(--border);padding:10px 16px}
+.sb-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px;border-radius:4px}
+.sb-user:hover{background:var(--bg2)}
+.sb-ava{width:26px;height:26px;border-radius:4px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-uname{font-size:11px;color:var(--text)}
+.sb-urole{font-size:10px;color:var(--text3)}
 
-    /* Topbar */
-    .topbar { height:44px; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 20px; gap:10px; position:sticky; top:0; z-index:10; }
-    .topbar-menu-btn { background:none; border:none; cursor:pointer; color:var(--text2); padding:4px; display:none; }
-    .topbar-title { font-size:13px; color:var(--text); }
-    .topbar-sep { width:1px; height:14px; background:var(--border2); }
-    .topbar-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
-    .topbar-conn { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--text3); }
-    .content { padding:18px 22px 40px; }
+/* Topbar */
+.topbar{height:44px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:10}
+.topbar-menu{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;display:none}
+.topbar-title{font-size:13px;color:var(--text)}
+.topbar-sep{width:1px;height:14px;background:var(--border2)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.conn{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.content{padding:18px 22px 40px}
 
-    /* Stats */
-    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
-    .stat-card { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:14px 16px; }
-    .stat-label { font-size:10px; color:var(--text3); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em; }
-    .stat-val { font-size:22px; color:var(--text); font-weight:300; line-height:1; }
-    .stat-sub { font-size:10px; color:var(--text3); margin-top:4px; }
-    .stat-up { color:var(--green); } .stat-down { color:var(--red); }
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
+.stat-label{font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
+.stat-val{font-size:22px;color:var(--text);font-weight:300;line-height:1}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.up{color:var(--green)}.down{color:var(--red)}
 
-    /* Panels */
-    .panel { background:var(--bg); border:1px solid var(--border); border-radius:6px; margin-bottom:14px; overflow:hidden; }
-    .panel-head { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--border); }
-    .panel-title { font-size:11px; color:var(--text2); letter-spacing:0.01em; }
-    .panel-pad { padding:14px 16px; }
-    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+/* Panel */
+.panel{background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border)}
+.pt{font-size:11px;color:var(--text2);letter-spacing:.01em}
+.pp{padding:14px 16px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
 
-    /* Table */
-    .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    table { width:100%; border-collapse:collapse; min-width:420px; }
-    thead th { font-size:10px; color:var(--text3); font-weight:400; text-align:left; padding:8px 14px; border-bottom:1px solid var(--border); letter-spacing:0.03em; text-transform:uppercase; background:var(--bg2); white-space:nowrap; }
-    tbody td { font-size:11px; color:var(--text); padding:8px 14px; border-bottom:1px solid var(--border); white-space:nowrap; }
-    tbody tr:last-child td { border-bottom:none; }
-    tbody tr:hover td { background:var(--bg2); }
-    /* Sticky first column for root cause */
-    .tbl-sticky thead th:first-child,
-    .tbl-sticky tbody td:first-child { position:sticky; left:0; background:var(--bg2); z-index:2; box-shadow:1px 0 0 var(--border); }
-    .tbl-sticky tbody tr:hover td:first-child { background:var(--bg3); }
+/* Table */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:400px}
+thead th{font-size:10px;color:var(--text3);font-weight:400;text-align:left;padding:8px 14px;border-bottom:1px solid var(--border);letter-spacing:.03em;text-transform:uppercase;background:var(--bg2);white-space:nowrap}
+tbody td{font-size:11px;color:var(--text);padding:8px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg2)}
+.sticky-col thead th:first-child,.sticky-col tbody td:first-child{position:sticky;left:0;background:var(--bg2);z-index:2;box-shadow:1px 0 0 var(--border)}
+.sticky-col tbody tr:hover td:first-child{background:var(--bg3)}
 
-    /* Pills */
-    .pill { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 7px; border-radius:3px; }
-    .pill-red { background:var(--red-bg); color:var(--red); }
-    .pill-amber { background:var(--amber-bg); color:var(--amber); }
-    .pill-green { background:var(--green-bg); color:var(--green); }
-    .pill-blue { background:var(--accent-bg); color:var(--accent); }
-    .pill-gray { background:var(--bg3); color:var(--text2); }
-    .dot { width:5px; height:5px; border-radius:50%; display:inline-block; }
-    .dot-red { background:var(--red); } .dot-amber { background:var(--amber); } .dot-green { background:var(--green); }
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:3px}
+.p-red{background:var(--red-bg);color:var(--red)}
+.p-amber{background:var(--amber-bg);color:var(--amber)}
+.p-green{background:var(--green-bg);color:var(--green)}
+.p-blue{background:var(--accent-bg);color:var(--accent)}
+.p-gray{background:var(--bg3);color:var(--text2)}
+.dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+.d-red{background:var(--red)}.d-amber{background:var(--amber)}.d-green{background:var(--green)}
 
-    /* Buttons */
-    .btn { font-family:var(--font); font-size:11px; color:var(--text2); background:var(--bg); border:1px solid var(--border); padding:5px 10px; border-radius:4px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
-    .btn:hover { border-color:var(--border2); color:var(--text); }
-    .btn-primary { background:var(--accent); border-color:var(--accent); color:white; }
-    .btn-primary:hover { background:#1d4ed8; }
-    .btn-danger { background:var(--red-bg); border-color:#fca5a5; color:var(--red); }
-    .btn-sm { font-size:10px; padding:3px 7px; }
+/* Buttons */
+.btn{font-family:var(--font);font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);padding:5px 10px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{border-color:var(--border2);color:var(--text)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-danger{background:var(--red-bg);border-color:#fca5a5;color:var(--red)}
+.btn-sm{font-size:10px;padding:3px 7px}
+.btn-group{display:flex;gap:6px;flex-wrap:wrap}
 
-    /* Message feed */
-    .msg-item { display:flex; align-items:flex-start; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); }
-    .msg-item:last-child { border-bottom:none; }
-    .msg-item.sla-breach { border-left:2px solid var(--red); background:var(--red-bg); }
-    .msg-dot { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
-    .msg-body { flex:1; min-width:0; }
-    .msg-row1 { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px; }
-    .msg-guest { font-size:11px; color:var(--text); }
-    .msg-time { font-size:10px; color:var(--text3); white-space:nowrap; }
-    .msg-text { font-size:11px; color:var(--text2); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:500px; }
-    .msg-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+/* Input / select */
+.input,.select{font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg);border:1px solid var(--border);padding:7px 10px;border-radius:4px;width:100%;outline:none}
+.input:focus,.select:focus{border-color:var(--accent)}
+.field-label{font-size:10px;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.form-group{margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-    /* Status */
-    .status-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-    .status-dot.online { background:var(--green); } .status-dot.offline { background:var(--border2); }
+/* Upload */
+.upload-zone{border:1px dashed var(--border2);border-radius:6px;padding:22px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;display:block}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-bg)}
+.upload-zone input[type=file]{display:none}
+.upload-icon{font-size:22px;margin-bottom:5px}
+.upload-lbl{font-size:11px;color:var(--text2)}
+.upload-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.import-result{border:1px solid var(--border);border-radius:4px;padding:9px 12px;margin-top:8px;font-size:11px;color:var(--text2);background:var(--bg2)}
+.import-result.ok{border-color:#86efac;background:var(--green-bg);color:var(--green)}
+.import-result.err{border-color:#fca5a5;background:var(--red-bg);color:var(--red)}
+.import-result.info{border-color:#93c5fd;background:var(--accent-bg);color:var(--accent)}
 
-    /* Progress */
-    .progress-track { height:4px; background:var(--bg3); border-radius:2px; overflow:hidden; }
-    .progress-fill { height:100%; border-radius:2px; }
+/* Message feed */
+.msg-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.msg-item:last-child{border-bottom:none}
+.msg-item.breach-row{border-left:2px solid var(--red);background:var(--red-bg)}
+.msg-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.msg-body{flex:1;min-width:0}
+.msg-r1{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+.msg-guest{font-size:11px;color:var(--text)}
+.msg-time{font-size:10px;color:var(--text3);white-space:nowrap}
+.msg-text{font-size:11px;color:var(--text2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px}
+.msg-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 
-    /* Input */
-    .input { font-family:var(--font); font-size:12px; color:var(--text); background:var(--bg); border:1px solid var(--border); padding:7px 10px; border-radius:4px; width:100%; outline:none; }
-    .input:focus { border-color:var(--accent); }
-    label.field-label { font-size:10px; color:var(--text3); display:block; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.03em; }
+/* Empty state */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center}
+.empty-icon{font-size:32px;margin-bottom:12px;opacity:.4}
+.empty-title{font-size:13px;color:var(--text2);margin-bottom:4px}
+.empty-sub{font-size:11px;color:var(--text3);max-width:320px;line-height:1.6}
 
-    /* Upload */
-    .upload-zone { border:1px dashed var(--border2); border-radius:6px; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.15s,background 0.15s; display:block; }
-    .upload-zone:hover,.upload-zone.drag { border-color:var(--accent); background:var(--accent-bg); }
-    .upload-zone input[type=file] { display:none; }
-    .upload-icon { font-size:20px; margin-bottom:5px; }
-    .upload-label { font-size:11px; color:var(--text2); }
-    .upload-sub { font-size:10px; color:var(--text3); margin-top:2px; }
-    .import-result { border:1px solid var(--border); border-radius:4px; padding:8px 12px; margin-top:8px; font-size:11px; color:var(--text2); background:var(--bg2); }
-    .import-result.success { border-color:#86efac; background:var(--green-bg); color:var(--green); }
-    .import-result.error { border-color:#fca5a5; background:var(--red-bg); color:var(--red); }
+/* Agent card grid */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px 16px}
+.agent-card{border:1px solid var(--border);border-radius:6px;padding:14px;background:var(--bg)}
+.agent-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.agent-ava{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0}
+.agent-name{font-size:12px;color:var(--text)}
+.agent-role{font-size:10px;color:var(--text3)}
+.agent-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.agent-stat{background:var(--bg2);border-radius:4px;padding:6px 8px}
+.agent-stat-val{font-size:16px;color:var(--text);font-weight:300;line-height:1}
+.agent-stat-lbl{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase}
 
-    /* Toast */
-    .toast { position:fixed; bottom:20px; right:20px; background:var(--text); color:white; font-size:11px; padding:8px 14px; border-radius:4px; opacity:0; transform:translateY(4px); transition:all 0.2s; pointer-events:none; z-index:9999; }
-    .toast.show { opacity:1; transform:translateY(0); }
+/* Status dot */
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.status-dot.on{background:var(--green)}.status-dot.off{background:var(--border2)}
+.progress-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px}
 
-    /* Modal */
-    .modal-wrap { position:fixed; inset:0; background:rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; z-index:1000; }
-    .modal-box { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:22px; width:400px; max-width:94vw; max-height:90vh; overflow-y:auto; }
-    .modal-box.wide { width:520px; }
-    .modal-title { font-size:13px; color:var(--text); margin-bottom:14px; }
-    .modal-actions { display:flex; justify-content:flex-end; gap:6px; margin-top:14px; }
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;font-size:11px;padding:8px 14px;border-radius:4px;opacity:0;transform:translateY(4px);transition:all .2s;pointer-events:none;z-index:9999}
+.toast.show{opacity:1;transform:translateY(0)}
 
-    /* User rows */
-    .user-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
-    .user-row:last-child { border-bottom:none; }
-    .user-row-avatar { width:28px; height:28px; border-radius:4px; background:var(--accent); color:white; font-size:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-    .user-row-info { flex:1; min-width:0; }
-    .user-row-name { font-size:11px; color:var(--text); }
-    .user-row-email { font-size:10px; color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .user-row-actions { display:flex; gap:4px; flex-shrink:0; }
+/* Modal */
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:22px;width:420px;max-width:94vw;max-height:90vh;overflow-y:auto}
+.modal-box.wide{width:540px}
+.modal-title{font-size:13px;color:var(--text);margin-bottom:14px}
+.modal-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:14px}
 
-    /* Form */
-    .form-group { margin-bottom:12px; }
-    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .chart-wrap { padding:12px 16px 10px; }
-    canvas { max-height:160px; }
+/* User rows */
+.user-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.user-row:last-child{border-bottom:none}
+.user-ava{width:28px;height:28px;border-radius:4px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:11px;color:var(--text)}
+.user-email{font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-acts{display:flex;gap:4px;flex-shrink:0}
 
-    /* Utility */
-    .divider { border:none; border-top:1px solid var(--border); margin:12px 0; }
-    .text-muted { font-size:10px; color:var(--text3); }
-    code.inline { font-size:10px; background:var(--bg2); padding:1px 6px; border-radius:3px; font-family:monospace; }
+/* Divider / util */
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+.text-muted{font-size:10px;color:var(--text3)}
+code.ic{font-size:10px;background:var(--bg2);padding:1px 6px;border-radius:3px;font-family:monospace}
+.chart-wrap{padding:12px 16px 10px}
+canvas{max-height:160px}
+.select-note{font-size:10px;color:var(--accent);margin-top:4px}
 
-    /* Mobile bar */
-    .mob-bar { display:none; height:44px; background:var(--bg); border-bottom:1px solid var(--border); align-items:center; padding:0 16px; gap:10px; position:sticky; top:0; z-index:20; }
-    .mob-menu-btn { background:none; border:none; cursor:pointer; color:var(--text2); padding:4px; }
-    .mob-title { font-size:12px; color:var(--text); }
-    .sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.25); z-index:25; }
+/* Step indicator */
+.steps{display:flex;gap:0;margin-bottom:20px}
+.step{flex:1;padding:10px 14px;font-size:11px;color:var(--text3);border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px}
+.step.active{color:var(--accent);border-bottom-color:var(--accent)}
+.step.done{color:var(--green);border-bottom-color:var(--green)}
+.step-num{width:18px;height:18px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
 
-    @media (max-width:960px) { .stats-row { grid-template-columns:repeat(2,1fr); } .two-col { grid-template-columns:1fr; } }
-    @media (max-width:680px) {
-      .shell { display:block; height:auto; overflow:visible; }
-      .sidebar { position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); transition:transform 0.2s; width:240px !important; min-width:240px !important; }
-      .sidebar.open { transform:translateX(0); }
-      .sb-overlay.open { display:block; }
-      .sb-close-btn { display:block; }
-      .mob-bar { display:flex; }
-      .topbar { display:none !important; }
-      .main { height:100vh; overflow-y:auto; }
-      .stats-row { grid-template-columns:1fr 1fr; }
-      .content { padding:14px 14px 40px; }
-    }
-    @media (min-width:681px) and (max-width:920px) {
-      .topbar-menu-btn { display:flex !important; }
-      .sidebar { position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); transition:transform 0.2s; }
-      .sidebar.open { transform:translateX(0); }
-      .sb-overlay.open { display:block; }
-      .sb-close-btn { display:block; }
-    }
-  </style>
+/* Mobile */
+.mob-bar{display:none;height:44px;background:var(--bg);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:20}
+.mob-menu{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px}
+.mob-title{font-size:12px;color:var(--text)}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:25}
+
+@media(max-width:960px){.stats-row{grid-template-columns:repeat(2,1fr)}.two-col,.three-col{grid-template-columns:1fr}}
+@media(max-width:680px){
+  .shell{display:block;height:auto;overflow:visible}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s;width:240px !important;min-width:240px !important}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.open{display:block}
+  .sb-close{display:block}
+  .mob-bar{display:flex}
+  .topbar{display:none !important}
+  .main{height:100vh;overflow-y:auto}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .content{padding:14px 14px 40px}
+}
+@media(min-width:681px) and (max-width:920px){
+  .topbar-menu{display:flex !important}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.open{display:block}
+  .sb-close{display:block}
+}
+</style>
 </head>
 <body>
-
 <div class="sb-overlay" id="sbOverlay"></div>
 <div class="toast" id="toast"></div>
 
 <!-- Admin Login Modal -->
-<div class="modal-wrap" id="adminLoginModal" style="display:none;">
+<div class="modal-wrap" id="adminModal" style="display:none">
   <div class="modal-box">
     <div class="modal-title">Admin access</div>
     <div class="form-group"><label class="field-label">Password</label><input class="input" type="password" id="adminPw" placeholder="Enter password"></div>
-    <div id="pwErr" style="font-size:10px;color:var(--red);min-height:14px;"></div>
+    <div id="pwErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
     <div class="modal-actions">
-      <button class="btn" id="modalCancel">Cancel</button>
-      <button class="btn btn-primary" id="modalSubmit">Login</button>
+      <button class="btn" id="adminCancel">Cancel</button>
+      <button class="btn btn-primary" id="adminSubmit">Login</button>
     </div>
-    <div class="text-muted" style="margin-top:10px;">Default: <code class="inline">guestcare</code></div>
+    <div class="text-muted" style="margin-top:10px">Default: <code class="ic">guestcare</code></div>
   </div>
 </div>
 
 <!-- User Management Modal -->
-<div class="modal-wrap" id="userMgmtModal" style="display:none;">
+<div class="modal-wrap" id="userModal" style="display:none">
   <div class="modal-box wide">
     <div class="modal-title">User management</div>
-    <div id="userListArea"></div>
+    <div id="userList"></div>
     <div class="divider"></div>
-    <div id="addUserForm" style="display:none;">
-      <div style="font-size:11px;color:var(--text);margin-bottom:10px;">Add new user</div>
+    <div id="addUserForm" style="display:none">
+      <div style="font-size:11px;color:var(--text);margin-bottom:10px">Add new user</div>
       <div class="form-group"><label class="field-label">Full name</label><input class="input" id="nu_name" placeholder="e.g. Sara Lopez"></div>
       <div class="form-row">
         <div class="form-group"><label class="field-label">Username</label><input class="input" id="nu_user" placeholder="saral"></div>
-        <div class="form-group"><label class="field-label">Role</label><select class="input" id="nu_role"><option>Agent</option><option>Supervisor</option><option>Admin</option></select></div>
+        <div class="form-group"><label class="field-label">Role</label><select class="select" id="nu_role"><option>Agent</option><option>Supervisor</option><option>Admin</option></select></div>
       </div>
       <div class="form-group"><label class="field-label">Email</label><input class="input" id="nu_email" placeholder="sara@homevy.com"></div>
       <div class="form-group"><label class="field-label">Password</label><input class="input" type="password" id="nu_pass" placeholder="••••••••"></div>
-      <div id="nuErr" style="font-size:10px;color:var(--red);min-height:14px;"></div>
-      <div class="modal-actions" style="margin-top:0;">
-        <button class="btn" id="cancelAddUser">Cancel</button>
-        <button class="btn btn-primary" id="saveNewUser">Save user</button>
+      <div id="nuErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
+      <div class="modal-actions" style="margin-top:0">
+        <button class="btn" id="cancelAdd">Cancel</button>
+        <button class="btn btn-primary" id="saveAdd">Save user</button>
       </div>
     </div>
-    <div id="editUserForm" style="display:none;">
-      <div style="font-size:11px;color:var(--text);margin-bottom:10px;">Edit user</div>
+    <div id="editUserForm" style="display:none">
+      <div style="font-size:11px;color:var(--text);margin-bottom:10px">Edit user</div>
       <input type="hidden" id="eu_id">
       <div class="form-group"><label class="field-label">Full name</label><input class="input" id="eu_name"></div>
       <div class="form-row">
         <div class="form-group"><label class="field-label">Username</label><input class="input" id="eu_user"></div>
-        <div class="form-group"><label class="field-label">Role</label><select class="input" id="eu_role"><option>Agent</option><option>Supervisor</option><option>Admin</option></select></div>
+        <div class="form-group"><label class="field-label">Role</label><select class="select" id="eu_role"><option>Agent</option><option>Supervisor</option><option>Admin</option></select></div>
       </div>
       <div class="form-group"><label class="field-label">Email</label><input class="input" id="eu_email"></div>
-      <div class="modal-actions" style="margin-top:0;">
-        <button class="btn" id="cancelEditUser">Cancel</button>
-        <button class="btn btn-primary" id="saveEditUser">Save changes</button>
+      <div class="modal-actions" style="margin-top:0">
+        <button class="btn" id="cancelEdit">Cancel</button>
+        <button class="btn btn-primary" id="saveEdit">Save changes</button>
       </div>
     </div>
-    <div id="showAddBtn" style="margin-top:4px;">
-      <button class="btn" id="openAddUserForm">+ Add new user</button>
+    <div id="showAddBtn" style="margin-top:4px"><button class="btn" id="openAdd">+ Add new user</button></div>
+    <div class="modal-actions"><button class="btn" id="closeUserModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Add / Edit Agent Modal -->
+<div class="modal-wrap" id="agentModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title" id="agentModalTitle">Add agent</div>
+    <input type="hidden" id="ag_id">
+    <div class="form-group"><label class="field-label">Full name</label><input class="input" id="ag_name" placeholder="e.g. Kudzanayi Moyo"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Role</label><select class="select" id="ag_role"><option>Guest Experience Agent</option><option>Supervisor</option><option>Team Lead</option><option>Manager</option></select></div>
+      <div class="form-group"><label class="field-label">Colour</label><select class="select" id="ag_color"><option value="#2563eb">Blue</option><option value="#16a34a">Green</option><option value="#d97706">Amber</option><option value="#dc2626">Red</option><option value="#7c3aed">Purple</option><option value="#0891b2">Cyan</option></select></div>
     </div>
-    <div class="modal-actions"><button class="btn" id="closeUserMgmt">Close</button></div>
+    <div class="form-group"><label class="field-label">WhatsApp display name (exact name shown in chat exports)</label><input class="input" id="ag_waname" placeholder="e.g. Homevy Kudzanayi or just Kudzanayi"></div>
+    <div class="form-group"><label class="field-label">Email</label><input class="input" id="ag_email" placeholder="kud@homevy.com"></div>
+    <div id="agErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelAgent">Cancel</button>
+      <button class="btn btn-primary" id="saveAgent">Save agent</button>
+    </div>
   </div>
 </div>
 
 <div class="shell">
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sb-brand">
-      <div><div class="sb-brand-name">GuestCare Command</div><div class="sb-brand-sub">Operations Suite</div></div>
-      <button class="sb-close-btn" id="sbClose">✕</button>
-    </div>
-    <nav class="sb-nav">
-      <button class="sb-item" data-view="overview"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Overview</button>
-
-      <div class="sb-section-label">Response</div>
-      <button class="sb-parent sb-item" data-parent="response"><span class="sb-parent-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 1.5"/></svg>Response</span><svg class="sb-chevron" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg></button>
-      <div class="sb-children" id="ch-response">
-        <button class="sb-child" data-view="response-first">First response</button>
-        <button class="sb-child" data-view="response-avg">Avg response</button>
-        <button class="sb-child" data-view="response-delay">Delays</button>
-        <button class="sb-child" data-view="response-missed">Missed</button>
-        <button class="sb-child" data-view="root-cause">Root cause analysis</button>
-      </div>
-
-      <div class="sb-section-label">Satisfaction</div>
-      <button class="sb-parent sb-item" data-parent="satisfaction"><span class="sb-parent-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 9.5s.8 1.5 2.5 1.5 2.5-1.5 2.5-1.5"/><circle cx="5.5" cy="7" r=".6" fill="currentColor"/><circle cx="10.5" cy="7" r=".6" fill="currentColor"/></svg>Satisfaction</span><svg class="sb-chevron" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg></button>
-      <div class="sb-children" id="ch-satisfaction">
-        <button class="sb-child" data-view="sat-reviews">Reviews</button>
-        <button class="sb-child" data-view="sat-complaints">Complaints</button>
-        <button class="sb-child" data-view="sat-nps">NPS / CSAT</button>
-        <button class="sb-child" data-view="sat-repeat">Repeat guests</button>
-        <button class="sb-child" data-view="sat-resolution">Resolution</button>
-        <button class="sb-child" data-view="sat-reopened">Reopened cases</button>
-      </div>
-
-      <div class="sb-section-label">Operations</div>
-      <button class="sb-parent sb-item" data-parent="operations"><span class="sb-parent-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>Operations</span><svg class="sb-chevron" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg></button>
-      <div class="sb-children" id="ch-operations">
-        <button class="sb-child" data-view="ops-closed">Tickets closed</button>
-        <button class="sb-child" data-view="ops-active">Active issues</button>
-        <button class="sb-child" data-view="ops-escalations">Escalations</button>
-        <button class="sb-child" data-view="ops-maintenance">Maintenance</button>
-        <button class="sb-child" data-view="ops-inspections">Inspections</button>
-        <button class="sb-child" data-view="ops-deepclean">Deep cleaning</button>
-        <button class="sb-child" data-view="ai-messages">Message intelligence</button>
-      </div>
-
-      <div class="sb-section-label">Revenue</div>
-      <button class="sb-parent sb-item" data-parent="revenue"><span class="sb-parent-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5.5C5 4.1 6.3 3 8 3s3 1.1 3 2.5c0 1.3-1.1 2.1-3 2.5-2 .4-3 1.3-3 2.5C5 11.9 6.3 13 8 13s3-1.1 3-2.5"/></svg>Revenue</span><svg class="sb-chevron" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg></button>
-      <div class="sb-children" id="ch-revenue">
-        <button class="sb-child" data-view="rev-upsell">Upsell</button>
-        <button class="sb-child" data-view="rev-addon">Add-ons</button>
-        <button class="sb-child" data-view="rev-retention">Retention</button>
-        <button class="sb-child" data-view="rev-leakage">Leakage</button>
-        <button class="sb-child" data-view="rev-recovery">Recovery cost</button>
-      </div>
-
-      <div class="sb-section-label">Channels</div>
-      <button class="sb-parent sb-item" data-parent="channel"><span class="sb-parent-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 7l4-2M6 9l4 2"/></svg>Channel intel</span><svg class="sb-chevron" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg></button>
-      <div class="sb-children" id="ch-channel">
-        <button class="sb-child" data-view="chan-airbnb">Airbnb</button>
-        <button class="sb-child" data-view="chan-booking">Booking.com</button>
-        <button class="sb-child" data-view="chan-direct">Direct</button>
-      </div>
-
-      <div class="sb-section-label">Proactive</div>
-      <button class="sb-parent sb-item" data-parent="proactive"><span class="sb-parent-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C8 2 3 4 3 8v3l1 1h8l1-1V8C13 4 8 2 8 2z"/><path d="M6 12v1a2 2 0 004 0v-1"/></svg>Proactive</span><svg class="sb-chevron" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg></button>
-      <div class="sb-children" id="ch-proactive">
-        <button class="sb-child" data-view="pro-prearrival">Pre-arrival</button>
-        <button class="sb-child" data-view="pro-midstay">Mid-stay</button>
-      </div>
-
-      <div class="sb-section-label">Team</div>
-      <button class="sb-parent sb-item" data-parent="agent"><span class="sb-parent-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Agent performance</span><svg class="sb-chevron" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg></button>
-      <div class="sb-children" id="ch-agent">
-        <button class="sb-child" data-view="agent-scorecard">Scorecard</button>
-        <button class="sb-child" data-view="agent-availability">Availability</button>
-        <button class="sb-child" data-view="agent-efficiency">Efficiency</button>
-      </div>
-
-      <div class="sb-section-label">System</div>
-      <button class="sb-item" data-view="integrations"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="6" height="4" rx="1"/><rect x="9" y="8" width="6" height="4" rx="1"/><path d="M7 6h2v4H7"/></svg>Integrations</button>
-      <button class="sb-item" data-view="admin"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 3h3l-2.4 1.8.9 3L8 8.2l-3 1.6.9-3L3.5 5h3z"/></svg>Admin</button>
-      <button class="sb-item" data-view="help"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.5 1.5 0 013 0c0 1-1.5 1.5-1.5 2.5"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>Help</button>
-    </nav>
-
-    <div class="sb-footer">
-      <div class="sb-user" id="profileBtn" title="Click to manage users">
-        <div class="sb-avatar">PC</div>
-        <div>
-          <div class="sb-user-name">Prince Chakusa</div>
-          <div class="sb-user-role">Master Admin · manage users ›</div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <div class="main">
-    <div class="mob-bar">
-      <button class="mob-menu-btn" id="mobMenu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
-      <span class="mob-title" id="mobTitle">Overview</span>
-    </div>
-    <div class="topbar">
-      <button class="topbar-menu-btn" id="topMenuBtn"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
-      <div class="topbar-title" id="topTitle">Overview</div>
-      <div class="topbar-sep"></div>
-      <span class="text-muted">GuestCare Command</span>
-      <div class="topbar-right">
-        <div class="topbar-conn"><span class="status-dot online"></span>WhatsApp</div>
-        <div class="topbar-conn"><span class="status-dot online"></span>Hostaway</div>
-        <div id="sbConnPill"><span class="pill pill-gray">Supabase connecting…</span></div>
-      </div>
-    </div>
-    <div class="content" id="content">Loading...</div>
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div><div class="sb-brand-name">GuestCare Command</div><div class="sb-brand-sub">Operations Suite</div></div>
+    <button class="sb-close" id="sbClose">✕</button>
   </div>
+  <nav class="sb-nav">
+    <button class="sb-item" data-view="overview"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Overview</button>
+    <button class="sb-item" data-view="agents"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-2.8 2.2-5 5-5"/><circle cx="12" cy="10" r="3"/><path d="M9 16c0-1.7 1.3-3 3-3"/></svg>Agents</button>
+    <button class="sb-item" data-view="import"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M3 12h10v2H3z"/></svg>Import data</button>
+
+    <div class="sb-label">Analysis</div>
+    <button class="sb-parent sb-item" data-parent="response">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 1.5"/></svg>Response times</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-response">
+      <button class="sb-kid" data-view="r-first">First response</button>
+      <button class="sb-kid" data-view="r-avg">Avg response</button>
+      <button class="sb-kid" data-view="r-delays">Delays</button>
+      <button class="sb-kid" data-view="r-missed">Missed</button>
+      <button class="sb-kid" data-view="root-cause">Root cause</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="sat">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 9.5s.8 1.5 2.5 1.5 2.5-1.5 2.5-1.5"/><circle cx="5.5" cy="7" r=".6" fill="currentColor"/><circle cx="10.5" cy="7" r=".6" fill="currentColor"/></svg>Satisfaction</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-sat">
+      <button class="sb-kid" data-view="sat-reviews">Reviews</button>
+      <button class="sb-kid" data-view="sat-complaints">Complaints</button>
+      <button class="sb-kid" data-view="sat-nps">NPS / CSAT</button>
+      <button class="sb-kid" data-view="sat-repeat">Repeat guests</button>
+      <button class="sb-kid" data-view="sat-resolution">Resolution</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="ops">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>Operations</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-ops">
+      <button class="sb-kid" data-view="ops-closed">Tickets closed</button>
+      <button class="sb-kid" data-view="ops-active">Active issues</button>
+      <button class="sb-kid" data-view="ops-escalations">Escalations</button>
+      <button class="sb-kid" data-view="ops-maintenance">Maintenance</button>
+      <button class="sb-kid" data-view="ops-inspections">Inspections</button>
+      <button class="sb-kid" data-view="ops-deepclean">Deep cleaning</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="rev">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5.5C5 4.1 6.3 3 8 3s3 1.1 3 2.5c0 1.3-1.1 2.1-3 2.5-2 .4-3 1.3-3 2.5C5 11.9 6.3 13 8 13s3-1.1 3-2.5"/></svg>Revenue</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-rev">
+      <button class="sb-kid" data-view="rev-upsell">Upsell</button>
+      <button class="sb-kid" data-view="rev-addon">Add-ons</button>
+      <button class="sb-kid" data-view="rev-leakage">Leakage</button>
+      <button class="sb-kid" data-view="rev-recovery">Recovery cost</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="chan">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 7l4-2M6 9l4 2"/></svg>Channel intel</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-chan">
+      <button class="sb-kid" data-view="chan-airbnb">Airbnb</button>
+      <button class="sb-kid" data-view="chan-booking">Booking.com</button>
+      <button class="sb-kid" data-view="chan-direct">Direct</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="pro">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C8 2 3 4 3 8v3l1 1h8l1-1V8C13 4 8 2 8 2z"/><path d="M6 12v1a2 2 0 004 0v-1"/></svg>Proactive</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-pro">
+      <button class="sb-kid" data-view="pro-prearrival">Pre-arrival</button>
+      <button class="sb-kid" data-view="pro-midstay">Mid-stay</button>
+    </div>
+
+    <div class="sb-label">System</div>
+    <button class="sb-item" data-view="integrations"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="6" height="4" rx="1"/><rect x="9" y="8" width="6" height="4" rx="1"/><path d="M7 6h2v4H7"/></svg>Integrations</button>
+    <button class="sb-item" data-view="admin"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 3h3l-2.4 1.8.9 3L8 8.2l-3 1.6.9-3L3.5 5h3z"/></svg>Admin</button>
+    <button class="sb-item" data-view="help"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.5 1.5 0 013 0c0 1-1.5 1.5-1.5 2.5"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>Help</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user" id="profileBtn">
+      <div class="sb-ava">PC</div>
+      <div>
+        <div class="sb-uname">Prince Chakusa</div>
+        <div class="sb-urole">Master Admin · manage users ›</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="mob-bar">
+    <button class="mob-menu" id="mobMenu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+    <span class="mob-title" id="mobTitle">Overview</span>
+  </div>
+  <div class="topbar">
+    <button class="topbar-menu" id="topMenu"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+    <div class="topbar-title" id="topTitle">Overview</div>
+    <div class="topbar-sep"></div>
+    <span class="text-muted">GuestCare Command</span>
+    <div class="topbar-right">
+      <div class="conn"><span class="status-dot on"></span>WhatsApp</div>
+      <div class="conn"><span class="status-dot on"></span>Hostaway</div>
+      <div id="sbPill"><span class="pill p-gray">Supabase…</span></div>
+    </div>
+  </div>
+  <div class="content" id="content">Loading…</div>
+</div>
 </div>
 
 <script>
 (function(){
 
-/* ── CONFIG ── */
-const CFG = {
-  sla:{ Hostaway:5, WhatsApp:10, default:10 },
-  whatsapp:{ accessToken:'', phoneNumberId:'' },
-  supabase:{
-    url:'https://ttxiutmxtbzcelhajdlc.supabase.co',
-    anonKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0eGl1dG14dGJ6Y2VsaGFqZGxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjAwODIsImV4cCI6MjA5MTQ5NjA4Mn0.Ny5hz6mEXPS8_DKdrAsqpMnlUMLd-Jd8xuqx6efpizw'
-  }
-};
+/* ══════════════════════════════════════════
+   CONFIG & SUPABASE
+══════════════════════════════════════════ */
+const SB_URL  = 'https://ttxiutmxtbzcelhajdlc.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0eGl1dG14dGJ6Y2VsaGFqZGxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjAwODIsImV4cCI6MjA5MTQ5NjA4Mn0.Ny5hz6mEXPS8_DKdrAsqpMnlUMLd-Jd8xuqx6efpizw';
+const SLA     = { WhatsApp: 10, Hostaway: 5, default: 10 };
+const sb      = supabase.createClient(SB_URL, SB_KEY);
 
-/* ── SUPABASE CLIENT ── */
-const sb = supabase.createClient(CFG.supabase.url, CFG.supabase.anonKey);
+/* ══════════════════════════════════════════
+   LOCAL STORE  — zero demo data
+   swap sb.from() calls for Appwrite if needed
+══════════════════════════════════════════ */
+const SK = 'gcc_v4';
+function blank(){ return { agents:[], messages:[], rootCause:[], importLog:[], users:[], kpi:{ avg:0, breaches:0, active:0, csat:0 } }; }
+function load(){ try{ return JSON.parse(localStorage.getItem(SK)) || blank(); }catch(e){ return blank(); } }
+function saveLocal(){ try{ localStorage.setItem(SK, JSON.stringify(store)); }catch(e){} }
+let store = load();
 
-/* ── TABLE NAMES ── */
-const T = { messages:'gcc_messages', rootCause:'gcc_root_cause', kpi:'gcc_kpi', importLog:'gcc_import_log', users:'gcc_users' };
+/* ══════════════════════════════════════════
+   SUPABASE HELPERS
+══════════════════════════════════════════ */
+function setPill(state){
+  const el=document.getElementById('sbPill'); if(!el) return;
+  if(state==='on')  el.innerHTML='<span class="pill p-green"><span class="dot d-green"></span>Supabase live</span>';
+  if(state==='off') el.innerHTML='<span class="pill p-amber">Supabase offline</span>';
+  if(state==='...')el.innerHTML='<span class="pill p-gray">Supabase…</span>';
+}
 
-/* ── LOCAL STORE (fallback + in-memory cache) ── */
-const SK='gcc_v3';
-function defStore(){ return {
-  kpi:{ avg:3.2, breaches:2, active:2, csat:94 },
-  messages:[
-    {id:'d1',channel:'WhatsApp',guest:'Maria G.',message:"The air conditioner is not working.",ts:Date.now()-15*6e4,intent:'Maintenance',urgency:'high',agent:'Prince',responded:true,rt:4,breach:false},
-    {id:'d2',channel:'Hostaway',guest:'John D.',message:'Can I get an extra towel?',ts:Date.now()-45*6e4,intent:'Amenity',urgency:'low',agent:'Kudzanayi',responded:true,rt:3,breach:false},
-    {id:'d3',channel:'WhatsApp',guest:'Linda K.',message:'I need a refund for last night, the room was dirty.',ts:Date.now()-120*6e4,intent:'Complaint',urgency:'high',agent:null,responded:false,rt:null,breach:true},
-    {id:'d4',channel:'Hostaway',guest:'Carlos M.',message:'What time is check-out?',ts:Date.now()-8*6e4,intent:'Question',urgency:'low',agent:'Prince',responded:true,rt:1.5,breach:false},
-    {id:'d5',channel:'WhatsApp',guest:'Anna S.',message:'The toilet is overflowing! Emergency!',ts:Date.now()-3*6e4,intent:'Emergency',urgency:'high',agent:'Kudzanayi',responded:false,rt:null,breach:true},
-  ],
-  rootCause:[
-    {guest:'Linda K.',channel:'WhatsApp',msg:'I need a refund...',ts:Date.now()-120*6e4,agent:'Unassigned',rt:null,reason:'No agent assigned'},
-    {guest:'Anna S.',channel:'WhatsApp',msg:'The toilet is overflowing!',ts:Date.now()-3*6e4,agent:'Kudzanayi',rt:8.2,reason:'Agent offline / high workload'},
-  ],
-  users:[], importLog:[]
-}; }
-function loadLocal(){ try{ return JSON.parse(localStorage.getItem(SK))||defStore(); }catch(e){ return defStore(); } }
-function saveLocal(){ try{ localStorage.setItem(SK,JSON.stringify(store)); }catch(e){} }
-let store = loadLocal();
-
-/* ── SUPABASE READ: pull all tables into store ── */
-async function loadFromSupabase(){
-  try {
-    setConnBanner('loading');
-    const [msgRes, rcRes, kpiRes, logRes, usrRes] = await Promise.all([
-      sb.from(T.messages).select('*').order('ts',{ascending:false}).limit(500),
-      sb.from(T.rootCause).select('*').order('ts',{ascending:false}),
-      sb.from(T.kpi).select('*').eq('id',1).single(),
-      sb.from(T.importLog).select('*').order('created_at',{ascending:false}).limit(20),
-      sb.from(T.users).select('*')
+async function sbLoad(){
+  setPill('...');
+  try{
+    const [ag,ms,rc,il,us] = await Promise.all([
+      sb.from('gcc_agents').select('*'),
+      sb.from('gcc_messages').select('*').order('ts',{ascending:false}).limit(1000),
+      sb.from('gcc_root_cause').select('*').order('ts',{ascending:false}),
+      sb.from('gcc_import_log').select('*').order('created_at',{ascending:false}).limit(30),
+      sb.from('gcc_users').select('*')
     ]);
-    if(msgRes.data&&msgRes.data.length){
-      store.messages = msgRes.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
-    }
-    if(rcRes.data&&rcRes.data.length){
-      store.rootCause = rcRes.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
-    }
-    if(kpiRes.data){ store.kpi = {avg:kpiRes.data.avg, breaches:kpiRes.data.breaches, active:kpiRes.data.active, csat:kpiRes.data.csat}; }
-    if(logRes.data&&logRes.data.length){ store.importLog = logRes.data.map(r=>r.entry); }
-    if(usrRes.data&&usrRes.data.length){ store.users = usrRes.data; }
+    if(ag.data)  store.agents     = ag.data;
+    if(ms.data)  store.messages   = ms.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
+    if(rc.data)  store.rootCause  = rc.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
+    if(il.data)  store.importLog  = il.data.map(r=>r.entry);
+    if(us.data)  store.users      = us.data.filter(u=>!u.locked); // master admin not in db
+    recalcKPI();
     saveLocal();
-    setConnBanner('online');
-    render(currentView); // refresh current view with live data
-  } catch(e) {
-    setConnBanner('offline');
-    console.warn('Supabase load failed, using local cache:', e.message);
-  }
+    setPill('on');
+    render(currentView);
+  }catch(e){ setPill('off'); console.warn('Supabase load:', e.message); }
 }
 
-/* ── SUPABASE WRITE: push new messages + KPI + root cause ── */
-async function pushToSupabase(newMessages, newBreaches){
-  try {
-    // Upsert messages (id as conflict key)
-    if(newMessages&&newMessages.length){
-      const rows = newMessages.map(m=>({
-        id: String(m.id), channel:m.channel, guest:m.guest, message:m.message,
-        ts: new Date(m.ts).toISOString(), intent:m.intent, urgency:m.urgency,
-        agent:m.agent, responded:m.responded, rt:m.rt, breach:m.breach
-      }));
-      await sb.from(T.messages).upsert(rows,{onConflict:'id'});
+async function sbPushMessages(rows){
+  if(!rows.length) return;
+  const data = rows.map(m=>({
+    id:String(m.id), agent_id:m.agentId, channel:m.channel, guest:m.guest,
+    message:m.message, ts:new Date(m.ts).toISOString(), intent:m.intent,
+    urgency:m.urgency, responded:m.responded, rt:m.rt, breach:m.breach
+  }));
+  try{ await sb.from('gcc_messages').upsert(data,{onConflict:'id'}); }catch(e){ console.warn('push msg',e.message); }
+}
+
+async function sbPushRootCause(rows){
+  if(!rows.length) return;
+  const data = rows.map((r,i)=>({
+    id:String(r.ts)+'_'+i, agent_id:r.agentId, guest:r.guest, channel:r.channel,
+    msg:r.msg, ts:new Date(r.ts).toISOString(), agent_name:r.agentName,
+    rt:r.rt, reason:r.reason
+  }));
+  try{ await sb.from('gcc_root_cause').upsert(data,{onConflict:'id'}); }catch(e){ console.warn('push rc',e.message); }
+}
+
+async function sbUpsertKPI(){
+  try{ await sb.from('gcc_kpi').upsert({id:1,...store.kpi,updated_at:new Date().toISOString()},{onConflict:'id'}); }catch(e){}
+}
+
+async function sbUpsertAgent(a){
+  try{ await sb.from('gcc_agents').upsert(a,{onConflict:'id'}); }catch(e){ console.warn('push agent',e.message); }
+}
+async function sbDeleteAgent(id){
+  try{ await sb.from('gcc_agents').delete().eq('id',id); }catch(e){}
+}
+async function sbUpsertUser(u){
+  try{ await sb.from('gcc_users').upsert(u,{onConflict:'id'}); }catch(e){}
+}
+async function sbDeleteUser(id){
+  try{ await sb.from('gcc_users').delete().eq('id',id); }catch(e){}
+}
+async function sbLogImport(entry){
+  try{ await sb.from('gcc_import_log').insert({entry,created_at:new Date().toISOString()}); }catch(e){}
+}
+
+/* ══════════════════════════════════════════
+   KPI — recalculate from all messages
+══════════════════════════════════════════ */
+function recalcKPI(){
+  const m = store.messages;
+  const resp = m.filter(x=>x.responded && x.rt!=null);
+  store.kpi.avg      = resp.length ? +(resp.reduce((s,x)=>s+x.rt,0)/resp.length).toFixed(1) : 0;
+  store.kpi.breaches = m.filter(x=>x.breach).length;
+  store.kpi.active   = m.filter(x=>!x.responded).length;
+}
+
+/* ══════════════════════════════════════════
+   AGENT COLOURS
+══════════════════════════════════════════ */
+const COLORS = ['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#0f766e'];
+function agentColor(id){ const a=store.agents.find(x=>x.id===id); return a&&a.color ? a.color : COLORS[0]; }
+function agentName(id){ const a=store.agents.find(x=>x.id===id); return a ? a.name : 'Unknown'; }
+function agentStats(agentId){
+  const m = store.messages.filter(x=>x.agentId===agentId);
+  const resp = m.filter(x=>x.responded&&x.rt!=null);
+  return {
+    total: m.length,
+    active: m.filter(x=>!x.responded).length,
+    breaches: m.filter(x=>x.breach).length,
+    avgRt: resp.length ? +(resp.reduce((s,x)=>s+x.rt,0)/resp.length).toFixed(1) : 0,
+    slaHit: resp.length ? Math.round(100*m.filter(x=>x.responded&&!x.breach).length/resp.length) : 0
+  };
+}
+
+/* ══════════════════════════════════════════
+   PARSERS
+══════════════════════════════════════════ */
+
+// WhatsApp TXT parser — format: [DD/MM/YYYY, HH:MM:SS] Sender: Message
+// agentWaName = the exact WhatsApp display name of the selected agent
+function parseWhatsApp(text, agentWaName, agentId, channel){
+  // multiple format patterns
+  const patterns = [
+    /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),\s*(\d{1,2}:\d{2}(?::\d{2})?)\s*(?:AM|PM)?\]\s*([^:]+):\s*(.+)$/i,
+    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s*(\d{1,2}:\d{2}(?::\d{2})?)\s*(?:AM|PM)?\s*-\s*([^:]+):\s*(.+)$/i
+  ];
+
+  const threads = {}; // keyed by guest name
+  const lines = text.split('\n');
+  let matched = 0;
+
+  lines.forEach(line => {
+    let m = null;
+    for(const p of patterns){ m = line.match(p); if(m) break; }
+    if(!m) return;
+    const [, dateStr, timeStr, rawSender, body] = m;
+    const sender = rawSender.trim().replace(/^[~\u200e]/,'').trim();
+    if(!sender || body.trim()==='<Media omitted>' || body.trim()==='This message was deleted') return;
+
+    // Parse timestamp
+    const parts = dateStr.split('/');
+    let d,mo,y;
+    if(parseInt(parts[0])>12){ [d,mo,y] = parts; } // DD/MM/YYYY
+    else { [mo,d,y] = parts; } // MM/DD/YYYY fallback
+    const fullYear = y.length===2 ? '20'+y : y;
+    const ts = new Date(`${fullYear}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}T${timeStr.includes(':')&&timeStr.split(':').length===2?timeStr+':00':timeStr}`).getTime();
+    if(isNaN(ts)) return;
+    matched++;
+
+    // Is this the agent or a guest?
+    const isAgent = agentWaName.toLowerCase().split(',').map(s=>s.trim()).some(n=>sender.toLowerCase().includes(n));
+
+    if(!isAgent){
+      // guest message
+      if(!threads[sender]) threads[sender] = { msgs:[], guestName: sender };
+      threads[sender].msgs.push({ ts, body, role:'guest' });
+    } else {
+      // agent reply — add to ALL open threads that are waiting for response
+      Object.values(threads).forEach(t => t.msgs.push({ ts, body, role:'agent' }));
     }
-    // Upsert root cause breaches
-    if(newBreaches&&newBreaches.length){
-      const rows = newBreaches.map((b,i)=>({
-        id: String(b.ts)+'_'+i, guest:b.guest, channel:b.channel, msg:b.msg,
-        ts: new Date(b.ts).toISOString(), agent:b.agent, rt:b.rt, reason:b.reason
-      }));
-      await sb.from(T.rootCause).upsert(rows,{onConflict:'id'});
+  });
+
+  if(matched===0) return { error: 'No messages matched. Check the file is a WhatsApp .txt export.' };
+
+  const result = [];
+  const slaMs = SLA[channel] * 60000;
+
+  Object.values(threads).forEach(th => {
+    if(!th.msgs.length) return;
+    // Find first guest message, then first agent reply after it
+    let lastGuestTs = null, firstAgentTs = null, guestBlock = false;
+    th.msgs.sort((a,b)=>a.ts-b.ts);
+    for(const msg of th.msgs){
+      if(msg.role==='guest'){ lastGuestTs=msg.ts; guestBlock=true; firstAgentTs=null; }
+      else if(guestBlock && lastGuestTs && !firstAgentTs){ firstAgentTs=msg.ts; guestBlock=false; }
     }
-    // Upsert KPI row (always id=1)
-    await sb.from(T.kpi).upsert({
-      id:1, avg:store.kpi.avg, breaches:store.kpi.breaches,
-      active:store.kpi.active, csat:store.kpi.csat,
-      updated_at: new Date().toISOString()
-    },{onConflict:'id'});
-    // Append to import log
-    if(store.importLog.length){
-      await sb.from(T.importLog).insert({entry:store.importLog[0], created_at:new Date().toISOString()});
+    const rt    = firstAgentTs ? +((firstAgentTs - lastGuestTs)/60000).toFixed(1) : null;
+    const breach= rt!=null ? rt > SLA[channel] : !firstAgentTs;
+    const lastG = th.msgs.filter(m=>m.role==='guest').slice(-1)[0];
+    result.push({
+      id: 'wa_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      agentId, channel, guest: th.guestName,
+      message: lastG ? lastG.body : '',
+      ts: lastG ? lastG.ts : Date.now(),
+      intent:'WhatsApp', urgency: breach?'high':'low',
+      responded: firstAgentTs!=null, rt, breach
+    });
+  });
+
+  return { messages: result, matched, threads: Object.keys(threads).length };
+}
+
+// Hostaway CSV parser
+// Expected cols: thread_id, timestamp, direction (Inbound/Outbound), message, guest_name (optional)
+function parseHostaway(csvText, agentId, channel){
+  const res = Papa.parse(csvText, { header:true, skipEmptyLines:true });
+  if(!res.data.length) return { error:'CSV appears empty or has no rows.' };
+
+  const threads = {};
+  res.data.forEach(row => {
+    const tid    = row.thread_id || row['Thread ID'] || row.ThreadId || Object.values(row)[0] || '';
+    const tsRaw  = row.timestamp  || row.Timestamp  || row.Date || row.date || Object.values(row)[1] || '';
+    const dirRaw = (row.direction || row.Direction  || row.dir  || '').toLowerCase();
+    const body   = row.message    || row.Message    || row.body || row.Body || Object.values(row)[3] || '';
+    const guest  = row.guest      || row.Guest      || row.guest_name || row.GuestName || 'Guest-'+tid;
+    const ts     = new Date(tsRaw).getTime();
+    if(!tid || isNaN(ts)) return;
+    if(!threads[tid]) threads[tid] = { msgs:[], guest: String(guest).trim() };
+    const isAgent = dirRaw.includes('out');
+    threads[tid].msgs.push({ ts, body, role: isAgent?'agent':'guest' });
+  });
+
+  if(!Object.keys(threads).length) return { error:'No threads found. Check columns: thread_id, timestamp, direction, message.' };
+
+  const result = [];
+  Object.entries(threads).forEach(([tid, th]) => {
+    th.msgs.sort((a,b)=>a.ts-b.ts);
+    let lastGuestTs=null, firstAgentTs=null, guestBlock=false;
+    for(const msg of th.msgs){
+      if(msg.role==='guest'){ lastGuestTs=msg.ts; guestBlock=true; firstAgentTs=null; }
+      else if(guestBlock && lastGuestTs && !firstAgentTs){ firstAgentTs=msg.ts; guestBlock=false; }
     }
-    setConnBanner('online');
-  } catch(e) {
-    console.warn('Supabase push failed:', e.message);
-    setConnBanner('offline');
-  }
+    const rt     = firstAgentTs ? +((firstAgentTs - lastGuestTs)/60000).toFixed(1) : null;
+    const breach = rt!=null ? rt > SLA.Hostaway : !firstAgentTs;
+    const lastG  = th.msgs.filter(m=>m.role==='guest').slice(-1)[0];
+    result.push({
+      id: 'ha_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      agentId, channel:'Hostaway', guest: th.guest,
+      message: lastG ? lastG.body : '',
+      ts: lastG ? lastG.ts : Date.now(),
+      intent:'Hostaway', urgency: breach?'high':'low',
+      responded: firstAgentTs!=null, rt, breach
+    });
+  });
+
+  return { messages: result, matched: res.data.length, threads: Object.keys(threads).length };
 }
 
-/* ── SUPABASE USER SYNC ── */
-async function pushUserToSupabase(user){
-  try{ await sb.from(T.users).upsert({...user},{onConflict:'id'}); }catch(e){ console.warn('User push failed:',e.message); }
-}
-async function deleteUserFromSupabase(uid){
-  try{ await sb.from(T.users).delete().eq('id',uid); }catch(e){ console.warn('User delete failed:',e.message); }
-}
+/* ══════════════════════════════════════════
+   SYNC — merge parsed data into store & push everywhere
+══════════════════════════════════════════ */
+function syncAll(parsed, agentId, fileName, channel){
+  const newMsgs=[], newBreaches=[];
 
-/* ── CONNECTION BANNER ── */
-function setConnBanner(state){
-  const el=document.getElementById('sbConnPill');
-  if(!el) return;
-  if(state==='online') el.innerHTML='<span class="pill pill-green"><span class="dot dot-green"></span>Supabase live</span>';
-  else if(state==='loading') el.innerHTML='<span class="pill pill-gray">Supabase connecting…</span>';
-  else el.innerHTML='<span class="pill pill-amber">Supabase offline</span>';
-}
-
-/* ── SAVE: local + push to Supabase ── */
-function saveStore(newMessages, newBreaches){
-  saveLocal();
-  pushToSupabase(newMessages||[], newBreaches||[]);
-}
-
-/* ── SYNC DASHBOARD — called after every file import ── */
-function syncDashboard(parsed){
-  if(!parsed||!parsed.length) return;
-  // Merge — skip duplicates by guest+ts
-  const newMsgs=[];
-  parsed.forEach(pm=>{
-    if(!store.messages.find(m=>m.guest===pm.guest&&Math.abs(m.ts-pm.ts)<60000)){
+  parsed.forEach(pm => {
+    if(!store.messages.find(m=>m.id===pm.id)){
       store.messages.push(pm);
       newMsgs.push(pm);
     }
   });
-  // Recalculate all KPIs from full message set
-  const resp=store.messages.filter(m=>m.responded&&m.rt!=null);
-  store.kpi.avg = resp.length ? +(resp.reduce((s,m)=>s+m.rt,0)/resp.length).toFixed(1) : 0;
-  store.kpi.breaches = store.messages.filter(m=>m.breach).length;
-  store.kpi.active = store.messages.filter(m=>!m.responded).length;
-  // Add new root cause entries
-  const newBreaches=[];
-  newMsgs.filter(m=>m.breach).forEach(b=>{
+
+  // Derive root cause entries from breaches
+  newMsgs.filter(m=>m.breach).forEach(b => {
+    const entry = {
+      agentId, agentName: agentName(agentId),
+      guest:b.guest, channel:b.channel, msg:b.message,
+      ts:b.ts, rt:b.rt,
+      reason: b.rt!=null ? b.rt+'m > '+SLA[b.channel]+'m SLA' : 'No agent response recorded'
+    };
     if(!store.rootCause.find(r=>r.guest===b.guest&&Math.abs(r.ts-b.ts)<60000)){
-      const entry={guest:b.guest,channel:b.channel,msg:b.message,ts:b.ts,agent:b.agent||'Unassigned',rt:b.rt,reason:b.rt==null?'No response':b.rt+'m > '+CFG.sla[b.channel]+'m SLA'};
       store.rootCause.push(entry);
       newBreaches.push(entry);
     }
   });
-  // Persist locally and push to Supabase
-  saveStore(newMsgs, newBreaches);
-  showToast('Dashboard synced — all sections updated');
-  // Re-render whichever view is open so data shows immediately
+
+  recalcKPI();
+  saveLocal();
+
+  // Push to Supabase
+  sbPushMessages(newMsgs);
+  sbPushRootCause(newBreaches);
+  sbUpsertKPI();
+
+  // Log import
+  const logEntry = new Date().toLocaleString()+' — '+channel+' for '+agentName(agentId)+': '+parsed.length+' conversations from '+fileName;
+  store.importLog.unshift(logEntry);
+  sbLogImport(logEntry);
+
+  showToast('Import complete — all sections updated');
   render(currentView);
 }
 
-/* ── WHATSAPP PARSER ── */
-function parseWA(text){
-  const HOST=['homevy','prince','kudzanayi','charles','miracle','jennifer','niniola','precious'];
-  const re=/^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),\s*(\d{1,2}:\d{2}(?::\d{2})?)\]\s*([^:]+):\s*(.+)$/;
-  const threads={};
-  text.split('\n').forEach(line=>{
-    const m=line.match(re); if(!m) return;
-    const[,d,t,s,b]=m; const name=s.trim().replace(/^~/,'');
-    const [dd,mm,yy]=d.split('/'); const fy=yy.length===2?'20'+yy:yy;
-    const ts=new Date(`${fy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}T${t.split(':').length===2?t+':00':t}`).getTime();
-    if(isNaN(ts)) return;
-    const isHost=HOST.some(h=>name.toLowerCase().includes(h));
-    if(!isHost){ if(!threads[name]) threads[name]=[]; threads[name].push({ts,body:b,role:'guest'}); }
-    else Object.keys(threads).forEach(g=>threads[g].push({ts,body:b,role:'host',by:name}));
-  });
-  const msgs=[];
-  Object.entries(threads).forEach(([guest,arr])=>{
-    let lg=null,fh=null,rt=null,breach=false,gb=false;
-    arr.forEach(msg=>{ if(msg.role==='guest'){lg=msg.ts;gb=true;fh=null;} else if(gb&&lg&&!fh){fh=msg.ts;rt=+((fh-lg)/6e4).toFixed(1);breach=rt>CFG.sla.WhatsApp;gb=false;} });
-    const last=arr.filter(m=>m.role==='guest').slice(-1)[0];
-    msgs.push({id:Date.now()+Math.random(),channel:'WhatsApp',guest,message:last?last.body:'',ts:last?last.ts:Date.now(),intent:'Imported',urgency:breach?'high':'low',agent:null,responded:fh!=null,rt,breach});
-  });
-  return msgs;
+/* ══════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════ */
+const charts = {};
+function mkChart(id, cfg){
+  if(charts[id]){ try{charts[id].destroy();}catch(e){} delete charts[id]; }
+  const el=document.getElementById(id); if(!el) return;
+  charts[id]=new Chart(el.getContext('2d'),cfg);
+}
+function killCharts(){ Object.keys(charts).forEach(k=>{ try{charts[k].destroy();}catch(e){} delete charts[k]; }); }
+const CD={ plugins:{legend:{display:false}}, scales:{x:{grid:{display:false},ticks:{font:{size:10,family:'DM Sans'},color:'#9ca3af'}},y:{grid:{color:'#f0f2f5'},ticks:{font:{size:10,family:'DM Sans'},color:'#9ca3af'}}}, elements:{bar:{borderRadius:2},line:{tension:.35,borderWidth:1.5},point:{radius:0}} };
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+const fmt = ts => new Date(ts).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const fmtT = ts => new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000); }
+
+function urgencyPill(u){
+  if(u==='high') return '<span class="pill p-red"><span class="dot d-red"></span>High</span>';
+  if(u==='medium') return '<span class="pill p-amber"><span class="dot d-amber"></span>Medium</span>';
+  return '<span class="pill p-green"><span class="dot d-green"></span>Low</span>';
 }
 
-/* ── HOSTAWAY CSV PARSER ── */
-function parseHACSV(csv){
-  const res=Papa.parse(csv,{header:true,skipEmptyLines:true}); const rows=res.data;
-  const threads={};
-  rows.forEach(r=>{
-    const tid=r.thread_id||r['Thread ID']||r.ThreadId||Object.values(r)[0];
-    const tsRaw=r.timestamp||r.Timestamp||r.date||Object.values(r)[1];
-    const dir=(r.direction||r.Direction||r.dir||'').toLowerCase();
-    const body=r.message||r.Message||r.body||Object.values(r)[3]||'';
-    const ts=new Date(tsRaw).getTime();
-    if(!tid||isNaN(ts)) return;
-    if(!threads[tid]) threads[tid]={msgs:[],guest:r.guest||r.Guest||'Guest-'+tid};
-    threads[tid].msgs.push({ts,dir:dir.includes('out')?'host':'guest',body});
-  });
-  const msgs=[];
-  Object.entries(threads).forEach(([tid,th])=>{
-    th.msgs.sort((a,b)=>a.ts-b.ts);
-    let lg=null,fh=null,rt=null,breach=false,gb=false;
-    th.msgs.forEach(msg=>{ if(msg.dir==='guest'){lg=msg.ts;gb=true;fh=null;} else if(gb&&lg&&!fh){fh=msg.ts;rt=+((fh-lg)/6e4).toFixed(1);breach=rt>CFG.sla.Hostaway;gb=false;} });
-    const last=th.msgs.filter(m=>m.dir==='guest').slice(-1)[0];
-    msgs.push({id:Date.now()+Math.random(),channel:'Hostaway',guest:th.guest,message:last?last.body:'',ts:last?last.ts:Date.now(),intent:'Imported',urgency:breach?'high':'low',agent:null,responded:fh!=null,rt,breach});
-  });
-  return msgs;
+function emptyState(icon, title, sub, action=''){
+  return `<div class="empty"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div>${action}</div>`;
 }
 
-/* ── USERS ── */
-const MASTER={id:'master',name:'Prince Chakusa',username:'prince',email:'prince@homevy.com',role:'Master Admin',locked:true};
-function getUsers(){ return [MASTER,...(store.users||[])]; }
-
-function renderUserList(){
-  document.getElementById('userListArea').innerHTML=getUsers().map(u=>`
-    <div class="user-row">
-      <div class="user-row-avatar">${u.name.slice(0,2).toUpperCase()}</div>
-      <div class="user-row-info">
-        <div class="user-row-name">${u.name} <span class="pill ${u.locked?'pill-blue':'pill-gray'}">${u.role}</span></div>
-        <div class="user-row-email">@${u.username} · ${u.email}</div>
-      </div>
-      <div class="user-row-actions">${u.locked?'<span class="text-muted">Non-editable</span>':`<button class="btn btn-sm" onclick="openEditUser('${u.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>`}</div>
-    </div>`).join('');
+function agentSelect(id, placeholder='Select agent'){
+  if(!store.agents.length) return `<select class="select" id="${id}" disabled><option>No agents registered yet</option></select><div class="select-note">→ Go to Agents to register your team first</div>`;
+  return `<select class="select" id="${id}"><option value="">— ${placeholder} —</option>${store.agents.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select>`;
 }
 
-function openUserMgmt(){ document.getElementById('addUserForm').style.display='none'; document.getElementById('editUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; renderUserList(); document.getElementById('userMgmtModal').style.display='flex'; }
-window.openEditUser=function(uid){ const u=store.users.find(u=>u.id===uid); if(!u) return; document.getElementById('eu_id').value=uid; document.getElementById('eu_name').value=u.name; document.getElementById('eu_user').value=u.username; document.getElementById('eu_email').value=u.email; document.getElementById('eu_role').value=u.role; document.getElementById('editUserForm').style.display='block'; document.getElementById('addUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='none'; };
-window.deleteUser=function(uid){ if(!confirm('Delete this user?')) return; store.users=store.users.filter(u=>u.id!==uid); saveLocal(); deleteUserFromSupabase(uid); renderUserList(); showToast('User deleted'); };
+/* ══════════════════════════════════════════
+   VIEWS
+══════════════════════════════════════════ */
+const VIEWS = {
 
-/* ── CHART REGISTRY ── */
-const charts={};
-function mkChart(id,cfg){ if(charts[id]){try{charts[id].destroy();}catch(e){} delete charts[id];} const el=document.getElementById(id); if(!el) return; charts[id]=new Chart(el.getContext('2d'),cfg); }
-function killCharts(){ Object.keys(charts).forEach(k=>{try{charts[k].destroy();}catch(e){} delete charts[k];}); }
-const CD={ plugins:{legend:{display:false}}, scales:{x:{grid:{display:false},ticks:{font:{size:10,family:'DM Sans'},color:'#9ca3af'}},y:{grid:{color:'#f0f2f5'},ticks:{font:{size:10,family:'DM Sans'},color:'#9ca3af'}}}, elements:{bar:{borderRadius:2},line:{tension:0.35,borderWidth:1.5},point:{radius:0}} };
-
-/* ── HELPERS ── */
-const fmt=ts=>new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-const urgPill=u=>u==='high'?'<span class="pill pill-red"><span class="dot dot-red"></span>High</span>':u==='medium'?'<span class="pill pill-amber"><span class="dot dot-amber"></span>Medium</span>':'<span class="pill pill-green"><span class="dot dot-green"></span>Low</span>';
-const dotCls=u=>u==='high'?'dot-red':u==='medium'?'dot-amber':'dot-green';
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-function simulate(){ const opts=['The toilet is overflowing!','Is early check-in available?','The heater is broken.','Can I get late checkout?']; const msg=opts[Math.floor(Math.random()*opts.length)]; const urgency=(msg.includes('overflowing')||msg.includes('broken'))?'high':'low'; const nm={id:'sim_'+Date.now(),channel:Math.random()>.5?'WhatsApp':'Hostaway',guest:['Sara L.','Robert P.','Nina K.'][Math.floor(Math.random()*3)],message:msg,ts:Date.now(),intent:urgency==='high'?'Emergency':'General',urgency,agent:Math.random()>.5?'Prince':'Kudzanayi',responded:false,rt:null,breach:false}; store.messages.push(nm); store.kpi.active=store.messages.filter(m=>!m.responded).length; saveStore([nm],[]); showToast('Message simulated & synced'); }
-
-function msgFeed(){ return store.messages.slice().reverse().slice(0,20).map(m=>`
-  <div class="msg-item${m.breach?' sla-breach':''}">
-    <div class="msg-dot dot ${dotCls(m.urgency)}"></div>
-    <div class="msg-body">
-      <div class="msg-row1"><span class="msg-guest">${m.guest}</span><span class="msg-time">${fmt(m.ts)}</span></div>
-      <div class="msg-text">"${m.message}"</div>
-      <div class="msg-meta">${urgPill(m.urgency)}<span class="pill pill-gray">${m.channel}</span><span style="font-size:10px;color:var(--text3);">${m.agent||'Unassigned'}</span><span style="margin-left:auto;font-size:10px;color:var(--text3);">${m.responded?'✓ '+m.rt+'m':m.breach?'<span style="color:var(--red)">Missed SLA</span>':'Pending'}</span></div>
-    </div>
-  </div>`).join(''); }
-
-/* ── VIEWS ── */
-let currentView='overview';
-const VIEWS={
-  overview:()=>`
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Active conversations</div><div class="stat-val">${store.kpi.active}</div><div class="stat-sub">right now</div></div>
-      <div class="stat-card"><div class="stat-label">SLA breaches</div><div class="stat-val ${store.kpi.breaches>0?'stat-down':'stat-up'}">${store.kpi.breaches}</div><div class="stat-sub">unresolved</div></div>
-      <div class="stat-card"><div class="stat-label">Avg response time</div><div class="stat-val">${store.kpi.avg}<span style="font-size:13px;color:var(--text3);">m</span></div><div class="stat-sub"><span class="stat-up">↓ 0.4m</span> vs last week</div></div>
-      <div class="stat-card"><div class="stat-label">CSAT</div><div class="stat-val">${store.kpi.csat}<span style="font-size:13px;color:var(--text3);">%</span></div><div class="stat-sub"><span class="stat-up">↑ 2%</span> vs last month</div></div>
-    </div>
-    <div class="two-col">
-      <div class="panel"><div class="panel-head"><span class="panel-title">Channel performance</span></div><div class="chart-wrap"><canvas id="channelChart"></canvas></div></div>
-      <div class="panel"><div class="panel-head"><span class="panel-title">Top agents</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Score</th><th>Tickets</th></tr></thead><tbody><tr><td>Prince</td><td><span class="pill pill-green">96%</span></td><td>52</td></tr><tr><td>Kudzanayi</td><td><span class="pill pill-amber">89%</span></td><td>38</td></tr></tbody></table></div></div>
-    </div>
-    <div class="panel"><div class="panel-head"><span class="panel-title">Recent messages</span><button class="btn" id="simBtn">+ Simulate</button></div><div>${msgFeed()}</div></div>`,
-
-  'response-first':()=>`
-    <div class="stats-row"><div class="stat-card"><div class="stat-label">Team avg first response</div><div class="stat-val">3.8<span style="font-size:13px;color:var(--text3);">m</span></div></div><div class="stat-card"><div class="stat-label">Within SLA</div><div class="stat-val stat-up">78%</div></div><div class="stat-card"><div class="stat-label">Best this week</div><div class="stat-val">1.2<span style="font-size:13px;color:var(--text3);">m</span></div><div class="stat-sub">Prince · Mon</div></div><div class="stat-card"><div class="stat-label">Worst this week</div><div class="stat-val stat-down">12.3<span style="font-size:13px;color:var(--text3);">m</span></div><div class="stat-sub">Kudzanayi · Wed</div></div></div>
-    <div class="panel"><div class="panel-head"><span class="panel-title">First response by agent — this week</span></div><div class="chart-wrap"><canvas id="frtChart"></canvas></div></div>
-    <div class="panel"><div class="panel-head"><span class="panel-title">Agent breakdown</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Avg (min)</th><th>Best</th><th>Worst</th><th>SLA hit rate</th></tr></thead><tbody><tr><td>Prince</td><td>3.2</td><td>1.2</td><td>8.5</td><td><span class="pill pill-green">91%</span></td></tr><tr><td>Kudzanayi</td><td>4.8</td><td>2.0</td><td>12.3</td><td><span class="pill pill-amber">74%</span></td></tr></tbody></table></div></div>`,
-
-  'response-avg':()=>`
-    <div class="two-col"><div class="panel"><div class="panel-head"><span class="panel-title">Weekly avg trend</span></div><div class="chart-wrap"><canvas id="avgChart"></canvas></div></div><div class="panel"><div class="panel-head"><span class="panel-title">By channel</span></div><div class="tbl-wrap"><table><thead><tr><th>Channel</th><th>Avg (min)</th><th>SLA</th></tr></thead><tbody><tr><td>WhatsApp</td><td>3.9</td><td>10 min</td></tr><tr><td>Hostaway</td><td>4.2</td><td>5 min</td></tr></tbody></table></div></div></div>
-    <div class="panel"><div class="panel-head"><span class="panel-title">Agent comparison</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>This week</th><th>Last week</th><th>Change</th></tr></thead><tbody><tr><td>Prince</td><td>3.8m</td><td>4.1m</td><td><span class="stat-up">↓ 0.3m</span></td></tr><tr><td>Kudzanayi</td><td>5.2m</td><td>5.9m</td><td><span class="stat-up">↓ 0.7m</span></td></tr></tbody></table></div></div>`,
-
-  'response-delay':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Delays over 10 min</div><div class="stat-val">7</div></div><div class="stat-card"><div class="stat-label">Longest delay</div><div class="stat-val stat-down">12.3<span style="font-size:13px;color:var(--text3);">m</span></div></div></div><div class="panel"><div class="panel-head"><span class="panel-title">Delay incidents</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Count</th><th>Avg delay</th></tr></thead><tbody><tr><td>Prince</td><td>2</td><td>9.1m</td></tr><tr><td>Kudzanayi</td><td>5</td><td>11.4m</td></tr></tbody></table></div></div>`,
-
-  'response-missed':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Missed messages</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Missed this week</th></tr></thead><tbody><tr><td>Prince</td><td>1</td></tr><tr><td>Kudzanayi</td><td>3</td></tr></tbody></table></div></div>`,
-
-  'root-cause':()=>`
-    <div class="panel">
-      <div class="panel-head"><span class="panel-title">SLA breaches — root cause</span></div>
-      <div class="tbl-wrap">
-        <table class="tbl-sticky" style="min-width:820px;">
-          <thead><tr><th>Guest name</th><th>Channel</th><th>First message</th><th>Time</th><th>Agent</th><th>Response</th><th>SLA target</th><th>Root cause</th></tr></thead>
-          <tbody>${store.rootCause.map(b=>`<tr><td>${b.guest}</td><td>${b.channel}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">"${b.msg}"</td><td>${fmt(b.ts)}</td><td>${b.agent}</td><td>${b.rt!=null?b.rt+'m':'—'}</td><td>${CFG.sla[b.channel]||CFG.sla.default}m</td><td><span class="pill pill-red">${b.reason}</span></td></tr>`).join('')}</tbody>
-        </table>
-      </div>
-      <div class="panel-pad" style="border-top:1px solid var(--border);padding:8px 16px;"><span class="text-muted">Hostaway SLA = 5 min · WhatsApp SLA = 10 min · Scroll right for all columns →</span></div>
-    </div>
-    <div class="panel"><div class="panel-head"><span class="panel-title">Delay trend by agent</span></div><div class="chart-wrap"><canvas id="rootChart"></canvas></div></div>`,
-
-  'sat-reviews':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Prince rating</div><div class="stat-val">4.9<span style="font-size:13px;color:var(--text3);">★</span></div><div class="stat-sub">42 reviews</div></div><div class="stat-card"><div class="stat-label">Kudzanayi rating</div><div class="stat-val">4.6<span style="font-size:13px;color:var(--text3);">★</span></div><div class="stat-sub">31 reviews</div></div></div><div class="panel"><div class="panel-head"><span class="panel-title">Rating comparison</span></div><div class="chart-wrap"><canvas id="reviewChart"></canvas></div></div>`,
-
-  'sat-complaints':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Total complaints</div><div class="stat-val">5</div><div class="stat-sub">2.1% of bookings</div></div><div class="stat-card"><div class="stat-label">Prince</div><div class="stat-val">1</div></div><div class="stat-card"><div class="stat-label">Kudzanayi</div><div class="stat-val">4</div></div></div>`,
-  'sat-nps':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">NPS score</div><div class="stat-val">72</div><div class="stat-sub"><span class="stat-up">↑ 8</span> vs last month</div></div><div class="stat-card"><div class="stat-label">CSAT</div><div class="stat-val">94<span style="font-size:13px;color:var(--text3);">%</span></div></div></div>`,
-  'sat-repeat':()=>`<div class="stat-card" style="max-width:200px;"><div class="stat-label">Repeat booking rate</div><div class="stat-val">34<span style="font-size:13px;color:var(--text3);">%</span></div><div class="stat-sub">of guests return</div></div>`,
-  'sat-resolution':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Resolution within 24h</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Rate</th></tr></thead><tbody><tr><td>Prince</td><td><span class="pill pill-green">94%</span></td></tr><tr><td>Kudzanayi</td><td><span class="pill pill-amber">87%</span></td></tr></tbody></table></div></div>`,
-  'sat-reopened':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Reopened cases</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Reopened</th><th>Rate</th></tr></thead><tbody><tr><td>Prince</td><td>1</td><td>1.9%</td></tr><tr><td>Kudzanayi</td><td>2</td><td>5.3%</td></tr></tbody></table></div></div>`,
-  'ops-closed':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Tickets closed this week</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Closed</th></tr></thead><tbody><tr><td>Prince</td><td>28</td></tr><tr><td>Kudzanayi</td><td>19</td></tr></tbody></table></div></div>`,
-  'ops-active':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Open tickets</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Open</th></tr></thead><tbody><tr><td>Prince</td><td>3</td></tr><tr><td>Kudzanayi</td><td>5</td></tr></tbody></table></div></div>`,
-  'ops-escalations':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Escalations this month</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Count</th></tr></thead><tbody><tr><td>Prince</td><td>1</td></tr><tr><td>Kudzanayi</td><td>3</td></tr></tbody></table></div></div>`,
-  'ops-maintenance':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Emergency resolution</div><div class="stat-val">2.1<span style="font-size:13px;color:var(--text3);">h</span></div></div><div class="stat-card"><div class="stat-label">Routine resolution</div><div class="stat-val">8.5<span style="font-size:13px;color:var(--text3);">h</span></div></div></div>`,
-  'ops-inspections':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Avg cleanliness</div><div class="stat-val">4.8<span style="font-size:13px;color:var(--text3);">/5</span></div></div><div class="stat-card"><div class="stat-label">Prince units</div><div class="stat-val">4.9</div></div><div class="stat-card"><div class="stat-label">Kudzanayi units</div><div class="stat-val">4.7</div></div></div>`,
-  'ops-deepclean':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Upcoming deep cleans</span></div><div class="tbl-wrap"><table><thead><tr><th>Property</th><th>Date</th></tr></thead><tbody><tr><td>Villa Azul</td><td>Apr 12</td></tr><tr><td>Ocean Suite</td><td>Apr 15</td></tr></tbody></table></div></div>`,
-
-  'ai-messages':()=>`
-    <div class="panel"><div class="panel-head"><span class="panel-title">Live message feed</span><button class="btn" id="simBtn2">+ Simulate</button></div><div>${msgFeed()}</div></div>
-    <div class="two-col">
-      <div class="panel"><div class="panel-head"><span class="panel-title">Urgency breakdown</span></div><div class="chart-wrap"><canvas id="urgChart"></canvas></div></div>
-      <div class="panel"><div class="panel-head"><span class="panel-title">SLA compliance</span></div><div class="panel-pad"><div style="font-size:20px;color:var(--text);font-weight:300;margin-bottom:8px;">78%</div><div class="progress-track"><div class="progress-fill" style="width:78%;background:var(--green);"></div></div><div class="text-muted" style="margin-top:6px;">within target response time</div></div></div>
-    </div>`,
-
-  'rev-upsell':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Conversion rate</div><div class="stat-val">28<span style="font-size:13px;color:var(--text3);">%</span></div></div><div class="stat-card"><div class="stat-label">Prince</div><div class="stat-val">32<span style="font-size:13px;color:var(--text3);">%</span></div></div><div class="stat-card"><div class="stat-label">Kudzanayi</div><div class="stat-val">22<span style="font-size:13px;color:var(--text3);">%</span></div></div></div>`,
-  'rev-addon':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Total add-ons</div><div class="stat-val">$4,280</div></div><div class="stat-card"><div class="stat-label">Prince</div><div class="stat-val">$2,510</div></div><div class="stat-card"><div class="stat-label">Kudzanayi</div><div class="stat-val">$1,770</div></div></div>`,
-  'rev-retention':()=>`<div class="stat-card" style="max-width:200px;"><div class="stat-label">Repeat booking rate</div><div class="stat-val">34<span style="font-size:13px;color:var(--text3);">%</span></div></div>`,
-  'rev-leakage':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Total refunds</div><div class="stat-val stat-down">$1,240</div></div><div class="stat-card"><div class="stat-label">Service recovery</div><div class="stat-val">$680</div></div><div class="stat-card"><div class="stat-label">Prince</div><div class="stat-val">$320</div></div><div class="stat-card"><div class="stat-label">Kudzanayi</div><div class="stat-val stat-down">$1,600</div></div></div>`,
-  'rev-recovery':()=>`<div class="stat-card" style="max-width:260px;"><div class="stat-label">Emergency maintenance cost</div><div class="stat-val">$1,820</div><div class="stat-sub">4 incidents this month</div></div>`,
-  'chan-airbnb':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Bookings</div><div class="stat-val">64</div></div><div class="stat-card"><div class="stat-label">Avg response</div><div class="stat-val">2.8<span style="font-size:13px;color:var(--text3);">m</span></div></div><div class="stat-card"><div class="stat-label">CSAT</div><div class="stat-val">96<span style="font-size:13px;color:var(--text3);">%</span></div></div></div>`,
-  'chan-booking':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Bookings</div><div class="stat-val">42</div></div><div class="stat-card"><div class="stat-label">Avg response</div><div class="stat-val">3.5<span style="font-size:13px;color:var(--text3);">m</span></div></div><div class="stat-card"><div class="stat-label">CSAT</div><div class="stat-val">91<span style="font-size:13px;color:var(--text3);">%</span></div></div></div>`,
-  'chan-direct':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Bookings</div><div class="stat-val">28</div></div><div class="stat-card"><div class="stat-label">Avg response</div><div class="stat-val">1.9<span style="font-size:13px;color:var(--text3);">m</span></div></div><div class="stat-card"><div class="stat-label">CSAT</div><div class="stat-val">98<span style="font-size:13px;color:var(--text3);">%</span></div></div></div>`,
-  'pro-prearrival':()=>`<div class="stats-row"><div class="stat-card"><div class="stat-label">Instructions sent</div><div class="stat-val">92<span style="font-size:13px;color:var(--text3);">%</span></div></div><div class="stat-card"><div class="stat-label">Prince</div><div class="stat-val">94<span style="font-size:13px;color:var(--text3);">%</span></div></div><div class="stat-card"><div class="stat-label">Kudzanayi</div><div class="stat-val">89<span style="font-size:13px;color:var(--text3);">%</span></div></div></div>`,
-  'pro-midstay':()=>`<div class="stat-card" style="max-width:260px;"><div class="stat-label">Mid-stay check-in rate</div><div class="stat-val">68<span style="font-size:13px;color:var(--text3);">%</span></div><div class="stat-sub">of guests received message</div></div>`,
-  'agent-scorecard':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Performance summary</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Speed</th><th>Quality</th><th>Tickets</th><th>SLA rate</th></tr></thead><tbody><tr><td>Prince</td><td><span class="pill pill-green">94%</span></td><td>4.9 ★</td><td>52</td><td>91%</td></tr><tr><td>Kudzanayi</td><td><span class="pill pill-amber">82%</span></td><td>4.6 ★</td><td>38</td><td>74%</td></tr></tbody></table></div></div>`,
-  'agent-availability':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Current status</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Status</th><th>Since</th></tr></thead><tbody><tr><td>Prince</td><td><span class="pill pill-green"><span class="dot dot-green"></span>Online</span></td><td>8:00 AM</td></tr><tr><td>Kudzanayi</td><td><span class="pill pill-green"><span class="dot dot-green"></span>Online</span></td><td>9:00 AM</td></tr></tbody></table></div></div>`,
-  'agent-efficiency':()=>`<div class="panel"><div class="panel-head"><span class="panel-title">Tickets per hour</span></div><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Tickets/hr</th></tr></thead><tbody><tr><td>Prince</td><td>4.2</td></tr><tr><td>Kudzanayi</td><td>3.1</td></tr></tbody></table></div></div>`,
-
-  integrations:()=>`
-    <div class="panel">
-      <div class="panel-head"><span class="panel-title">Real integrations — API status</span></div>
-      <div class="panel-pad" style="display:flex;flex-direction:column;gap:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div><div style="font-size:11px;color:var(--text);">WhatsApp Cloud API</div><div class="text-muted">Meta Business Suite · webhook</div></div>
-          <div id="waStatus"><span class="pill pill-amber">${CFG.whatsapp.accessToken?'Checking…':'No credentials'}</span></div>
-        </div>
-        <div class="divider" style="margin:0;"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div><div style="font-size:11px;color:var(--text);">Supabase</div><div class="text-muted">ttxiutmxtbzcelhajdlc · Database + realtime</div></div>
-          <div id="sbConnPill2"><span class="pill pill-green"><span class="dot dot-green"></span>Connected</span></div>
-        </div>
-        <div class="divider" style="margin:0;"></div>
-        <div class="text-muted">To connect: open the file and fill in the <code class="inline">CFG</code> object at top of the &lt;script&gt;.</div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><span class="panel-title">Manual data import — Upload Hub</span></div>
-      <div class="panel-pad">
-        <div class="two-col" style="margin-bottom:0;">
-          <div>
-            <div style="font-size:11px;color:var(--text);margin-bottom:6px;">WhatsApp export (.txt)</div>
-            <div class="text-muted" style="margin-bottom:8px;">Format: [DD/MM/YYYY, HH:MM:SS] Sender: Message</div>
-            <label class="upload-zone" id="waZone"><input type="file" id="waFile" accept=".txt"><div class="upload-icon">💬</div><div class="upload-label">Drop .txt or click to browse</div><div class="upload-sub">WhatsApp chat export</div></label>
-            <div id="waResult"></div>
-            <button class="btn btn-primary" style="margin-top:8px;width:100%;justify-content:center;" id="waParseBtn">Parse & import</button>
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--text);margin-bottom:6px;">Hostaway export (.csv)</div>
-            <div class="text-muted" style="margin-bottom:8px;">Cols: thread_id, timestamp, direction, message</div>
-            <label class="upload-zone" id="haZone"><input type="file" id="haFile" accept=".csv"><div class="upload-icon">🏨</div><div class="upload-label">Drop .csv or click to browse</div><div class="upload-sub">Hostaway message export</div></label>
-            <div id="haResult"></div>
-            <button class="btn btn-primary" style="margin-top:8px;width:100%;justify-content:center;" id="haParseBtn">Parse & import</button>
+overview: () => {
+  const hasData = store.messages.length > 0;
+  const agents = store.agents;
+  return `
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Active conversations</div><div class="stat-val">${store.kpi.active}</div><div class="stat-sub">awaiting response</div></div>
+    <div class="stat-card"><div class="stat-label">SLA breaches</div><div class="stat-val ${store.kpi.breaches>0?'down':'up'}">${store.kpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
+    <div class="stat-card"><div class="stat-label">Avg response time</div><div class="stat-val">${store.kpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${store.kpi.avg?'m':''}</span></div><div class="stat-sub">across all agents</div></div>
+    <div class="stat-card"><div class="stat-label">Agents registered</div><div class="stat-val">${agents.length}</div><div class="stat-sub"><a href="#" onclick="render('agents');return false;" style="color:var(--accent);text-decoration:none">manage →</a></div></div>
+  </div>
+  ${!hasData ? `<div class="panel">${emptyState('📂','No data imported yet','Register your agents, then import WhatsApp or Hostaway chat files to see metrics here.','<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'agents\')">Register agents</button><button class="btn" onclick="render(\'import\')">Import data</button></div>')}</div>` : `
+  ${agents.length ? `
+  <div class="panel">
+    <div class="ph"><span class="pt">Agent performance at a glance</span></div>
+    <div class="tw"><table class="sticky-col">
+      <thead><tr><th>Agent</th><th>Conversations</th><th>Active</th><th>Avg response</th><th>Breaches</th><th>SLA hit rate</th></tr></thead>
+      <tbody>${agents.map(a=>{const s=agentStats(a.id);return`<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${s.total}</td><td>${s.active}</td><td>${s.avgRt?s.avgRt+'m':'—'}</td><td>${s.breaches>0?`<span class="down">${s.breaches}</span>`:0}</td><td>${s.slaHit?s.slaHit+'%':'—'}</td></tr>`;}).join('')}</tbody>
+    </table></div>
+  </div>` : ''}
+  <div class="panel">
+    <div class="ph"><span class="pt">Recent conversations</span></div>
+    <div>${store.messages.slice(0,15).map(m=>`
+      <div class="msg-item${m.breach?' breach-row':''}">
+        <div class="msg-dot" style="background:${m.urgency==='high'?'var(--red)':'var(--green)'};margin-top:5px"></div>
+        <div class="msg-body">
+          <div class="msg-r1"><span class="msg-guest">${m.guest}</span><span class="msg-time">${fmtT(m.ts)} · ${m.channel}</span></div>
+          <div class="msg-text">"${m.message||'(no message)'}"</div>
+          <div class="msg-meta">
+            ${urgencyPill(m.urgency)}
+            <span class="pill p-gray">${agentName(m.agentId)}</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--text3)">${m.responded?'✓ '+m.rt+'m':m.breach?'<span style="color:var(--red)">Missed SLA</span>':'Pending'}</span>
           </div>
         </div>
-        ${store.importLog.length?`<div class="divider"></div><div class="text-muted" style="margin-bottom:4px;">Import log</div>${store.importLog.slice(-5).reverse().map(l=>`<div class="text-muted" style="margin-bottom:2px;">· ${l}</div>`).join('')}`:''}
-      </div>
-    </div>`,
+      </div>`).join('')}
+    </div>
+  </div>`}`;
+},
 
-  admin:()=>`
-    <div class="panel"><div class="panel-head"><span class="panel-title">System</span></div>
-      <div class="panel-pad" style="display:flex;flex-direction:column;gap:8px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px;"><span class="status-dot online"></span>WhatsApp Cloud API — webhook active</div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:11px;"><span class="status-dot ${CFG.supabase.url?'online':'offline'}"></span>Supabase — ${CFG.supabase.url?'connected':'ready to configure'}</div>
+agents: () => {
+  const noAgents = !store.agents.length;
+  return `
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Registered agents (${store.agents.length})</span>
+      <button class="btn btn-primary" id="openAddAgent">+ Add agent</button>
+    </div>
+    ${noAgents ? emptyState('👥','No agents yet','Add your team members below. Their WhatsApp display names are used to identify who is the agent in your chat exports.') : `
+    <div class="agent-grid">
+      ${store.agents.map(a => {
+        const s = agentStats(a.id);
+        return `<div class="agent-card">
+          <div class="agent-card-top">
+            <div class="agent-ava" style="background:${a.color}">${a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+            <div><div class="agent-name">${a.name}</div><div class="agent-role">${a.role}</div></div>
+          </div>
+          <div class="agent-stats">
+            <div class="agent-stat"><div class="agent-stat-val">${s.total}</div><div class="agent-stat-lbl">Conversations</div></div>
+            <div class="agent-stat"><div class="agent-stat-val">${s.avgRt||'—'}<span style="font-size:10px;color:var(--text3)">${s.avgRt?'m':''}</span></div><div class="agent-stat-lbl">Avg response</div></div>
+            <div class="agent-stat"><div class="agent-stat-val ${s.breaches>0?'down':''}">${s.breaches}</div><div class="agent-stat-lbl">Breaches</div></div>
+            <div class="agent-stat"><div class="agent-stat-val">${s.slaHit||'—'}<span style="font-size:10px;color:var(--text3)">${s.slaHit?'%':''}</span></div><div class="agent-stat-lbl">SLA rate</div></div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">WA name: ${a.waName||'—'}</div>
+          <div class="btn-group">
+            <button class="btn btn-sm" onclick="editAgent('${a.id}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteAgent('${a.id}')">Remove</button>
+            <button class="btn btn-sm btn-primary" onclick="render('import')">Import data</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`}
+  </div>`;
+},
+
+import: () => {
+  const noAgents = !store.agents.length;
+  return `
+  <div class="panel">
+    <div class="ph"><span class="pt">Import data — WhatsApp chat export</span></div>
+    <div class="pp">
+      ${noAgents ? `<div class="import-result info">→ You need to register agents first before importing. <button class="btn btn-sm btn-primary" onclick="render('agents')">Add agents</button></div>` : `
+      <div class="steps">
+        <div class="step active"><div class="step-num">1</div>Select agent</div>
+        <div class="step"><div class="step-num">2</div>Upload file</div>
+        <div class="step"><div class="step-num">3</div>Confirm import</div>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Which agent does this WhatsApp chat belong to?</label>
+        ${agentSelect('wa_agent')}
+      </div>
+      <div class="form-group">
+        <label class="field-label">WhatsApp .txt export file</label>
+        <label class="upload-zone" id="waZone">
+          <input type="file" id="waFile" accept=".txt">
+          <div class="upload-icon">💬</div>
+          <div class="upload-lbl">Drop .txt file or click to browse</div>
+          <div class="upload-sub">From WhatsApp → Chat → More → Export chat (without media)</div>
+        </label>
+      </div>
+      <div id="waResult"></div>
+      <div id="waConfirm" style="display:none"></div>
+      <button class="btn btn-primary" id="waParseBtn" style="width:100%;justify-content:center;margin-top:4px;">Parse file</button>`}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="pt">Import data — Hostaway message export</span></div>
+    <div class="pp">
+      ${noAgents ? `<div class="import-result info">→ Register agents first.</div>` : `
+      <div class="steps">
+        <div class="step active"><div class="step-num">1</div>Select agent</div>
+        <div class="step"><div class="step-num">2</div>Upload CSV</div>
+        <div class="step"><div class="step-num">3</div>Confirm import</div>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Which agent does this Hostaway export belong to?</label>
+        ${agentSelect('ha_agent')}
+      </div>
+      <div class="form-group">
+        <label class="field-label">Hostaway .csv export</label>
+        <label class="upload-zone" id="haZone">
+          <input type="file" id="haFile" accept=".csv">
+          <div class="upload-icon">🏨</div>
+          <div class="upload-lbl">Drop .csv file or click to browse</div>
+          <div class="upload-sub">Columns needed: thread_id, timestamp, direction, message</div>
+        </label>
+      </div>
+      <div id="haResult"></div>
+      <div id="haConfirm" style="display:none"></div>
+      <button class="btn btn-primary" id="haParseBtn" style="width:100%;justify-content:center;margin-top:4px;">Parse file</button>`}
+    </div>
+  </div>
+
+  ${store.importLog.length ? `
+  <div class="panel">
+    <div class="ph"><span class="pt">Import history</span></div>
+    <div class="pp">${store.importLog.slice(0,10).map(l=>`<div class="text-muted" style="margin-bottom:4px;">· ${l}</div>`).join('')}</div>
+  </div>` : ''}`;
+},
+
+'root-cause': () => {
+  const rc = store.rootCause;
+  return !rc.length
+    ? `<div class="panel">${emptyState('✅','No SLA breaches recorded','Import conversation data to automatically detect breaches.')}</div>`
+    : `<div class="panel">
+    <div class="ph"><span class="pt">SLA breaches — root cause (${rc.length})</span></div>
+    <div class="tw">
+      <table class="sticky-col" style="min-width:860px;">
+        <thead><tr><th>Guest name</th><th>Agent</th><th>Channel</th><th>First message</th><th>Date/time</th><th>Response time</th><th>SLA target</th><th>Root cause</th></tr></thead>
+        <tbody>${rc.map(r=>`<tr>
+          <td>${r.guest}</td>
+          <td><span class="pill p-blue">${r.agentName||agentName(r.agentId)}</span></td>
+          <td>${r.channel}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">"${r.msg||''}"</td>
+          <td>${fmt(r.ts)}</td>
+          <td class="down">${r.rt!=null?r.rt+'m':'No response'}</td>
+          <td>${SLA[r.channel]||SLA.default}m</td>
+          <td><span class="pill p-red">${r.reason}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:8px 16px;">
+      <span class="text-muted">Hostaway SLA = 5 min · WhatsApp SLA = 10 min · Scroll right for all columns →</span>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Breach distribution by agent</span></div>
+    <div class="chart-wrap"><canvas id="rcChart"></canvas></div>
+  </div>`;
+},
+
+'r-first': () => agentResponseTable('First response time', 'first'),
+'r-avg':   () => agentResponseTable('Average response time', 'avg'),
+'r-delays': () => agentResponseTable('Delays over SLA threshold', 'delays'),
+'r-missed': () => `
+  <div class="panel">
+    <div class="ph"><span class="pt">Missed / no-response conversations</span></div>
+    ${!store.messages.length ? emptyState('📭','No data','Import conversations to see missed messages.') : `
+    <div class="tw"><table><thead><tr><th>Guest</th><th>Agent</th><th>Channel</th><th>Date/time</th><th>Last message</th></tr></thead>
+    <tbody>${store.messages.filter(m=>!m.responded).map(m=>`<tr>
+      <td>${m.guest}</td><td><span class="pill p-blue">${agentName(m.agentId)}</span></td>
+      <td>${m.channel}</td><td>${fmt(m.ts)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">"${m.message||''}"</td>
+    </tr>`).join('')}</tbody></table></div>`}
+  </div>`,
+
+// Satisfaction stubs — ready for manual data entry
+'sat-reviews':()=>manualPanel('Review scores','Add agent review scores from Airbnb/Booking.com','Review data entry coming — connect to channel APIs in Integrations.'),
+'sat-complaints':()=>manualPanel('Complaints','Track guest complaints per agent','Import conversation data then log complaint outcomes manually.'),
+'sat-nps':()=>manualPanel('NPS & CSAT','Guest sentiment scores','Connect NPS survey tool or enter scores manually.'),
+'sat-repeat':()=>manualPanel('Repeat guests','Guest loyalty metrics','Requires Hostaway booking history import.'),
+'sat-resolution':()=>resolutionPanel(),
+
+// Operations
+'ops-closed':()=>closedPanel(),
+'ops-active':()=>`<div class="panel"><div class="ph"><span class="pt">Active conversations</span></div>${store.messages.filter(m=>!m.responded).length?`<div class="tw"><table><thead><tr><th>Guest</th><th>Agent</th><th>Channel</th><th>Waiting since</th></tr></thead><tbody>${store.messages.filter(m=>!m.responded).map(m=>`<tr><td>${m.guest}</td><td><span class="pill p-blue">${agentName(m.agentId)}</span></td><td>${m.channel}</td><td>${fmt(m.ts)}</td></tr>`).join('')}</tbody></table></div>`:emptyState('✅','No active conversations','All conversations have responses.')}  </div>`,
+'ops-escalations':()=>manualPanel('Escalations','Track escalated cases','Log escalations manually from the Agent Performance section.'),
+'ops-maintenance':()=>manualPanel('Maintenance delays','Property maintenance response times','Log maintenance request outcomes manually.'),
+'ops-inspections':()=>manualPanel('Inspections & audits','Room grading results','Log inspection scores per property.'),
+'ops-deepclean':()=>manualPanel('Deep cleaning schedule','Upcoming deep cleans','Connect property management system or log manually.'),
+
+// Revenue
+'rev-upsell':()=>manualPanel('Upsell conversions','Track upsell offers made and accepted per agent','Log upsell outcomes from agent conversations.'),
+'rev-addon':()=>manualPanel('Add-on revenue','Revenue from extras per agent','Log from booking system.'),
+'rev-leakage':()=>manualPanel('Revenue leakage','Refunds and compensation issued','Log refund amounts and reasons per agent.'),
+'rev-recovery':()=>manualPanel('Recovery cost','Emergency maintenance spend','Log maintenance invoices per property.'),
+
+// Channel intel
+'chan-airbnb':()=>manualPanel('Airbnb performance','Bookings, response rate, CSAT from Airbnb','Connect Airbnb API in Integrations for live data.'),
+'chan-booking':()=>manualPanel('Booking.com performance','Bookings, score, response rate','Connect Booking.com API in Integrations.'),
+'chan-direct':()=>manualPanel('Direct bookings','Direct booking metrics','Log direct bookings manually or via Hostaway export.'),
+
+// Proactive
+'pro-prearrival':()=>manualPanel('Pre-arrival outreach','% of guests who received check-in instructions before arrival','Log pre-arrival sends per agent from WhatsApp import data.'),
+'pro-midstay':()=>manualPanel('Mid-stay check-ins','% of guests contacted mid-stay','Log mid-stay messages from WhatsApp chat imports.'),
+
+integrations: () => `
+  <div class="panel">
+    <div class="ph"><span class="pt">Live API connections</span></div>
+    <div class="pp" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:11px;color:var(--text)">Supabase</div><div class="text-muted">ttxiutmxtbzcelhajdlc · all tables connected</div></div>
+        <span class="pill p-green"><span class="dot d-green"></span>Connected</span>
+      </div>
+      <div class="divider" style="margin:0"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:11px;color:var(--text)">WhatsApp Cloud API</div><div class="text-muted">Add access token in config to enable webhook</div></div>
+        <span class="pill p-amber">Credentials needed</span>
+      </div>
+      <div class="divider" style="margin:0"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:11px;color:var(--text)">Hostaway API</div><div class="text-muted">Add API key in config to enable live sync</div></div>
+        <span class="pill p-amber">Credentials needed</span>
       </div>
     </div>
-    <div class="panel"><div class="panel-head"><span class="panel-title">Users</span></div>
-      <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th></tr></thead><tbody>
-        <tr><td>Prince Chakusa</td><td>prince</td><td><span class="pill pill-blue">Master Admin</span></td></tr>
-        ${store.users.map(u=>`<tr><td>${u.name}</td><td>${u.username}</td><td><span class="pill pill-gray">${u.role}</span></td></tr>`).join('')}
-      </tbody></table></div>
-      <div class="panel-pad" style="border-top:1px solid var(--border);padding:8px 16px;"><button class="btn" onclick="openUserMgmt()">Manage users</button></div>
-    </div>
-    <div class="panel"><div class="panel-head"><span class="panel-title">Webhook endpoints</span></div>
-      <div class="panel-pad" style="display:flex;flex-direction:column;gap:8px;">
-        <div style="font-size:11px;">WhatsApp: <code class="inline">https://your-backend.com/webhook/whatsapp</code></div>
-        <div style="font-size:11px;">Supabase: <code class="inline">https://your-project.supabase.co/rest/v1/messages</code></div>
-        <div class="text-muted" style="margin-top:4px;">SLA config: Hostaway = 5 min · WhatsApp = 10 min</div>
-      </div>
-    </div>`,
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Import data</span></div>
+    <div class="pp"><p style="font-size:11px;color:var(--text2);margin-bottom:12px;">To import WhatsApp or Hostaway chat data, go to the <b style="font-weight:500">Import data</b> section in the sidebar. You must register your agents first.</p>
+    <button class="btn btn-primary" onclick="render('import')">Go to Import Hub</button></div>
+  </div>`,
 
-  help:()=>`
-    <div class="panel"><div class="panel-head"><span class="panel-title">About GuestCare Command</span></div>
-      <div class="panel-pad" style="display:flex;flex-direction:column;gap:10px;">
-        <p style="font-size:11px;color:var(--text2);">Tracks guest care performance across Hostaway, WhatsApp, and internal operations.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div style="font-size:11px;"><span class="text-muted">WhatsApp SLA</span><br>10 minutes</div>
-          <div style="font-size:11px;"><span class="text-muted">Hostaway SLA</span><br>5 minutes</div>
-          <div style="font-size:11px;"><span class="text-muted">Admin password</span><br><code class="inline">guestcare</code></div>
-          <div style="font-size:11px;"><span class="text-muted">Upload Hub</span><br>Integrations → Manual import</div>
-        </div>
-        <div class="divider"></div>
-        <div class="text-muted">Data persists via localStorage · Swap to Supabase/Appwrite by replacing loadStore / saveStore</div>
+admin: () => `
+  <div class="panel"><div class="ph"><span class="pt">Dashboard users (login accounts)</span></div>
+    <div class="tw"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td>Prince Chakusa</td><td>prince</td><td><span class="pill p-blue">Master Admin</span></td></tr>
+      ${store.users.map(u=>`<tr><td>${u.name}</td><td>${u.username}</td><td><span class="pill p-gray">${u.role}</span></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:8px 16px;"><button class="btn" onclick="openUserMgmt()">Manage users</button></div>
+  </div>
+  <div class="panel"><div class="ph"><span class="pt">Danger zone</span></div>
+    <div class="pp"><button class="btn btn-danger" id="clearDataBtn">Clear all imported data</button> <span class="text-muted" style="margin-left:8px;">Removes all messages and root cause records. Agents stay.</span></div>
+  </div>`,
+
+help: () => `
+  <div class="panel"><div class="ph"><span class="pt">How this dashboard works</span></div>
+    <div class="pp" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:11px;color:var(--text2);line-height:1.7">
+        <b style="font-weight:500;color:var(--text)">Step 1 — Register your agents</b><br>
+        Go to <b style="font-weight:500">Agents</b> and add each member of your team. Enter their exact WhatsApp display name — this is how the parser knows which messages are theirs in a chat export.<br><br>
+        <b style="font-weight:500;color:var(--text)">Step 2 — Export your chats</b><br>
+        WhatsApp: open the conversation → tap ⋮ → More → Export chat → Without media → save the .txt file.<br>
+        Hostaway: export message history as CSV with columns: thread_id, timestamp, direction, message.<br><br>
+        <b style="font-weight:500;color:var(--text)">Step 3 — Import data</b><br>
+        Go to <b style="font-weight:500">Import data</b>, select which agent the file belongs to, upload the file and click Parse. The dashboard will automatically calculate response times, SLA breaches, and update all sections.<br><br>
+        <b style="font-weight:500;color:var(--text)">Step 4 — Analyse</b><br>
+        Check Overview for team KPIs, Agents for per-agent stats, Root Cause for breach details, and Response Times for trends.
       </div>
-    </div>`
+      <div class="divider"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="font-size:11px"><span class="text-muted">WhatsApp SLA</span><br>10 minutes</div>
+        <div style="font-size:11px"><span class="text-muted">Hostaway SLA</span><br>5 minutes</div>
+        <div style="font-size:11px"><span class="text-muted">Admin password</span><br><code class="ic">guestcare</code></div>
+        <div style="font-size:11px"><span class="text-muted">Data storage</span><br>Supabase + localStorage fallback</div>
+      </div>
+    </div>
+  </div>`
 };
 
-/* ── CHART INIT ── */
-function initCharts(v){
-  const days=['Mon','Tue','Wed','Thu','Fri'];
-  if(v==='overview') mkChart('channelChart',{type:'bar',data:{labels:['Airbnb','Booking','Direct'],datasets:[{label:'CSAT',data:[96,91,98],backgroundColor:'#2563eb22',borderColor:'#2563eb',borderWidth:1.5,borderRadius:2,barPercentage:0.5}]},options:{...CD,responsive:true}});
-  if(v==='response-first') mkChart('frtChart',{type:'line',data:{labels:days,datasets:[{label:'Prince',data:[2.8,3.1,3.5,2.9,3.2],borderColor:'#2563eb',backgroundColor:'#2563eb18',fill:true},{label:'Kudzanayi',data:[4.5,5.0,4.2,5.5,4.8],borderColor:'#9ca3af',backgroundColor:'#9ca3af10',fill:true}]},options:{...CD,responsive:true}});
-  if(v==='response-avg') mkChart('avgChart',{type:'line',data:{labels:days,datasets:[{label:'Prince',data:[4.1,3.9,3.7,3.8,3.8],borderColor:'#2563eb'},{label:'Kudzanayi',data:[5.9,5.6,5.4,5.2,5.2],borderColor:'#9ca3af'}]},options:{...CD,responsive:true}});
-  if(v==='root-cause') mkChart('rootChart',{type:'line',data:{labels:days,datasets:[{label:'Prince',data:[0,1,0,0,1],borderColor:'#2563eb'},{label:'Kudzanayi',data:[2,1,0,2,1],borderColor:'#9ca3af'}]},options:{...CD,responsive:true}});
-  if(v==='sat-reviews') mkChart('reviewChart',{type:'bar',data:{labels:['Prince','Kudzanayi'],datasets:[{data:[4.9,4.6],backgroundColor:['#2563eb22','#9ca3af22'],borderColor:['#2563eb','#9ca3af'],borderWidth:1.5,borderRadius:2,barPercentage:0.4}]},options:{...CD,responsive:true,scales:{...CD.scales,y:{...CD.scales.y,min:4,max:5}}}});
-  if(v==='ai-messages'){const h=store.messages.filter(m=>m.urgency==='high').length,md=store.messages.filter(m=>m.urgency==='medium').length,lo=store.messages.filter(m=>m.urgency==='low').length; mkChart('urgChart',{type:'doughnut',data:{labels:['High','Medium','Low'],datasets:[{data:[h,md,lo],backgroundColor:['#dc262622','#d9770622','#16a34a22'],borderColor:['#dc2626','#d97706','#16a34a'],borderWidth:1.5}]},options:{responsive:true,plugins:{legend:{display:true,labels:{font:{size:10,family:'DM Sans'},color:'#9ca3af',boxWidth:8}}}}});}
+/* ── helper sub-views ── */
+function agentResponseTable(title, mode){
+  if(!store.messages.length) return `<div class="panel">${emptyState('📭',title,'Import conversations to see response time data.')}</div>`;
+  const rows = store.agents.map(a=>{
+    const s=agentStats(a.id);
+    const m=store.messages.filter(x=>x.agentId===a.id&&x.responded&&x.rt!=null);
+    const delays=m.filter(x=>x.rt>SLA[x.channel]);
+    return`<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${s.avgRt?s.avgRt+'m':'—'}</td><td>${m.length?Math.min(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${m.length?Math.max(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${delays.length}</td><td>${s.slaHit?s.slaHit+'%':'—'}</td></tr>`;
+  });
+  return`<div class="panel"><div class="ph"><span class="pt">${title}</span></div>
+    <div class="tw"><table><thead><tr><th>Agent</th><th>Avg</th><th>Best</th><th>Worst</th><th>Over SLA</th><th>SLA rate</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+  </div><div class="panel"><div class="ph"><span class="pt">Trend chart</span></div><div class="chart-wrap"><canvas id="rtChart"></canvas></div></div>`;
+}
+function manualPanel(title, sub, note){
+  return`<div class="panel"><div class="ph"><span class="pt">${title}</span></div><div class="pp"><div style="font-size:11px;color:var(--text2);margin-bottom:8px;">${sub}</div><div class="text-muted">${note}</div></div></div>`;
+}
+function resolutionPanel(){
+  const a=store.agents;
+  if(!a.length||!store.messages.length) return manualPanel('Resolution quality','% resolved in first response','Import conversations to see resolution data.');
+  return`<div class="panel"><div class="ph"><span class="pt">Resolution quality</span></div><div class="tw"><table><thead><tr><th>Agent</th><th>Conversations</th><th>Responded</th><th>Avg response</th></tr></thead><tbody>${a.map(ag=>{const s=agentStats(ag.id);return`<tr><td><span class="pill" style="background:${ag.color}22;color:${ag.color}">${ag.name}</span></td><td>${s.total}</td><td>${s.total-s.active}</td><td>${s.avgRt?s.avgRt+'m':'—'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+}
+function closedPanel(){
+  const a=store.agents;
+  if(!a.length||!store.messages.length) return manualPanel('Tickets closed','Conversations with responses','Import conversations to see closure data.');
+  return`<div class="panel"><div class="ph"><span class="pt">Conversations responded to</span></div><div class="tw"><table><thead><tr><th>Agent</th><th>Total</th><th>Responded</th><th>Pending</th></tr></thead><tbody>${a.map(ag=>{const s=agentStats(ag.id);return`<tr><td><span class="pill" style="background:${ag.color}22;color:${ag.color}">${ag.name}</span></td><td>${s.total}</td><td>${s.total-s.active}</td><td>${s.active}</td></tr>`;}).join('')}</tbody></table></div></div>`;
 }
 
-/* ── NAVIGATION ── */
-const CP={'response-first':'response','response-avg':'response','response-delay':'response','response-missed':'response','root-cause':'response','sat-reviews':'satisfaction','sat-complaints':'satisfaction','sat-nps':'satisfaction','sat-repeat':'satisfaction','sat-resolution':'satisfaction','sat-reopened':'satisfaction','ops-closed':'operations','ops-active':'operations','ops-escalations':'operations','ops-maintenance':'operations','ops-inspections':'operations','ops-deepclean':'operations','ai-messages':'operations','rev-upsell':'revenue','rev-addon':'revenue','rev-retention':'revenue','rev-leakage':'revenue','rev-recovery':'revenue','chan-airbnb':'channel','chan-booking':'channel','chan-direct':'channel','pro-prearrival':'proactive','pro-midstay':'proactive','agent-scorecard':'agent','agent-availability':'agent','agent-efficiency':'agent'};
-const LBL={overview:'Overview','response-first':'First response','response-avg':'Avg response','response-delay':'Delays','response-missed':'Missed messages','root-cause':'Root cause analysis','sat-reviews':'Reviews','sat-complaints':'Complaints','sat-nps':'NPS / CSAT','sat-repeat':'Repeat guests','sat-resolution':'Resolution quality','sat-reopened':'Reopened cases','ops-closed':'Tickets closed','ops-active':'Active issues','ops-escalations':'Escalations','ops-maintenance':'Maintenance','ops-inspections':'Inspections','ops-deepclean':'Deep cleaning','ai-messages':'Message intelligence','rev-upsell':'Upsell','rev-addon':'Add-ons','rev-retention':'Retention','rev-leakage':'Revenue leakage','rev-recovery':'Recovery cost','chan-airbnb':'Airbnb','chan-booking':'Booking.com','chan-direct':'Direct bookings','pro-prearrival':'Pre-arrival','pro-midstay':'Mid-stay','agent-scorecard':'Agent scorecard','agent-availability':'Availability','agent-efficiency':'Efficiency',integrations:'Integrations',admin:'Admin',help:'Help'};
+/* ══════════════════════════════════════════
+   CHART INIT after render
+══════════════════════════════════════════ */
+function initCharts(v){
+  if(v==='root-cause'&&store.rootCause.length){
+    const agents=store.agents, counts=agents.map(a=>store.rootCause.filter(r=>r.agentId===a.id||r.agentName===a.name).length);
+    mkChart('rcChart',{type:'bar',data:{labels:agents.map(a=>a.name),datasets:[{label:'Breaches',data:counts,backgroundColor:agents.map(a=>a.color+'44'),borderColor:agents.map(a=>a.color),borderWidth:1.5,borderRadius:2,barPercentage:.5}]},options:{...CD,responsive:true}});
+  }
+  if((v==='r-first'||v==='r-avg'||v==='r-delays')&&store.agents.length){
+    const datasets=store.agents.map(a=>({label:a.name,data:[a,a,a,a,a].map(()=>agentStats(a.id).avgRt||0),borderColor:a.color,backgroundColor:'transparent'}));
+    mkChart('rtChart',{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri'],datasets},options:{...CD,responsive:true,plugins:{legend:{display:true,labels:{font:{size:10,family:'DM Sans'},color:'#9ca3af',boxWidth:8}}}}});
+  }
+}
 
-let isAdmin=sessionStorage.getItem('gcc_admin')==='1';
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+const CP={'r-first':'response','r-avg':'response','r-delays':'response','r-missed':'response','root-cause':'response','sat-reviews':'sat','sat-complaints':'sat','sat-nps':'sat','sat-repeat':'sat','sat-resolution':'sat','ops-closed':'ops','ops-active':'ops','ops-escalations':'ops','ops-maintenance':'ops','ops-inspections':'ops','ops-deepclean':'ops','rev-upsell':'rev','rev-addon':'rev','rev-leakage':'rev','rev-recovery':'rev','chan-airbnb':'chan','chan-booking':'chan','chan-direct':'chan','pro-prearrival':'pro','pro-midstay':'pro'};
+const LBL={overview:'Overview',agents:'Agents',import:'Import data','r-first':'First response','r-avg':'Average response','r-delays':'Delays','r-missed':'Missed','root-cause':'Root cause analysis','sat-reviews':'Reviews','sat-complaints':'Complaints','sat-nps':'NPS / CSAT','sat-repeat':'Repeat guests','sat-resolution':'Resolution','ops-closed':'Tickets closed','ops-active':'Active issues','ops-escalations':'Escalations','ops-maintenance':'Maintenance','ops-inspections':'Inspections','ops-deepclean':'Deep cleaning','rev-upsell':'Upsell','rev-addon':'Add-ons','rev-leakage':'Leakage','rev-recovery':'Recovery cost','chan-airbnb':'Airbnb','chan-booking':'Booking.com','chan-direct':'Direct','pro-prearrival':'Pre-arrival','pro-midstay':'Mid-stay',integrations:'Integrations',admin:'Admin',help:'Help'};
+
+let currentView='overview';
+let isAdmin = sessionStorage.getItem('gcc_admin')==='1';
 
 function render(v){
-  if(v==='admin'&&!isAdmin){openAdminLogin();return;}
+  if(v==='admin'&&!isAdmin){ openAdminLogin(); return; }
   killCharts(); currentView=v;
   const lbl=LBL[v]||v;
   document.getElementById('topTitle').textContent=lbl;
   document.getElementById('mobTitle').textContent=lbl;
-  document.getElementById('content').innerHTML=VIEWS[v]?VIEWS[v]():'<div class="panel"><div class="panel-pad text-muted">Section coming soon.</div></div>';
-
-  const s1=document.getElementById('simBtn'); if(s1) s1.onclick=()=>{simulate();render(v);};
-  const s2=document.getElementById('simBtn2'); if(s2) s2.onclick=()=>{simulate();render(v);};
-  if(v==='integrations') wireUploadHub();
-
-  document.querySelectorAll('.sb-item,.sb-child').forEach(el=>el.classList.remove('active','parent-active'));
-  const ae=document.querySelector(`.sb-child[data-view="${v}"]`)||document.querySelector(`.sb-item[data-view="${v}"]`);
+  document.getElementById('content').innerHTML = VIEWS[v] ? VIEWS[v]() : `<div class="panel">${emptyState('🚧','Coming soon','This section is ready for your data.')}</div>`;
+  wireImport();
+  wireAdmin();
+  // Active nav
+  document.querySelectorAll('.sb-item,.sb-kid').forEach(el=>el.classList.remove('active','parent-active'));
+  const ae=document.querySelector(`.sb-kid[data-view="${v}"]`)||document.querySelector(`.sb-item[data-view="${v}"]`);
   if(ae) ae.classList.add('active');
-  const pid=CP[v]; if(pid){const pb=document.querySelector(`.sb-parent[data-parent="${pid}"]`);if(pb) pb.classList.add('parent-active');}
+  const pid=CP[v]; if(pid){ const pb=document.querySelector(`.sb-parent[data-parent="${pid}"]`); if(pb) pb.classList.add('parent-active'); }
   setTimeout(()=>initCharts(v),20);
   closeSb();
 }
 
-/* ── UPLOAD HUB ── */
-function wireUploadHub(){
+/* ══════════════════════════════════════════
+   IMPORT WIRING — fires every time Import view renders
+══════════════════════════════════════════ */
+function wireImport(){
+  // Drag zones
   ['waZone','haZone'].forEach(zid=>{
     const z=document.getElementById(zid); if(!z) return;
     z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
     z.addEventListener('dragleave',()=>z.classList.remove('drag'));
-    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');const inp=z.querySelector('input[type=file]');if(inp&&e.dataTransfer.files.length){const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);inp.files=dt.files;}});
+    z.addEventListener('drop',e=>{
+      e.preventDefault(); z.classList.remove('drag');
+      const inp=z.querySelector('input[type=file]');
+      if(inp&&e.dataTransfer.files.length){ const dt=new DataTransfer(); dt.items.add(e.dataTransfer.files[0]); inp.files=dt.files; inp.dispatchEvent(new Event('change')); }
+    });
   });
 
-  const wb=document.getElementById('waParseBtn');
-  if(wb) wb.onclick=()=>{
-    const f=document.getElementById('waFile').files[0],r=document.getElementById('waResult');
-    if(!f){r.innerHTML='<div class="import-result error">Select a .txt file first.</div>';return;}
-    r.innerHTML='<div class="import-result">Parsing…</div>';
+  // Show file name when selected
+  const waFile=document.getElementById('waFile');
+  const haFile=document.getElementById('haFile');
+  if(waFile) waFile.onchange=()=>{ if(waFile.files[0]) document.getElementById('waResult').innerHTML=`<div class="import-result info">File selected: ${waFile.files[0].name} (${(waFile.files[0].size/1024).toFixed(0)} KB)</div>`; };
+  if(haFile) haFile.onchange=()=>{ if(haFile.files[0]) document.getElementById('haResult').innerHTML=`<div class="import-result info">File selected: ${haFile.files[0].name} (${(haFile.files[0].size/1024).toFixed(0)} KB)</div>`; };
+
+  // WhatsApp parse button
+  const waBtn=document.getElementById('waParseBtn');
+  if(waBtn) waBtn.onclick=()=>{
+    const agentId=document.getElementById('wa_agent')?.value;
+    const file=document.getElementById('waFile')?.files[0];
+    const res=document.getElementById('waResult');
+    const conf=document.getElementById('waConfirm');
+    if(!agentId){ res.innerHTML='<div class="import-result err">Please select an agent first.</div>'; return; }
+    if(!file){ res.innerHTML='<div class="import-result err">Please select a .txt file.</div>'; return; }
+    const agent=store.agents.find(a=>a.id===agentId);
+    if(!agent.waName){ res.innerHTML='<div class="import-result err">This agent has no WhatsApp display name set. Edit the agent to add it.</div>'; return; }
+    res.innerHTML='<div class="import-result info">Parsing file…</div>';
     const rd=new FileReader();
     rd.onload=e=>{
-      try{
-        const m=parseWA(e.target.result);
-        if(!m.length){r.innerHTML='<div class="import-result error">No messages parsed. Check format: [DD/MM/YYYY, HH:MM:SS] Sender: Message</div>';return;}
-        const logEntry=new Date().toLocaleString()+' — WhatsApp: '+m.length+' threads from '+f.name;
-        store.importLog.unshift(logEntry);
-        syncDashboard(m); // this calls saveStore + pushToSupabase + render
-        r.innerHTML='<div class="import-result success">✓ '+m.length+' threads parsed · KPIs, root cause & message feed updated · Synced to Supabase</div>';
-      }catch(err){r.innerHTML='<div class="import-result error">Parse error: '+err.message+'</div>';}
+      const result=parseWhatsApp(e.target.result, agent.waName, agentId, 'WhatsApp');
+      if(result.error){ res.innerHTML=`<div class="import-result err">${result.error}</div>`; return; }
+      const {messages,matched,threads}=result;
+      res.innerHTML=`<div class="import-result ok">✓ Parsed ${matched} lines · ${threads} guest conversations found · ${messages.filter(m=>m.breach).length} SLA breaches detected</div>`;
+      conf.style.display='block';
+      conf.innerHTML=`
+        <div style="font-size:11px;color:var(--text);margin:10px 0 6px;">Preview — ${messages.length} conversations for <span class="pill p-blue">${agent.name}</span></div>
+        <div class="tw" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+          <table><thead><tr><th>Guest</th><th>Last message</th><th>Response time</th><th>SLA</th></tr></thead>
+          <tbody>${messages.slice(0,20).map(m=>`<tr>
+            <td>${m.guest}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${m.message||'—'}</td>
+            <td>${m.rt!=null?m.rt+'m':'No response'}</td>
+            <td>${m.breach?'<span class="down">Breach</span>':'<span class="up">OK</span>'}</td>
+          </tr>`).join('')}</tbody></table>
+        </div>
+        <button class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center;" id="waConfirmBtn">Confirm & import to dashboard</button>`;
+      document.getElementById('waConfirmBtn').onclick=()=>{
+        syncAll(messages, agentId, file.name, 'WhatsApp');
+        conf.innerHTML='<div class="import-result ok">✓ Imported — all sections updated</div>';
+      };
     };
-    rd.readAsText(f);
+    rd.readAsText(file);
   };
 
-  const hb=document.getElementById('haParseBtn');
-  if(hb) hb.onclick=()=>{
-    const f=document.getElementById('haFile').files[0],r=document.getElementById('haResult');
-    if(!f){r.innerHTML='<div class="import-result error">Select a .csv file first.</div>';return;}
-    r.innerHTML='<div class="import-result">Parsing…</div>';
+  // Hostaway parse button
+  const haBtn=document.getElementById('haParseBtn');
+  if(haBtn) haBtn.onclick=()=>{
+    const agentId=document.getElementById('ha_agent')?.value;
+    const file=document.getElementById('haFile')?.files[0];
+    const res=document.getElementById('haResult');
+    const conf=document.getElementById('haConfirm');
+    if(!agentId){ res.innerHTML='<div class="import-result err">Please select an agent first.</div>'; return; }
+    if(!file){ res.innerHTML='<div class="import-result err">Please select a .csv file.</div>'; return; }
+    res.innerHTML='<div class="import-result info">Parsing CSV…</div>';
     const rd=new FileReader();
     rd.onload=e=>{
-      try{
-        const m=parseHACSV(e.target.result);
-        if(!m.length){r.innerHTML='<div class="import-result error">No rows parsed. Expected cols: thread_id, timestamp, direction, message</div>';return;}
-        const logEntry=new Date().toLocaleString()+' — Hostaway: '+m.length+' threads from '+f.name;
-        store.importLog.unshift(logEntry);
-        syncDashboard(m); // this calls saveStore + pushToSupabase + render
-        r.innerHTML='<div class="import-result success">✓ '+m.length+' threads parsed · KPIs, root cause & message feed updated · Synced to Supabase</div>';
-      }catch(err){r.innerHTML='<div class="import-result error">Parse error: '+err.message+'</div>';}
+      const result=parseHostaway(e.target.result, agentId, 'Hostaway');
+      if(result.error){ res.innerHTML=`<div class="import-result err">${result.error}</div>`; return; }
+      const {messages,matched,threads}=result;
+      res.innerHTML=`<div class="import-result ok">✓ Parsed ${matched} rows · ${threads} conversations found · ${messages.filter(m=>m.breach).length} SLA breaches</div>`;
+      conf.style.display='block';
+      conf.innerHTML=`
+        <div style="font-size:11px;color:var(--text);margin:10px 0 6px;">Preview — ${messages.length} conversations for <span class="pill p-blue">${agentName(agentId)}</span></div>
+        <div class="tw" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+          <table><thead><tr><th>Guest</th><th>Last message</th><th>Response time</th><th>SLA</th></tr></thead>
+          <tbody>${messages.slice(0,20).map(m=>`<tr>
+            <td>${m.guest}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${m.message||'—'}</td>
+            <td>${m.rt!=null?m.rt+'m':'No response'}</td>
+            <td>${m.breach?'<span class="down">Breach</span>':'<span class="up">OK</span>'}</td>
+          </tr>`).join('')}</tbody></table>
+        </div>
+        <button class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center;" id="haConfirmBtn">Confirm & import to dashboard</button>`;
+      document.getElementById('haConfirmBtn').onclick=()=>{
+        syncAll(messages, agentId, file.name, 'Hostaway');
+        conf.innerHTML='<div class="import-result ok">✓ Imported — all sections updated</div>';
+      };
     };
-    rd.readAsText(f);
+    rd.readAsText(file);
   };
 }
 
-/* ── SIDEBAR ── */
-const sidebar=document.getElementById('sidebar'),sbOverlay=document.getElementById('sbOverlay');
-function openSb(){sidebar.classList.add('open');sbOverlay.classList.add('open');}
-function closeSb(){sidebar.classList.remove('open');sbOverlay.classList.remove('open');}
+/* ══════════════════════════════════════════
+   ADMIN WIRING
+══════════════════════════════════════════ */
+function wireAdmin(){
+  const clearBtn=document.getElementById('clearDataBtn');
+  if(clearBtn) clearBtn.onclick=()=>{
+    if(!confirm('This will delete all imported messages and root cause records. Agents will stay. Continue?')) return;
+    store.messages=[]; store.rootCause=[]; recalcKPI(); saveLocal();
+    try{ sb.from('gcc_messages').delete().neq('id','_'); sb.from('gcc_root_cause').delete().neq('id','_'); sb.from('gcc_kpi').upsert({id:1,...store.kpi}); }catch(e){}
+    showToast('All imported data cleared'); render(currentView);
+  };
+}
+
+/* ══════════════════════════════════════════
+   AGENT MODAL
+══════════════════════════════════════════ */
+window.editAgent = function(id){
+  const a=store.agents.find(x=>x.id===id); if(!a) return;
+  document.getElementById('agentModalTitle').textContent='Edit agent';
+  document.getElementById('ag_id').value=id;
+  document.getElementById('ag_name').value=a.name;
+  document.getElementById('ag_role').value=a.role;
+  document.getElementById('ag_color').value=a.color||'#2563eb';
+  document.getElementById('ag_waname').value=a.waName||'';
+  document.getElementById('ag_email').value=a.email||'';
+  document.getElementById('agentModal').style.display='flex';
+};
+window.deleteAgent = function(id){
+  const a=store.agents.find(x=>x.id===id);
+  if(!confirm(`Remove agent "${a?a.name:id}"? Their imported data will remain.`)) return;
+  store.agents=store.agents.filter(x=>x.id!==id);
+  saveLocal(); sbDeleteAgent(id);
+  showToast('Agent removed'); render(currentView);
+};
+document.getElementById('openAddAgent')?.addEventListener('click',()=>{});
+document.addEventListener('click',e=>{
+  if(e.target&&e.target.id==='openAddAgent'){
+    document.getElementById('agentModalTitle').textContent='Add agent';
+    document.getElementById('ag_id').value='';
+    ['ag_name','ag_waname','ag_email'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ag_role').value='Guest Experience Agent';
+    document.getElementById('ag_color').value='#2563eb';
+    document.getElementById('agentModal').style.display='flex';
+  }
+});
+document.getElementById('cancelAgent').onclick=()=>document.getElementById('agentModal').style.display='none';
+document.getElementById('saveAgent').onclick=()=>{
+  const name=document.getElementById('ag_name').value.trim();
+  if(!name){ document.getElementById('agErr').textContent='Name is required.'; return; }
+  const id=document.getElementById('ag_id').value||'ag_'+Date.now();
+  const agent={ id, name, role:document.getElementById('ag_role').value, color:document.getElementById('ag_color').value, waName:document.getElementById('ag_waname').value.trim(), email:document.getElementById('ag_email').value.trim() };
+  const idx=store.agents.findIndex(a=>a.id===id);
+  if(idx>=0) store.agents[idx]=agent; else store.agents.push(agent);
+  saveLocal(); sbUpsertAgent(agent);
+  document.getElementById('agentModal').style.display='none';
+  showToast(idx>=0?'Agent updated':'Agent added');
+  render(currentView);
+};
+
+/* ══════════════════════════════════════════
+   USER MANAGEMENT (admin login users — separate from agents)
+══════════════════════════════════════════ */
+function renderUserList(){
+  const MASTER={id:'master',name:'Prince Chakusa',username:'prince',email:'prince@homevy.com',role:'Master Admin',locked:true};
+  const all=[MASTER,...store.users];
+  document.getElementById('userList').innerHTML=all.map(u=>`
+    <div class="user-row">
+      <div class="user-ava">${u.name.slice(0,2).toUpperCase()}</div>
+      <div class="user-info"><div class="user-name">${u.name} <span class="pill ${u.locked?'p-blue':'p-gray'}">${u.role}</span></div><div class="user-email">@${u.username} · ${u.email}</div></div>
+      <div class="user-acts">${u.locked?'<span class="text-muted">Non-editable</span>':`<button class="btn btn-sm" onclick="editUser('${u.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>`}</div>
+    </div>`).join('');
+}
+function openUserMgmt(){ document.getElementById('addUserForm').style.display='none'; document.getElementById('editUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; renderUserList(); document.getElementById('userModal').style.display='flex'; }
+window.openUserMgmt=openUserMgmt;
+window.editUser=function(id){ const u=store.users.find(x=>x.id===id); if(!u) return; document.getElementById('eu_id').value=id; document.getElementById('eu_name').value=u.name; document.getElementById('eu_user').value=u.username; document.getElementById('eu_email').value=u.email; document.getElementById('eu_role').value=u.role; document.getElementById('editUserForm').style.display='block'; document.getElementById('addUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='none'; };
+window.deleteUser=function(id){ if(!confirm('Delete this user?')) return; store.users=store.users.filter(u=>u.id!==id); saveLocal(); sbDeleteUser(id); renderUserList(); showToast('User deleted'); };
+document.getElementById('profileBtn').onclick=openUserMgmt;
+document.getElementById('closeUserModal').onclick=()=>document.getElementById('userModal').style.display='none';
+document.getElementById('openAdd').onclick=()=>{ document.getElementById('addUserForm').style.display='block'; document.getElementById('showAddBtn').style.display='none'; document.getElementById('editUserForm').style.display='none'; };
+document.getElementById('cancelAdd').onclick=()=>{ document.getElementById('addUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; };
+document.getElementById('cancelEdit').onclick=()=>{ document.getElementById('editUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; };
+document.getElementById('saveAdd').onclick=()=>{
+  const n=document.getElementById('nu_name').value.trim(), u=document.getElementById('nu_user').value.trim(), e=document.getElementById('nu_email').value.trim(), p=document.getElementById('nu_pass').value, r=document.getElementById('nu_role').value;
+  if(!n||!u||!e||!p){ document.getElementById('nuErr').textContent='All fields required.'; return; }
+  const nu={id:'u_'+Date.now(),name:n,username:u,email:e,role:r,passwordHash:btoa(p)};
+  store.users.push(nu); saveLocal(); sbUpsertUser(nu);
+  document.getElementById('addUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; renderUserList(); showToast('User added');
+};
+document.getElementById('saveEdit').onclick=()=>{
+  const id=document.getElementById('eu_id').value, u=store.users.find(x=>x.id===id); if(!u) return;
+  u.name=document.getElementById('eu_name').value.trim(); u.username=document.getElementById('eu_user').value.trim(); u.email=document.getElementById('eu_email').value.trim(); u.role=document.getElementById('eu_role').value;
+  saveLocal(); sbUpsertUser(u); document.getElementById('editUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; renderUserList(); showToast('User updated');
+};
+
+/* ══════════════════════════════════════════
+   ADMIN LOGIN
+══════════════════════════════════════════ */
+function openAdminLogin(){ document.getElementById('pwErr').textContent=''; document.getElementById('adminPw').value=''; document.getElementById('adminModal').style.display='flex'; document.getElementById('adminPw').focus(); }
+document.getElementById('adminCancel').onclick=()=>document.getElementById('adminModal').style.display='none';
+document.getElementById('adminSubmit').onclick=doLogin;
+document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function doLogin(){ if(document.getElementById('adminPw').value==='guestcare'){ isAdmin=true; sessionStorage.setItem('gcc_admin','1'); document.getElementById('adminModal').style.display='none'; render('admin'); } else document.getElementById('pwErr').textContent='Incorrect password'; }
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
+const sidebar=document.getElementById('sidebar');
+const sbOverlay=document.getElementById('sbOverlay');
+function openSb(){ sidebar.classList.add('open'); sbOverlay.classList.add('open'); }
+function closeSb(){ sidebar.classList.remove('open'); sbOverlay.classList.remove('open'); }
 document.getElementById('mobMenu').onclick=openSb;
 document.getElementById('sbClose').onclick=closeSb;
-document.getElementById('topMenuBtn').onclick=openSb;
+document.getElementById('topMenu').onclick=openSb;
 sbOverlay.onclick=closeSb;
-document.querySelectorAll('.sb-parent').forEach(btn=>{btn.onclick=()=>{const pid=btn.dataset.parent,ch=document.getElementById('ch-'+pid),open=ch.classList.contains('open');document.querySelectorAll('.sb-children').forEach(c=>c.classList.remove('open'));document.querySelectorAll('.sb-parent').forEach(b=>b.classList.remove('open'));if(!open){ch.classList.add('open');btn.classList.add('open');}};});
-document.querySelectorAll('.sb-child[data-view]').forEach(b=>b.onclick=()=>render(b.dataset.view));
+document.querySelectorAll('.sb-parent').forEach(btn=>{
+  btn.onclick=()=>{ const pid=btn.dataset.parent, ch=document.getElementById('ch-'+pid), open=ch.classList.contains('open'); document.querySelectorAll('.sb-kids').forEach(c=>c.classList.remove('open')); document.querySelectorAll('.sb-parent').forEach(b=>b.classList.remove('open')); if(!open){ ch.classList.add('open'); btn.classList.add('open'); } };
+});
+document.querySelectorAll('.sb-kid[data-view]').forEach(b=>b.onclick=()=>render(b.dataset.view));
 document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render(b.dataset.view));
 
-/* ── ADMIN LOGIN ── */
-function openAdminLogin(){document.getElementById('pwErr').textContent='';document.getElementById('adminPw').value='';document.getElementById('adminLoginModal').style.display='flex';document.getElementById('adminPw').focus();}
-document.getElementById('modalCancel').onclick=()=>document.getElementById('adminLoginModal').style.display='none';
-document.getElementById('modalSubmit').onclick=doLogin;
-document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-function doLogin(){if(document.getElementById('adminPw').value==='guestcare'){isAdmin=true;sessionStorage.setItem('gcc_admin','1');document.getElementById('adminLoginModal').style.display='none';render('admin');}else document.getElementById('pwErr').textContent='Incorrect password';}
-
-/* ── USER MGMT WIRING ── */
-window.openUserMgmt=openUserMgmt;
-function openUserMgmt(){document.getElementById('addUserForm').style.display='none';document.getElementById('editUserForm').style.display='none';document.getElementById('showAddBtn').style.display='block';renderUserList();document.getElementById('userMgmtModal').style.display='flex';}
-document.getElementById('profileBtn').onclick=openUserMgmt;
-document.getElementById('closeUserMgmt').onclick=()=>document.getElementById('userMgmtModal').style.display='none';
-document.getElementById('openAddUserForm').onclick=()=>{document.getElementById('addUserForm').style.display='block';document.getElementById('showAddBtn').style.display='none';document.getElementById('editUserForm').style.display='none';};
-document.getElementById('cancelAddUser').onclick=()=>{document.getElementById('addUserForm').style.display='none';document.getElementById('showAddBtn').style.display='block';};
-document.getElementById('cancelEditUser').onclick=()=>{document.getElementById('editUserForm').style.display='none';document.getElementById('showAddBtn').style.display='block';};
-document.getElementById('saveNewUser').onclick=()=>{
-  const n=document.getElementById('nu_name').value.trim(),u=document.getElementById('nu_user').value.trim(),e=document.getElementById('nu_email').value.trim(),p=document.getElementById('nu_pass').value,r=document.getElementById('nu_role').value;
-  if(!n||!u||!e||!p){document.getElementById('nuErr').textContent='All fields required.';return;}
-  const newUser={id:'u_'+Date.now(),name:n,username:u,email:e,role:r,passwordHash:btoa(p)};
-  store.users.push(newUser); saveLocal(); pushUserToSupabase(newUser);
-  document.getElementById('addUserForm').style.display='none';document.getElementById('showAddBtn').style.display='block';renderUserList();showToast('User added & synced to Supabase');
-};
-document.getElementById('saveEditUser').onclick=()=>{
-  const uid=document.getElementById('eu_id').value,u=store.users.find(u=>u.id===uid);if(!u) return;
-  u.name=document.getElementById('eu_name').value.trim();u.username=document.getElementById('eu_user').value.trim();u.email=document.getElementById('eu_email').value.trim();u.role=document.getElementById('eu_role').value;
-  saveLocal(); pushUserToSupabase(u);
-  document.getElementById('editUserForm').style.display='none';document.getElementById('showAddBtn').style.display='block';renderUserList();showToast('User updated & synced');
-};
-
-/* ── INIT ── */
+/* ══════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════ */
 render('overview');
 document.querySelector('.sb-item[data-view="overview"]').classList.add('active');
-// Pull live data from Supabase — updates all sections when complete
-loadFromSupabase();
+sbLoad(); // pull live data from Supabase
 
 })();
 </script>
