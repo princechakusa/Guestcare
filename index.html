@@ -185,8 +185,43 @@ tbody tr:hover td{background:var(--bg2)}
 .user-email{font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .user-acts{display:flex;gap:4px;flex-shrink:0}
 
-/* Divider / util */
-.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+/* Filter bar */
+.filter-bar{display:flex;align-items:center;gap:8px;padding:10px 22px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;position:sticky;top:44px;z-index:9}
+.filter-bar .select,.filter-bar .input{width:auto;padding:4px 8px;font-size:11px}
+.filter-bar .btn{padding:4px 10px}
+.clock{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;min-width:60px;text-align:right}
+
+/* Search bar */
+.search-wrap{position:relative;flex:1;min-width:160px;max-width:260px}
+.search-wrap .input{padding-left:26px;font-size:11px}
+.search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+
+/* Heatmap */
+.heatmap{display:grid;grid-template-columns:40px repeat(24,1fr);gap:2px;padding:14px 16px}
+.hm-cell{height:22px;border-radius:2px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)}
+.hm-label{font-size:9px;color:var(--text3);display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.hm-head{font-size:9px;color:var(--text3);text-align:center}
+
+/* Sentiment */
+.sentiment-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:4px;display:flex;gap:1px}
+.sb-pos{background:var(--green)}.sb-neu{background:var(--border2)}.sb-neg{background:var(--red)}
+
+/* Export btn */
+.export-row{display:flex;justify-content:flex-end;padding:8px 16px;border-top:1px solid var(--border)}
+
+/* Alert badge */
+.alert-dot{width:7px;height:7px;background:var(--red);border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Trend mini */
+.trend-mini{display:inline-flex;align-items:center;gap:3px;font-size:10px}
+
+/* Score ring */
+.score-ring{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:300;border:2px solid var(--border);flex-shrink:0}
+
+/* Property tag */
+.prop-tag{font-size:10px;color:var(--accent);background:var(--accent-bg);padding:1px 6px;border-radius:3px;margin-left:4px}
+
 .text-muted{font-size:10px;color:var(--text3)}
 code.ic{font-size:10px;background:var(--bg2);padding:1px 6px;border-radius:3px;font-family:monospace}
 .chart-wrap{padding:12px 16px 10px}
@@ -387,6 +422,8 @@ canvas{max-height:160px}
     </div>
 
     <div class="sb-label">System</div>
+    <button class="sb-item" data-view="heatmap"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="3" height="3" rx=".5"/><rect x="6" y="1" width="3" height="3" rx=".5"/><rect x="11" y="1" width="3" height="3" rx=".5"/><rect x="1" y="6" width="3" height="3" rx=".5"/><rect x="6" y="6" width="3" height="3" rx=".5"/><rect x="11" y="6" width="3" height="3" rx=".5"/><rect x="1" y="11" width="3" height="3" rx=".5"/><rect x="6" y="11" width="3" height="3" rx=".5"/><rect x="11" y="11" width="3" height="3" rx=".5"/></svg>Response heatmap</button>
+    <button class="sb-item" data-view="sentiment"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 9.5s.8 1.5 2.5 1.5 2.5-1.5 2.5-1.5"/><circle cx="5.5" cy="7" r=".6" fill="currentColor"/><circle cx="10.5" cy="7" r=".6" fill="currentColor"/></svg>Guest sentiment</button>
     <button class="sb-item" data-view="integrations"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="6" height="4" rx="1"/><rect x="9" y="8" width="6" height="4" rx="1"/><path d="M7 6h2v4H7"/></svg>Integrations</button>
     <button class="sb-item" data-view="admin"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 3h3l-2.4 1.8.9 3L8 8.2l-3 1.6.9-3L3.5 5h3z"/></svg>Admin</button>
     <button class="sb-item" data-view="help"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.5 1.5 0 013 0c0 1-1.5 1.5-1.5 2.5"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>Help</button>
@@ -417,7 +454,32 @@ canvas{max-height:160px}
       <div class="conn"><span class="status-dot on"></span>WhatsApp</div>
       <div class="conn"><span class="status-dot on"></span>Hostaway</div>
       <div id="sbPill"><span class="pill p-gray">Supabase…</span></div>
+      <div class="clock" id="liveClock"></div>
     </div>
+  </div>
+  <!-- Global filter bar -->
+  <div class="filter-bar" id="filterBar">
+    <select class="select" id="filterAgent" title="Filter by agent">
+      <option value="">All agents</option>
+    </select>
+    <select class="select" id="filterPeriod">
+      <option value="all">All time</option>
+      <option value="today">Today</option>
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+    </select>
+    <select class="select" id="filterChannel">
+      <option value="">All channels</option>
+      <option value="WhatsApp">WhatsApp</option>
+      <option value="Hostaway">Hostaway</option>
+    </select>
+    <div class="search-wrap">
+      <svg class="search-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input class="input" id="filterSearch" placeholder="Search guest name…" style="font-size:11px;">
+    </div>
+    <button class="btn" id="filterReset">Reset</button>
+    <span class="text-muted" id="filterCount" style="margin-left:4px;"></span>
   </div>
   <div class="content" id="content">Loading…</div>
 </div>
@@ -1323,7 +1385,504 @@ document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render
 ══════════════════════════════════════════ */
 render('overview');
 document.querySelector('.sb-item[data-view="overview"]').classList.add('active');
-sbLoad(); // pull live data from Supabase
+sbLoad();
+
+/* ══════════════════════════════════════════
+   LIVE CLOCK
+══════════════════════════════════════════ */
+function tickClock(){
+  const el=document.getElementById('liveClock'); if(!el) return;
+  const now=new Date();
+  el.textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+tickClock();
+setInterval(tickClock,1000);
+
+/* ══════════════════════════════════════════
+   GLOBAL FILTER ENGINE
+   — all analysis views read filteredMessages()
+══════════════════════════════════════════ */
+function getFilters(){
+  return {
+    agentId: document.getElementById('filterAgent')?.value||'',
+    period:  document.getElementById('filterPeriod')?.value||'all',
+    channel: document.getElementById('filterChannel')?.value||'',
+    search:  (document.getElementById('filterSearch')?.value||'').toLowerCase().trim()
+  };
+}
+
+function filteredMessages(){
+  const f=getFilters();
+  const now=Date.now();
+  const cutoff={ today:86400000, '7':7*86400000, '30':30*86400000, '90':90*86400000 }[f.period];
+  return store.messages.filter(m=>{
+    if(f.agentId && m.agentId!==f.agentId) return false;
+    if(cutoff && (now-m.ts)>cutoff) return false;
+    if(f.channel && m.channel!==f.channel) return false;
+    if(f.search && !m.guest.toLowerCase().includes(f.search) && !(m.message||'').toLowerCase().includes(f.search)) return false;
+    return true;
+  });
+}
+
+function updateFilterCount(){
+  const el=document.getElementById('filterCount'); if(!el) return;
+  const total=store.messages.length, shown=filteredMessages().length;
+  el.textContent = total===shown ? total+' conversations' : shown+' of '+total+' shown';
+}
+
+function populateAgentFilter(){
+  const sel=document.getElementById('filterAgent'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All agents</option>'+store.agents.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  sel.value=cur;
+}
+
+// Wire filter controls — re-render view on any change
+['filterAgent','filterPeriod','filterChannel','filterSearch'].forEach(id=>{
+  document.addEventListener('change',e=>{ if(e.target&&e.target.id===id){ updateFilterCount(); render(currentView); } });
+  document.addEventListener('input',e=>{ if(e.target&&e.target.id===id){ updateFilterCount(); render(currentView); } });
+});
+document.getElementById('filterReset').onclick=()=>{
+  ['filterAgent','filterPeriod','filterChannel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=id==='filterPeriod'?'30':''; });
+  const s=document.getElementById('filterSearch'); if(s) s.value='';
+  updateFilterCount(); render(currentView);
+};
+
+/* ══════════════════════════════════════════
+   AUTO-CLASSIFY URGENCY & INTENT
+   — runs on every parsed message before import
+══════════════════════════════════════════ */
+const KEYWORDS = {
+  high: ['emergency','overflowing','flood','fire','no water','no power','broken','burst','smoke','gas leak','locked out','accident','injury','blood','help','urgent','asap','immediately'],
+  medium: ['not working','issue','problem','complaint','refund','unhappy','disappointed','dirty','smell','noise','cold','hot','broken','leak'],
+  low: ['checkout','check-out','check in','checkin','wifi','password','towel','pillow','key','parking','late','early','directions','info','question','when']
+};
+const INTENT_MAP = {
+  'Maintenance': ['broken','not working','leak','flood','repair','fix','heater','ac','aircon','plumbing','electricity','wifi'],
+  'Complaint':   ['refund','unhappy','dirty','smell','disgusting','complaint','disappointed','unacceptable','terrible','awful'],
+  'Emergency':   ['emergency','overflowing','fire','smoke','gas','injury','blood','help','urgent','flood'],
+  'Question':    ['what time','when','how','where','can i','is it','do you','checkout','checkin','directions','parking'],
+  'Amenity':     ['towel','pillow','soap','shampoo','blanket','iron','hairdryer','extra'],
+};
+
+function classifyMessage(text){
+  const t=(text||'').toLowerCase();
+  let urgency='low';
+  if(KEYWORDS.high.some(k=>t.includes(k))) urgency='high';
+  else if(KEYWORDS.medium.some(k=>t.includes(k))) urgency='medium';
+  let intent='General';
+  for(const [cat,words] of Object.entries(INTENT_MAP)){
+    if(words.some(w=>t.includes(w))){ intent=cat; break; }
+  }
+  return { urgency, intent };
+}
+
+/* patch classifier into parser output */
+const _origSyncAll = syncAll;
+window.syncAll = function(parsed, agentId, fileName, channel){
+  parsed.forEach(m=>{ const c=classifyMessage(m.message); m.urgency=c.urgency; m.intent=c.intent; });
+  _origSyncAll(parsed, agentId, fileName, channel);
+};
+
+/* ══════════════════════════════════════════
+   SENTIMENT SCORING  (keyword-based, no API)
+══════════════════════════════════════════ */
+const POS_WORDS=['thank','thanks','great','excellent','perfect','amazing','wonderful','love','happy','good','clean','comfortable','nice','fantastic','brilliant','quick','fast','helpful','superb'];
+const NEG_WORDS=['dirty','broken','terrible','awful','horrible','disgusting','unacceptable','worst','bad','slow','noisy','smelly','disappointed','frustrated','angry','refund','complaint','emergency','never','problem'];
+
+function scoreSentiment(text){
+  const t=(text||'').toLowerCase().split(/\s+/);
+  const pos=t.filter(w=>POS_WORDS.includes(w)).length;
+  const neg=t.filter(w=>NEG_WORDS.includes(w)).length;
+  const total=pos+neg||1;
+  return { pos:Math.round(100*pos/total), neg:Math.round(100*neg/total), neu:Math.round(100*(total-pos-neg)/total), label:neg>pos?'Negative':pos>neg?'Positive':'Neutral' };
+}
+
+function agentSentiment(agentId){
+  const msgs=filteredMessages().filter(m=>m.agentId===agentId);
+  if(!msgs.length) return null;
+  const scores=msgs.map(m=>scoreSentiment(m.message));
+  return {
+    pos:  Math.round(scores.reduce((s,x)=>s+x.pos,0)/scores.length),
+    neg:  Math.round(scores.reduce((s,x)=>s+x.neg,0)/scores.length),
+    neu:  Math.round(scores.reduce((s,x)=>s+x.neu,0)/scores.length),
+    total:msgs.length
+  };
+}
+
+/* ══════════════════════════════════════════
+   RESPONSE TIME HEATMAP  (hour × day)
+══════════════════════════════════════════ */
+function buildHeatmap(){
+  const msgs=filteredMessages().filter(m=>m.responded&&m.rt!=null);
+  const grid={}; // key: 'day_hour'
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  msgs.forEach(m=>{
+    const d=new Date(m.ts), day=d.getDay(), hour=d.getHours();
+    const k=day+'_'+hour;
+    if(!grid[k]) grid[k]={sum:0,count:0};
+    grid[k].sum+=m.rt; grid[k].count++;
+  });
+  return {grid, days};
+}
+
+/* ══════════════════════════════════════════
+   CSV EXPORT
+══════════════════════════════════════════ */
+function exportCSV(rows, headers, filename){
+  const csv=[headers.join(','),...rows.map(r=>headers.map(h=>{
+    const v=r[h]!=null?String(r[h]):'';
+    return v.includes(',')||v.includes('"') ? '"'+v.replace(/"/g,'""')+'"' : v;
+  }).join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportAgentReport(){
+  const rows=store.agents.map(a=>{
+    const s=agentStats(a.id);
+    return {Agent:a.name, Role:a.role, Conversations:s.total, Active:s.active, 'Avg Response (min)':s.avgRt, Breaches:s.breaches, 'SLA Hit Rate':s.slaHit+'%'};
+  });
+  exportCSV(rows,['Agent','Role','Conversations','Active','Avg Response (min)','Breaches','SLA Hit Rate'],'agent_performance_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+function exportBreachReport(){
+  const rows=store.rootCause.map(r=>({'Guest':r.guest,'Agent':r.agentName||agentName(r.agentId),'Channel':r.channel,'Message':r.msg,'Date/Time':new Date(r.ts).toLocaleString(),'Response (min)':r.rt!=null?r.rt:'None','SLA Target':SLA[r.channel]||SLA.default,'Root Cause':r.reason}));
+  exportCSV(rows,['Guest','Agent','Channel','Message','Date/Time','Response (min)','SLA Target','Root Cause'],'sla_breaches_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+function exportMessages(){
+  const msgs=filteredMessages();
+  const rows=msgs.map(m=>({'Guest':m.guest,'Agent':agentName(m.agentId),'Channel':m.channel,'Message':m.message,'Date/Time':new Date(m.ts).toLocaleString(),'Responded':m.responded?'Yes':'No','Response (min)':m.rt!=null?m.rt:'','Breach':m.breach?'Yes':'No','Intent':m.intent,'Urgency':m.urgency}));
+  exportCSV(rows,['Guest','Agent','Channel','Message','Date/Time','Responded','Response (min)','Breach','Intent','Urgency'],'messages_export_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+/* ══════════════════════════════════════════
+   NEW VIEWS — Heatmap + Sentiment
+══════════════════════════════════════════ */
+VIEWS.heatmap = () => {
+  const {grid, days}=buildHeatmap();
+  const vals=Object.values(grid).map(v=>v.sum/v.count);
+  const maxVal=Math.max(...vals,1);
+
+  function cellColor(day,hour){
+    const k=day+'_'+hour, v=grid[k];
+    if(!v) return 'background:var(--bg3)';
+    const rt=v.sum/v.count, intensity=Math.min(rt/maxVal,1);
+    if(rt>10) return `background:rgba(220,38,38,${0.15+intensity*0.7})`;
+    if(rt>5)  return `background:rgba(217,119,6,${0.15+intensity*0.7})`;
+    return `background:rgba(22,163,74,${0.15+intensity*0.7})`;
+  }
+  function cellLabel(day,hour){
+    const k=day+'_'+hour, v=grid[k];
+    return v ? (v.sum/v.count).toFixed(1)+'m' : '';
+  }
+
+  const hours=Array.from({length:24},(_,i)=>i);
+  const rows=days.map((d,di)=>`
+    <div class="hm-label">${d}</div>
+    ${hours.map(h=>`<div class="hm-cell" style="${cellColor(di,h)}" title="${d} ${h}:00 — avg ${cellLabel(di,h)||'no data'}">${cellLabel(di,h)}</div>`).join('')}
+  `).join('');
+
+  const noData=!Object.keys(grid).length;
+  return `
+  <div class="panel">
+    <div class="ph"><span class="pt">Response time heatmap — by hour and day</span></div>
+    ${noData ? emptyState('📊','No data yet','Import conversations to see when your team is fastest and slowest.') : `
+    <div class="heatmap">
+      <div class="hm-head"></div>${hours.map(h=>`<div class="hm-head">${h}</div>`).join('')}
+      ${rows}
+    </div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:16px;align-items:center;">
+      <span class="text-muted">Darker = slower response. Hours shown are local time.</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green)">■ Fast (≤5m)</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--amber)">■ Moderate (5-10m)</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red)">■ Slow (>10m)</span>
+    </div>`}
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Busiest hours — message volume</span></div>
+    <div class="chart-wrap"><canvas id="hourChart"></canvas></div>
+  </div>`;
+};
+
+VIEWS.sentiment = () => {
+  const agents=store.agents;
+  if(!agents.length||!store.messages.length) return `<div class="panel">${emptyState('💬','No data yet','Import conversations to analyse guest sentiment.')}</div>`;
+
+  const allMsgs=filteredMessages();
+  const posCount=allMsgs.filter(m=>scoreSentiment(m.message).label==='Positive').length;
+  const negCount=allMsgs.filter(m=>scoreSentiment(m.message).label==='Negative').length;
+  const neuCount=allMsgs.length-posCount-negCount;
+
+  return `
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Positive conversations</div><div class="stat-val up">${posCount}</div><div class="stat-sub">${allMsgs.length?Math.round(100*posCount/allMsgs.length)+'% of total':''}</div></div>
+    <div class="stat-card"><div class="stat-label">Negative conversations</div><div class="stat-val down">${negCount}</div><div class="stat-sub">${allMsgs.length?Math.round(100*negCount/allMsgs.length)+'% of total':''}</div></div>
+    <div class="stat-card"><div class="stat-label">Neutral</div><div class="stat-val">${neuCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Total analysed</div><div class="stat-val">${allMsgs.length}</div></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Sentiment by agent</span></div>
+    <div class="pp" style="display:flex;flex-direction:column;gap:14px;">
+      ${agents.map(a=>{
+        const s=agentSentiment(a.id);
+        if(!s) return `<div><span class="pill p-gray">${a.name}</span> <span class="text-muted">No data</span></div>`;
+        return `<div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span>
+            <span class="text-muted">${s.total} conversations · ${s.pos}% positive · ${s.neg}% negative</span>
+          </div>
+          <div class="sentiment-bar">
+            <div class="sb-pos" style="width:${s.pos}%"></div>
+            <div class="sb-neu" style="width:${s.neu}%"></div>
+            <div class="sb-neg" style="width:${s.neg}%"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Most common negative keywords</span></div>
+    <div class="pp">
+      ${(()=>{
+        const freq={};
+        filteredMessages().forEach(m=>{ (m.message||'').toLowerCase().split(/\s+/).forEach(w=>{ if(NEG_WORDS.includes(w)) freq[w]=(freq[w]||0)+1; }); });
+        const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+        return sorted.length ? sorted.map(([w,c])=>`<span class="pill p-red" style="margin:2px;">${w} <strong>${c}</strong></span>`).join('') : '<span class="text-muted">No negative keywords detected in current filter.</span>';
+      })()}
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Most common positive keywords</span></div>
+    <div class="pp">
+      ${(()=>{
+        const freq={};
+        filteredMessages().forEach(m=>{ (m.message||'').toLowerCase().split(/\s+/).forEach(w=>{ if(POS_WORDS.includes(w)) freq[w]=(freq[w]||0)+1; }); });
+        const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+        return sorted.length ? sorted.map(([w,c])=>`<span class="pill p-green" style="margin:2px;">${w} <strong>${c}</strong></span>`).join('') : '<span class="text-muted">No positive keywords detected yet.</span>';
+      })()}
+    </div>
+  </div>`;
+};
+
+/* ══════════════════════════════════════════
+   PATCH EXISTING VIEWS to use filteredMessages()
+   and add export buttons
+══════════════════════════════════════════ */
+const _origViews = {};
+
+// Patch overview KPIs to use filtered data
+const _overviewOrig = VIEWS.overview;
+VIEWS.overview = () => {
+  // Recalc with filter applied
+  const fm=filteredMessages();
+  const resp=fm.filter(m=>m.responded&&m.rt!=null);
+  const liveKpi={
+    active:fm.filter(m=>!m.responded).length,
+    breaches:fm.filter(m=>m.breach).length,
+    avg:resp.length?+(resp.reduce((s,m)=>s+m.rt,0)/resp.length).toFixed(1):0,
+    agents:store.agents.length
+  };
+  const hasData=store.messages.length>0;
+  const agents=store.agents;
+  const breachAlert=liveKpi.breaches>0?`<span class="alert-dot"></span>`:'';
+  return `
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Active conversations</div><div class="stat-val">${liveKpi.active}</div><div class="stat-sub">awaiting response</div></div>
+    <div class="stat-card"><div class="stat-label">SLA breaches ${breachAlert}</div><div class="stat-val ${liveKpi.breaches>0?'down':'up'}">${liveKpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
+    <div class="stat-card"><div class="stat-label">Avg response time</div><div class="stat-val">${liveKpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${liveKpi.avg?'m':''}</span></div><div class="stat-sub">filtered selection</div></div>
+    <div class="stat-card"><div class="stat-label">Agents registered</div><div class="stat-val">${liveKpi.agents}</div><div class="stat-sub"><a href="#" onclick="render('agents');return false;" style="color:var(--accent);text-decoration:none">manage →</a></div></div>
+  </div>
+  ${!hasData ? `<div class="panel">${emptyState('📂','No data imported yet','Register your agents first, then import WhatsApp or Hostaway chat exports.','<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'agents\')">Register agents</button><button class="btn" onclick="render(\'import\')">Import data</button></div>')}</div>` : `
+  ${agents.length ? `
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Agent performance at a glance</span>
+      <button class="btn btn-sm" onclick="exportAgentReport()">Export CSV</button>
+    </div>
+    <div class="tw"><table class="sticky-col">
+      <thead><tr><th>Agent</th><th>Conversations</th><th>Active</th><th>Avg response</th><th>Breaches</th><th>SLA rate</th><th>Sentiment</th></tr></thead>
+      <tbody>${agents.map(a=>{
+        const msgs=filteredMessages().filter(m=>m.agentId===a.id);
+        const resp=msgs.filter(m=>m.responded&&m.rt!=null);
+        const avg=resp.length?+(resp.reduce((s,m)=>s+m.rt,0)/resp.length).toFixed(1):0;
+        const breaches=msgs.filter(m=>m.breach).length;
+        const slaHit=resp.length?Math.round(100*msgs.filter(m=>m.responded&&!m.breach).length/resp.length):0;
+        const sent=agentSentiment(a.id);
+        const sentLabel=sent?sent.pos>sent.neg?'<span class="up">Positive</span>':'<span class="down">Negative</span>':'—';
+        return `<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${msgs.length}</td><td>${msgs.filter(m=>!m.responded).length}</td><td>${avg?avg+'m':'—'}</td><td>${breaches>0?`<span class="down">${breaches}</span>`:0}</td><td>${slaHit?slaHit+'%':'—'}</td><td>${sentLabel}</td></tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>` : ''}
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Recent conversations</span>
+      <button class="btn btn-sm" onclick="exportMessages()">Export CSV</button>
+    </div>
+    <div>${filteredMessages().slice(0,15).map(m=>{
+      const sent=scoreSentiment(m.message);
+      const sentColor=sent.label==='Positive'?'var(--green)':sent.label==='Negative'?'var(--red)':'var(--text3)';
+      return `<div class="msg-item${m.breach?' breach-row':''}">
+        <div class="msg-dot" style="background:${m.urgency==='high'?'var(--red)':'var(--green)'};margin-top:5px"></div>
+        <div class="msg-body">
+          <div class="msg-r1"><span class="msg-guest">${m.guest}</span><span class="msg-time">${fmtT(m.ts)} · ${m.channel}</span></div>
+          <div class="msg-text">"${m.message||'(no message)'}"</div>
+          <div class="msg-meta">
+            ${urgencyPill(m.urgency)}
+            <span class="pill p-gray">${m.intent||'General'}</span>
+            <span class="pill p-blue">${agentName(m.agentId)}</span>
+            <span style="font-size:10px;color:${sentColor}">${sent.label}</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--text3)">${m.responded?'✓ '+m.rt+'m':m.breach?'<span style="color:var(--red)">Missed SLA</span>':'Pending'}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')||emptyState('📭','No conversations match filter','Try adjusting the filter bar above.')}
+    </div>
+  </div>`}`;
+};
+
+// Patch root cause to use filtered data + export
+VIEWS['root-cause'] = () => {
+  const rc=store.rootCause.filter(r=>{
+    const f=getFilters();
+    if(f.agentId&&r.agentId!==f.agentId) return false;
+    if(f.channel&&r.channel!==f.channel) return false;
+    if(f.search&&!r.guest.toLowerCase().includes(f.search)) return false;
+    return true;
+  });
+  return !rc.length
+    ? `<div class="panel">${emptyState('✅','No SLA breaches in this filter','Adjust the filter bar or import more data.')}</div>`
+    : `<div class="panel">
+    <div class="ph">
+      <span class="pt">SLA breaches — root cause (${rc.length})</span>
+      <button class="btn btn-sm" onclick="exportBreachReport()">Export CSV</button>
+    </div>
+    <div class="tw">
+      <table class="sticky-col" style="min-width:860px;">
+        <thead><tr><th>Guest name</th><th>Agent</th><th>Channel</th><th>First message</th><th>Date/time</th><th>Response time</th><th>SLA target</th><th>Root cause</th></tr></thead>
+        <tbody>${rc.map(r=>`<tr>
+          <td>${r.guest}</td>
+          <td><span class="pill p-blue">${r.agentName||agentName(r.agentId)}</span></td>
+          <td>${r.channel}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">"${r.msg||''}"</td>
+          <td>${fmt(r.ts)}</td>
+          <td class="down">${r.rt!=null?r.rt+'m':'No response'}</td>
+          <td>${SLA[r.channel]||SLA.default}m</td>
+          <td><span class="pill p-red">${r.reason}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:8px 16px;">
+      <span class="text-muted">Hostaway SLA = 5 min · WhatsApp SLA = 10 min · Scroll right for all columns →</span>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Breach distribution by agent</span></div>
+    <div class="chart-wrap"><canvas id="rcChart"></canvas></div>
+  </div>`;
+};
+
+// Patch r-first / r-avg / r-delays to use filtered data
+function filteredAgentTable(title){
+  const fm=filteredMessages();
+  if(!fm.length) return `<div class="panel">${emptyState('📭',title,'Import conversations and check your filters.')}</div>`;
+  const rows=store.agents.map(a=>{
+    const m=fm.filter(x=>x.agentId===a.id&&x.responded&&x.rt!=null);
+    const all=fm.filter(x=>x.agentId===a.id);
+    const delays=m.filter(x=>x.rt>SLA[x.channel]);
+    const avg=m.length?+(m.reduce((s,x)=>s+x.rt,0)/m.length).toFixed(1):0;
+    const slaHit=all.filter(x=>x.responded).length?Math.round(100*all.filter(x=>x.responded&&!x.breach).length/all.filter(x=>x.responded).length):0;
+    return `<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${avg?avg+'m':'—'}</td><td>${m.length?Math.min(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${m.length?Math.max(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${delays.length>0?`<span class="down">${delays.length}</span>`:0}</td><td>${slaHit?slaHit+'%':'—'}</td></tr>`;
+  });
+  return `<div class="panel">
+    <div class="ph"><span class="pt">${title}</span><button class="btn btn-sm" onclick="exportAgentReport()">Export CSV</button></div>
+    <div class="tw"><table><thead><tr><th>Agent</th><th>Avg</th><th>Best</th><th>Worst</th><th>Over SLA</th><th>SLA rate</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+  </div><div class="panel"><div class="ph"><span class="pt">Trend</span></div><div class="chart-wrap"><canvas id="rtChart"></canvas></div></div>`;
+}
+VIEWS['r-first']=()=>filteredAgentTable('First response time');
+VIEWS['r-avg']=()=>filteredAgentTable('Average response time');
+VIEWS['r-delays']=()=>filteredAgentTable('Delays over SLA threshold');
+
+/* ══════════════════════════════════════════
+   PATCH initCharts for new heatmap chart
+══════════════════════════════════════════ */
+const _origInitCharts = initCharts;
+function initCharts(v){
+  _origInitCharts(v);
+  if(v==='heatmap'){
+    const fm=filteredMessages();
+    const hourCounts=Array(24).fill(0);
+    fm.forEach(m=>{ hourCounts[new Date(m.ts).getHours()]++; });
+    mkChart('hourChart',{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+':00'),datasets:[{label:'Messages',data:hourCounts,backgroundColor:'#2563eb22',borderColor:'#2563eb',borderWidth:1.5,borderRadius:2,barPercentage:.7}]},options:{...CD,responsive:true}});
+  }
+}
+
+/* ══════════════════════════════════════════
+   PATCH render to populate filters after each render
+══════════════════════════════════════════ */
+const _origRender=render;
+window.render=function(v){
+  _origRender(v);
+  populateAgentFilter();
+  updateFilterCount();
+};
+
+/* ══════════════════════════════════════════
+   UPDATE LABELS map for new views
+══════════════════════════════════════════ */
+LBL.heatmap='Response heatmap';
+LBL.sentiment='Guest sentiment';
+
+/* ══════════════════════════════════════════
+   ADMIN — add SLA config + export section
+══════════════════════════════════════════ */
+const _adminOrig = VIEWS.admin;
+VIEWS.admin = () => {
+  const adminHtml = _adminOrig();
+  return adminHtml + `
+  <div class="panel">
+    <div class="ph"><span class="pt">SLA configuration</span></div>
+    <div class="pp">
+      <div class="form-row" style="max-width:400px;">
+        <div class="form-group"><label class="field-label">WhatsApp SLA (minutes)</label><input class="input" id="sla_wa" type="number" value="${SLA.WhatsApp}" min="1" max="60"></div>
+        <div class="form-group"><label class="field-label">Hostaway SLA (minutes)</label><input class="input" id="sla_ha" type="number" value="${SLA.Hostaway}" min="1" max="60"></div>
+      </div>
+      <button class="btn btn-primary" id="saveSLA">Save SLA targets</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Export reports</span></div>
+    <div class="pp" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="exportAgentReport()">Agent performance CSV</button>
+      <button class="btn" onclick="exportBreachReport()">SLA breaches CSV</button>
+      <button class="btn" onclick="exportMessages()">All messages CSV</button>
+    </div>
+  </div>`;
+};
+
+/* Wire SLA save in admin view */
+document.addEventListener('click', e=>{
+  if(e.target&&e.target.id==='saveSLA'){
+    const wa=parseInt(document.getElementById('sla_wa')?.value)||10;
+    const ha=parseInt(document.getElementById('sla_ha')?.value)||5;
+    SLA.WhatsApp=wa; SLA.Hostaway=ha;
+    store.slaConfig={WhatsApp:wa,Hostaway:ha};
+    saveLocal();
+    showToast(`SLA updated — WhatsApp: ${wa}m · Hostaway: ${ha}m`);
+  }
+});
+
+// Restore SLA config from store on load
+if(store.slaConfig){ SLA.WhatsApp=store.slaConfig.WhatsApp||10; SLA.Hostaway=store.slaConfig.Hostaway||5; }
+
+/* ══════════════════════════════════════════
+   OVERRIDE BOOT — re-render with patched render
+══════════════════════════════════════════ */
+window.render('overview');
+populateAgentFilter();
+updateFilterCount();
 
 })();
 </script>
