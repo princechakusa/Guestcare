@@ -541,11 +541,20 @@ const SLA     = { WhatsApp: 10, Hostaway: 5, default: 10 };
 const sb      = supabase.createClient(SB_URL, SB_KEY);
 
 /* ══════════════════════════════════════════
-   LOCAL STORE  — zero demo data
-   swap sb.from() calls for Appwrite if needed
+   LOCAL STORE  — always fresh, no demo data
+   Bump SK version whenever a schema change needs a clean slate
 ══════════════════════════════════════════ */
-const SK = 'gcc_v4';
-function blank(){ return { agents:[], messages:[], rootCause:[], importLog:[], users:[], kpi:{ avg:0, breaches:0, active:0, csat:0 } }; }
+const SK = 'gcc_v5';
+// Clear any stale data from previous versions
+['gcc_v4','gcc_v3','gcc_store_v1'].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
+
+function blank(){
+  return {
+    agents:[], messages:[], rootCause:[], importLog:[],
+    users:[], properties:[], reviews:[], slaConfig:null,
+    kpi:{ avg:0, breaches:0, active:0, csat:0 }
+  };
+}
 function load(){ try{ return JSON.parse(localStorage.getItem(SK)) || blank(); }catch(e){ return blank(); } }
 function saveLocal(){ try{ localStorage.setItem(SK, JSON.stringify(store)); }catch(e){} }
 let store = load();
@@ -563,23 +572,44 @@ function setPill(state){
 async function sbLoad(){
   setPill('...');
   try{
-    const [ag,ms,rc,il,us] = await Promise.all([
-      sb.from('gcc_agents').select('*'),
+    const [ag,ms,rc,il,us,pr,rv] = await Promise.all([
+      sb.from('gcc_agents').select('*').order('created_at',{ascending:true}),
       sb.from('gcc_messages').select('*').order('ts',{ascending:false}).limit(1000),
       sb.from('gcc_root_cause').select('*').order('ts',{ascending:false}),
-      sb.from('gcc_import_log').select('*').order('created_at',{ascending:false}).limit(30),
-      sb.from('gcc_users').select('*')
+      sb.from('gcc_import_log').select('*').order('created_at',{ascending:false}).limit(50),
+      sb.from('gcc_users').select('*'),
+      sb.from('gcc_properties').select('*').order('created_at',{ascending:true}),
+      sb.from('gcc_reviews').select('*').order('ts',{ascending:false}).limit(2000)
     ]);
-    if(ag.data)  store.agents     = ag.data;
-    if(ms.data)  store.messages   = ms.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
-    if(rc.data)  store.rootCause  = rc.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
-    if(il.data)  store.importLog  = il.data.map(r=>r.entry);
-    if(us.data)  store.users      = us.data.filter(u=>!u.locked); // master admin not in db
+    // Only overwrite local if Supabase returned rows — prevents blank wipe on empty DB
+    if(ag.data  && !ag.error)  store.agents     = ag.data;
+    if(ms.data  && !ms.error)  store.messages   = ms.data.map(r=>({...r, ts:new Date(r.ts).getTime(), agentId:r.agent_id}));
+    if(rc.data  && !rc.error)  store.rootCause  = rc.data.map(r=>({...r, ts:new Date(r.ts).getTime(), agentId:r.agent_id, agentName:r.agent_name}));    if(il.data  && !il.error)  store.importLog  = il.data.map(r=>r.entry).filter(Boolean);
+    if(us.data  && !us.error)  store.users      = us.data.filter(u=>u.id!=='master');
+    if(pr.data  && !pr.error)  store.properties = pr.data.map(r=>({
+      id:r.id, name:r.name, type:r.type, location:r.location,
+      beds:r.beds||0, hostawayId:r.hostaway_id||'', status:r.status||'Active',
+      notes:r.notes||'', createdAt:new Date(r.created_at||Date.now()).getTime()
+    }));
+    if(rv.data  && !rv.error)  store.reviews    = rv.data.map(r=>({
+      id:r.id, propertyId:r.property_id, guest:r.guest, score:r.score,
+      ts:new Date(r.ts||r.created_at).getTime(), channel:r.channel,
+      nationality:r.nationality, text:r.review_text, cleanliness:r.cleanliness,
+      communication:r.communication, checkin:r.checkin, accuracy:r.accuracy,
+      location:r.location, value:r.value, response:r.response
+    }));
+    if(store.slaConfig){ SLA.WhatsApp=store.slaConfig.WhatsApp||10; SLA.Hostaway=store.slaConfig.Hostaway||5; }
     recalcKPI();
     saveLocal();
     setPill('on');
     render(currentView);
-  }catch(e){ setPill('off'); console.warn('Supabase load:', e.message); }
+  }catch(e){
+    setPill('off');
+    console.warn('Supabase load error:', e.message);
+    // Still render with local cache
+    recalcKPI();
+    render(currentView);
+  }
 }
 
 async function sbPushMessages(rows){
@@ -1431,9 +1461,6 @@ document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render
 ══════════════════════════════════════════ */
 
 // Seed store if not present
-if(!store.properties) store.properties = [];
-if(!store.reviews)    store.reviews    = [];
-
 // ── helpers ──
 function starsHTML(score){
   const full = Math.round(score||0);
@@ -1454,30 +1481,37 @@ function grSearchFilter(items, query, fields){
 
 // ── Supabase sync for reviews module ──
 async function sbPushProperty(p){
-  try{ await sb.from('gcc_properties').upsert(p,{onConflict:'id'}); }catch(e){ console.warn('prop push',e.message); }
+  try{
+    await sb.from('gcc_properties').upsert({
+      id:p.id, name:p.name, type:p.type, location:p.location,
+      beds:p.beds||0, hostaway_id:p.hostawayId||null, status:p.status||'Active',
+      notes:p.notes||null
+    },{onConflict:'id'});
+  }catch(e){ console.warn('prop push',e.message); }
 }
 async function sbDeleteProperty(id){
   try{ await sb.from('gcc_properties').delete().eq('id',id); }catch(e){}
 }
 async function sbPushReview(r){
-  try{ await sb.from('gcc_reviews').upsert({...r, ts:new Date(r.ts).toISOString()},{onConflict:'id'}); }catch(e){ console.warn('review push',e.message); }
+  try{
+    await sb.from('gcc_reviews').upsert({
+      id:r.id, property_id:r.propertyId||null,
+      guest:r.guest||null, score:r.score||null,
+      ts:r.ts?new Date(r.ts).toISOString():new Date().toISOString(),
+      channel:r.channel||null, nationality:r.nationality||null,
+      review_text:r.text||null, cleanliness:r.cleanliness||null,
+      communication:r.communication||null, checkin:r.checkin||null,
+      accuracy:r.accuracy||null, location:r.location||null,
+      value:r.value||null, response:r.response||null
+    },{onConflict:'id'});
+  }catch(e){ console.warn('review push',e.message); }
 }
 async function sbDeleteReview(id){
   try{ await sb.from('gcc_reviews').delete().eq('id',id); }catch(e){}
 }
 
-// Pull properties and reviews from Supabase on load
-async function sbLoadReviews(){
-  try{
-    const [pr,rv] = await Promise.all([
-      sb.from('gcc_properties').select('*'),
-      sb.from('gcc_reviews').select('*').order('ts',{ascending:false})
-    ]);
-    if(pr.data && pr.data.length) store.properties = pr.data;
-    if(rv.data && rv.data.length) store.reviews    = rv.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
-    saveLocal();
-  }catch(e){ console.warn('review load', e.message); }
-}
+// sbLoadReviews merged into sbLoad — no longer needed separately
+function sbLoadReviews_noop(){}
 
 // Derived: average score per property
 function propAvgScore(propId){
@@ -1598,9 +1632,15 @@ window.grSaveProperty = function(){
   render('gr-properties');
 };
 
-/* ══════════════
-   REVIEW MODAL WIRING
-══════════════ */
+// Safe helper — used by Add Review button when no property filter is active
+window.grAddReviewClick = function(propId){
+  if(!store.properties.length){
+    showToast('Add a property first before adding reviews');
+    render('gr-properties');
+    return;
+  }
+  grOpenAddReview(propId || store.properties[0].id);
+};
 window.grOpenAddReview = function(propId){
   grReviewModal='add'; grEditId=null;
   showGrReviewModal({propertyId:propId});
@@ -1950,12 +1990,12 @@ function grReviewsView(){
         <option value="highest">Highest score</option>
         <option value="lowest">Lowest score</option>
       </select>
-      <button class="btn btn-primary" onclick="grOpenAddReview(${propFilter?`'${propFilter}'`:'store.properties[0]&&store.properties[0].id'})">+ Add review</button>
+      <button class="btn btn-primary" onclick="grAddReviewClick(${propFilter?`'${propFilter}'`:'null'})">+ Add review</button>
       <button class="btn btn-sm" onclick="exportReviewsCSV()">Export CSV</button>
       <span class="text-muted">${revs.length} review${revs.length===1?'':'s'}</span>
     </div>
     ${!store.reviews.length
-      ? emptyState('⭐','No reviews yet','Import a CSV from Hostaway or add reviews manually.','<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'gr-import\')">Import CSV</button><button class="btn" onclick="grOpenAddReview(store.properties[0]&&store.properties[0].id)">Add manually</button></div>')
+      ? emptyState('⭐','No reviews yet','Import a CSV from Hostaway or add reviews manually.','<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'gr-import\')">Import CSV</button><button class="btn" onclick="grAddReviewClick(null)">Add manually</button></div>')
       : !revs.length
       ? emptyState('🔍','No results','Try adjusting the filters above.')
       : revs.map(r=>{
@@ -2095,30 +2135,38 @@ Ocean Suite,Sara L.,2024-04-02,6.0,6.5,7.0,5.5,6.0,8.0,5.5,"Needs some maintenan
 };
 
 /* ══════════════
-   PATCH initCharts for analysis view
+   ANALYSIS CHARTS — gr-analysis view
 ══════════════ */
-const _origInitCharts2=initCharts;
-initCharts=function(v){
-  _origInitCharts2(v);
-  if(v==='gr-analysis'){
-    // Overall trend chart
-    const now=new Date(), monthLabels=[];
-    for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); monthLabels.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
-    const overallData=monthLabels.map(m=>{
-      const revs=store.reviews.filter(r=>{ const d=new Date(r.ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m&&r.score!=null; });
-      return revs.length?+(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2):null;
-    });
-    mkChart('overallTrendChart',{type:'line',data:{labels:monthLabels.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'});}),datasets:[{label:'Avg score',data:overallData,borderColor:'#2563eb',backgroundColor:'#2563eb18',fill:true,spanGaps:true}]},options:{...CD,responsive:true,scales:{...CD.scales,y:{...CD.scales.y,min:0,max:10}}}});
-
-    // Mini trend charts for attention properties
-    store.properties.forEach(p=>{
-      const monthly=propMonthlyScores(p.id);
-      if(monthly.length<2) return;
-      setTimeout(()=>{
-        mkChart('mini_'+p.id,{type:'line',data:{labels:monthly.map(m=>m.month),datasets:[{data:monthly.map(m=>m.avg),borderColor:propAvgScore(p.id)<8?'var(--red)':'var(--green)',borderWidth:1.5,tension:.4,pointRadius:0}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0,max:10}},elements:{line:{fill:false}}}});
-      },50);
-    });
-  }
+const _icBase = initCharts;
+initCharts = function(v){
+  _icBase(v);
+  if(v!=='gr-analysis') return;
+  const now=new Date(), mLabels=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); mLabels.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  const overallData=mLabels.map(m=>{
+    const revs=store.reviews.filter(r=>{ const d=new Date(r.ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m&&r.score!=null; });
+    return revs.length?+(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2):null;
+  });
+  mkChart('overallTrendChart',{
+    type:'line',
+    data:{
+      labels:mLabels.map(m=>{ const[y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
+      datasets:[{label:'Avg score',data:overallData,borderColor:'#2563eb',backgroundColor:'#2563eb18',fill:true,spanGaps:true}]
+    },
+    options:{...CD,responsive:true,scales:{...CD.scales,y:{...CD.scales.y,min:0,max:10}}}
+  });
+  // Mini sparklines for attention properties
+  store.properties.forEach(p=>{
+    const monthly=propMonthlyScores(p.id);
+    if(monthly.length<2) return;
+    setTimeout(()=>{
+      mkChart('mini_'+p.id,{
+        type:'line',
+        data:{labels:monthly.map(m=>m.month),datasets:[{data:monthly.map(m=>m.avg),borderColor:propAvgScore(p.id)<8?'#dc2626':'#16a34a',borderWidth:1.5,tension:.4,pointRadius:0}]},
+        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0,max:10}},elements:{line:{fill:false}}}
+      });
+    },80);
+  });
 };
 
 /* ══════════════
@@ -2127,8 +2175,10 @@ initCharts=function(v){
 const _origRender2=window.render;
 window.render=function(v){
   _origRender2(v);
-  if(['gr-import'].includes(v)) wireReviewImport();
-  populateAgentFilter(); updateFilterCount();
+  if(v==='gr-import')   wireReviewImport();
+  if(v==='gr-reviews')  wireReviewImport(); // re-wire drag zones
+  populateAgentFilter();
+  updateFilterCount();
 };
 
 LBL['gr-properties']='Properties';
@@ -2136,9 +2186,7 @@ LBL['gr-analysis']='Review analysis';
 LBL['gr-reviews']='Guest reviews';
 LBL['gr-import']='Import reviews';
 
-// Load reviews from Supabase on boot
-sbLoadReviews();
-
+// Single unified boot — loads all tables from Supabase
 document.querySelector('.sb-item[data-view="overview"]').classList.add('active');
 sbLoad();
 
@@ -2632,9 +2680,7 @@ document.addEventListener('click', e=>{
 // Restore SLA config from store on load
 if(store.slaConfig){ SLA.WhatsApp=store.slaConfig.WhatsApp||10; SLA.Hostaway=store.slaConfig.Hostaway||5; }
 
-/* ══════════════════════════════════════════
-   OVERRIDE BOOT — re-render with patched render
-══════════════════════════════════════════ */
+// Initial render with local cache (Supabase will re-render when loaded)
 window.render('overview');
 populateAgentFilter();
 updateFilterCount();
