@@ -219,8 +219,52 @@ tbody tr:hover td{background:var(--bg2)}
 /* Score ring */
 .score-ring{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:300;border:2px solid var(--border);flex-shrink:0}
 
-/* Property tag */
-.prop-tag{font-size:10px;color:var(--accent);background:var(--accent-bg);padding:1px 6px;border-radius:3px;margin-left:4px}
+/* Property card */
+.prop-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.prop-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.prop-name{font-size:12px;color:var(--text)}
+.prop-meta{font-size:10px;color:var(--text3)}
+.prop-score{display:flex;align-items:center;gap:4px;font-size:20px;font-weight:300;color:var(--text)}
+.stars{color:var(--amber);font-size:11px;letter-spacing:1px}
+.prop-bar-wrap{display:flex;flex-direction:column;gap:4px}
+.prop-bar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)}
+.prop-bar-track{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.prop-bar-fill{height:100%;border-radius:2px;background:var(--amber)}
+.prop-actions{display:flex;gap:4px;margin-top:2px}
+
+/* Review row */
+.review-row{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+.review-row:last-child{border-bottom:none}
+.review-score-badge{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:300;flex-shrink:0}
+.review-body{flex:1;min-width:0}
+.review-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+.review-guest{font-size:11px;color:var(--text)}
+.review-date{font-size:10px;color:var(--text3)}
+.review-text{font-size:11px;color:var(--text2);line-height:1.55;margin-bottom:5px}
+.review-footer{display:flex;align-items:center;gap:6px}
+
+/* Score colour helpers */
+.score-great{background:var(--green-bg);color:var(--green)}
+.score-good{background:#fef9c3;color:#a16207}
+.score-bad{background:var(--red-bg);color:var(--red)}
+
+/* Analysis cards */
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.analysis-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
+.analysis-card.attention{border-left:3px solid var(--red)}
+.analysis-card.good{border-left:3px solid var(--green)}
+.month-chart-wrap{padding:12px 16px 10px}
+
+/* Search bar in reviews */
+.gr-toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.gr-search{position:relative;flex:1;min-width:140px;max-width:280px}
+.gr-search svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+.gr-search .input{padding-left:26px;font-size:11px}
+
+/* Rating breakdown */
+.rating-row{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text3);margin-bottom:5px}
+.rating-row .bar{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.rating-row .fill{height:100%;background:var(--amber);border-radius:3px}
 
 .text-muted{font-size:10px;color:var(--text3)}
 code.ic{font-size:10px;background:var(--bg2);padding:1px 6px;border-radius:3px;font-family:monospace}
@@ -391,15 +435,15 @@ canvas{max-height:160px}
       <button class="sb-kid" data-view="ops-deepclean">Deep cleaning</button>
     </div>
 
-    <button class="sb-parent sb-item" data-parent="rev">
-      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5.5C5 4.1 6.3 3 8 3s3 1.1 3 2.5c0 1.3-1.1 2.1-3 2.5-2 .4-3 1.3-3 2.5C5 11.9 6.3 13 8 13s3-1.1 3-2.5"/></svg>Revenue</span>
+    <button class="sb-parent sb-item" data-parent="greviews">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.2 3.6H13l-3 2.2 1.1 3.5L8 9.2l-3.1 2.1 1.1-3.5-3-2.2h3.8z"/></svg>Guest reviews</span>
       <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
     </button>
-    <div class="sb-kids" id="ch-rev">
-      <button class="sb-kid" data-view="rev-upsell">Upsell</button>
-      <button class="sb-kid" data-view="rev-addon">Add-ons</button>
-      <button class="sb-kid" data-view="rev-leakage">Leakage</button>
-      <button class="sb-kid" data-view="rev-recovery">Recovery cost</button>
+    <div class="sb-kids" id="ch-greviews">
+      <button class="sb-kid" data-view="gr-properties">Properties</button>
+      <button class="sb-kid" data-view="gr-analysis">Analysis</button>
+      <button class="sb-kid" data-view="gr-reviews">Reviews</button>
+      <button class="sb-kid" data-view="gr-import">Import CSV</button>
     </div>
 
     <button class="sb-parent sb-item" data-parent="chan">
@@ -1014,11 +1058,11 @@ import: () => {
 'ops-inspections':()=>manualPanel('Inspections & audits','Room grading results','Log inspection scores per property.'),
 'ops-deepclean':()=>manualPanel('Deep cleaning schedule','Upcoming deep cleans','Connect property management system or log manually.'),
 
-// Revenue
-'rev-upsell':()=>manualPanel('Upsell conversions','Track upsell offers made and accepted per agent','Log upsell outcomes from agent conversations.'),
-'rev-addon':()=>manualPanel('Add-on revenue','Revenue from extras per agent','Log from booking system.'),
-'rev-leakage':()=>manualPanel('Revenue leakage','Refunds and compensation issued','Log refund amounts and reasons per agent.'),
-'rev-recovery':()=>manualPanel('Recovery cost','Emergency maintenance spend','Log maintenance invoices per property.'),
+// Guest Reviews module
+'gr-properties': () => grPropertiesView(),
+'gr-analysis':   () => grAnalysisView(),
+'gr-reviews':    () => grReviewsView(),
+'gr-import':     () => grImportView(),
 
 // Channel intel
 'chan-airbnb':()=>manualPanel('Airbnb performance','Bookings, response rate, CSAT from Airbnb','Connect Airbnb API in Integrations for live data.'),
@@ -1137,8 +1181,8 @@ function initCharts(v){
 /* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
-const CP={'r-first':'response','r-avg':'response','r-delays':'response','r-missed':'response','root-cause':'response','sat-reviews':'sat','sat-complaints':'sat','sat-nps':'sat','sat-repeat':'sat','sat-resolution':'sat','ops-closed':'ops','ops-active':'ops','ops-escalations':'ops','ops-maintenance':'ops','ops-inspections':'ops','ops-deepclean':'ops','rev-upsell':'rev','rev-addon':'rev','rev-leakage':'rev','rev-recovery':'rev','chan-airbnb':'chan','chan-booking':'chan','chan-direct':'chan','pro-prearrival':'pro','pro-midstay':'pro'};
-const LBL={overview:'Overview',agents:'Agents',import:'Import data','r-first':'First response','r-avg':'Average response','r-delays':'Delays','r-missed':'Missed','root-cause':'Root cause analysis','sat-reviews':'Reviews','sat-complaints':'Complaints','sat-nps':'NPS / CSAT','sat-repeat':'Repeat guests','sat-resolution':'Resolution','ops-closed':'Tickets closed','ops-active':'Active issues','ops-escalations':'Escalations','ops-maintenance':'Maintenance','ops-inspections':'Inspections','ops-deepclean':'Deep cleaning','rev-upsell':'Upsell','rev-addon':'Add-ons','rev-leakage':'Leakage','rev-recovery':'Recovery cost','chan-airbnb':'Airbnb','chan-booking':'Booking.com','chan-direct':'Direct','pro-prearrival':'Pre-arrival','pro-midstay':'Mid-stay',integrations:'Integrations',admin:'Admin',help:'Help'};
+const CP={'r-first':'response','r-avg':'response','r-delays':'response','r-missed':'response','root-cause':'response','sat-reviews':'sat','sat-complaints':'sat','sat-nps':'sat','sat-repeat':'sat','sat-resolution':'sat','ops-closed':'ops','ops-active':'ops','ops-escalations':'ops','ops-maintenance':'ops','ops-inspections':'ops','ops-deepclean':'ops','gr-properties':'greviews','gr-analysis':'greviews','gr-reviews':'greviews','gr-import':'greviews','chan-airbnb':'chan','chan-booking':'chan','chan-direct':'chan','pro-prearrival':'pro','pro-midstay':'pro'};
+const LBL={overview:'Overview',agents:'Agents',import:'Import data','r-first':'First response','r-avg':'Average response','r-delays':'Delays','r-missed':'Missed','root-cause':'Root cause analysis','sat-reviews':'Reviews','sat-complaints':'Complaints','sat-nps':'NPS / CSAT','sat-repeat':'Repeat guests','sat-resolution':'Resolution','ops-closed':'Tickets closed','ops-active':'Active issues','ops-escalations':'Escalations','ops-maintenance':'Maintenance','ops-inspections':'Inspections','ops-deepclean':'Deep cleaning','gr-properties':'Properties','gr-analysis':'Review analysis','gr-reviews':'Guest reviews','gr-import':'Import reviews','chan-airbnb':'Airbnb','chan-booking':'Booking.com','chan-direct':'Direct','pro-prearrival':'Pre-arrival','pro-midstay':'Mid-stay',heatmap:'Response heatmap',sentiment:'Guest sentiment',integrations:'Integrations',admin:'Admin',help:'Help'};
 
 let currentView='overview';
 let isAdmin = sessionStorage.getItem('gcc_admin')==='1';
@@ -1381,9 +1425,720 @@ document.querySelectorAll('.sb-kid[data-view]').forEach(b=>b.onclick=()=>render(
 document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render(b.dataset.view));
 
 /* ══════════════════════════════════════════
-   BOOT
+   GUEST REVIEWS MODULE
+   Data structures live in store.properties and store.reviews
+   Both persist in localStorage and sync to Supabase
 ══════════════════════════════════════════ */
-render('overview');
+
+// Seed store if not present
+if(!store.properties) store.properties = [];
+if(!store.reviews)    store.reviews    = [];
+
+// ── helpers ──
+function starsHTML(score){
+  const full = Math.round(score||0);
+  return Array(5).fill(0).map((_,i)=>i<full?'★':'☆').join('');
+}
+
+function scoreClass(s){
+  if(s>=4.5) return 'score-great';
+  if(s>=3.5) return 'score-good';
+  return 'score-bad';
+}
+
+function grSearchFilter(items, query, fields){
+  if(!query) return items;
+  const q = query.toLowerCase();
+  return items.filter(item => fields.some(f=>(item[f]||'').toLowerCase().includes(q)));
+}
+
+// ── Supabase sync for reviews module ──
+async function sbPushProperty(p){
+  try{ await sb.from('gcc_properties').upsert(p,{onConflict:'id'}); }catch(e){ console.warn('prop push',e.message); }
+}
+async function sbDeleteProperty(id){
+  try{ await sb.from('gcc_properties').delete().eq('id',id); }catch(e){}
+}
+async function sbPushReview(r){
+  try{ await sb.from('gcc_reviews').upsert({...r, ts:new Date(r.ts).toISOString()},{onConflict:'id'}); }catch(e){ console.warn('review push',e.message); }
+}
+async function sbDeleteReview(id){
+  try{ await sb.from('gcc_reviews').delete().eq('id',id); }catch(e){}
+}
+
+// Pull properties and reviews from Supabase on load
+async function sbLoadReviews(){
+  try{
+    const [pr,rv] = await Promise.all([
+      sb.from('gcc_properties').select('*'),
+      sb.from('gcc_reviews').select('*').order('ts',{ascending:false})
+    ]);
+    if(pr.data && pr.data.length) store.properties = pr.data;
+    if(rv.data && rv.data.length) store.reviews    = rv.data.map(r=>({...r, ts:new Date(r.ts).getTime()}));
+    saveLocal();
+  }catch(e){ console.warn('review load', e.message); }
+}
+
+// Derived: average score per property
+function propAvgScore(propId){
+  const revs = store.reviews.filter(r=>r.propertyId===propId&&r.score!=null);
+  return revs.length ? +(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2) : null;
+}
+
+function propReviewCount(propId){
+  return store.reviews.filter(r=>r.propertyId===propId).length;
+}
+
+// Month-over-month avg score per property
+function propMonthlyScores(propId){
+  const revs = store.reviews.filter(r=>r.propertyId===propId&&r.score!=null);
+  const byMonth={};
+  revs.forEach(r=>{
+    const d=new Date(r.ts), key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if(!byMonth[key]) byMonth[key]={sum:0,count:0};
+    byMonth[key].sum+=r.score; byMonth[key].count++;
+  });
+  return Object.entries(byMonth).sort().map(([m,v])=>({month:m, avg:+(v.sum/v.count).toFixed(2)}));
+}
+
+// Rating breakdown distribution (1–5 stars)
+function ratingDistribution(propId){
+  const revs = store.reviews.filter(r=>r.propertyId===propId&&r.score!=null);
+  const dist={1:0,2:0,3:0,4:0,5:0};
+  revs.forEach(r=>{ const s=Math.round(r.score); if(dist[s]!==undefined) dist[s]++; });
+  const total=revs.length||1;
+  return [5,4,3,2,1].map(star=>({star, count:dist[star], pct:Math.round(100*dist[star]/total)}));
+}
+
+// Category scores (if review has sub-scores)
+const REVIEW_CATS = ['cleanliness','communication','checkin','accuracy','location','value'];
+
+// ── Modal state for reviews module ──
+let grPropertyModal = null;  // 'add' | 'edit'
+let grReviewModal   = null;
+let grEditId        = null;
+
+/* ══════════════
+   PROPERTY MODAL WIRING (event delegation)
+══════════════ */
+window.grOpenAddProperty = function(){
+  grPropertyModal='add'; grEditId=null;
+  showGrPropertyModal({});
+};
+window.grOpenEditProperty = function(id){
+  const p=store.properties.find(x=>x.id===id); if(!p) return;
+  grPropertyModal='edit'; grEditId=id;
+  showGrPropertyModal(p);
+};
+window.grDeleteProperty = function(id){
+  const p=store.properties.find(x=>x.id===id);
+  if(!confirm(`Delete property "${p?p.name:id}"? All its reviews will also be deleted.`)) return;
+  store.properties=store.properties.filter(x=>x.id!==id);
+  store.reviews=store.reviews.filter(r=>r.propertyId!==id);
+  saveLocal(); sbDeleteProperty(id);
+  showToast('Property deleted'); render('gr-properties');
+};
+
+function showGrPropertyModal(p){
+  const existing = document.getElementById('grPropModal');
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.id='grPropModal'; div.className='modal-wrap';
+  div.innerHTML=`<div class="modal-box wide">
+    <div class="modal-title">${grPropertyModal==='add'?'Add property':'Edit property'}</div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Property name</label><input class="input" id="gp_name" value="${p.name||''}"></div>
+      <div class="form-group"><label class="field-label">Type</label>
+        <select class="select" id="gp_type">
+          ${['Apartment','Villa','Studio','Penthouse','Townhouse','Suite','Chalet'].map(t=>`<option${(p.type||'')==t?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Location / Area</label><input class="input" id="gp_location" value="${p.location||''}" placeholder="e.g. Dubai Marina"></div>
+      <div class="form-group"><label class="field-label">Bedrooms</label><input class="input" id="gp_beds" type="number" min="0" value="${p.beds||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Hostaway property ID (optional)</label><input class="input" id="gp_hostaway_id" value="${p.hostawayId||''}" placeholder="e.g. 12345"></div>
+      <div class="form-group"><label class="field-label">Status</label>
+        <select class="select" id="gp_status">
+          ${['Active','Inactive','Under maintenance'].map(s=>`<option${(p.status||'Active')===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="field-label">Notes</label><input class="input" id="gp_notes" value="${p.notes||''}" placeholder="Any extra info…"></div>
+    <div id="gp_err" style="font-size:10px;color:var(--red);min-height:14px"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('grPropModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="grSaveProperty()">Save property</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('gp_name').focus();
+}
+
+window.grSaveProperty = function(){
+  const name=document.getElementById('gp_name')?.value.trim();
+  if(!name){ document.getElementById('gp_err').textContent='Property name is required.'; return; }
+  const prop={
+    id: grEditId||'prop_'+Date.now(),
+    name, type:document.getElementById('gp_type').value,
+    location:document.getElementById('gp_location').value.trim(),
+    beds:parseInt(document.getElementById('gp_beds').value)||0,
+    hostawayId:document.getElementById('gp_hostaway_id').value.trim(),
+    status:document.getElementById('gp_status').value,
+    notes:document.getElementById('gp_notes').value.trim(),
+    createdAt: grEditId ? (store.properties.find(x=>x.id===grEditId)?.createdAt||Date.now()) : Date.now()
+  };
+  const idx=store.properties.findIndex(x=>x.id===prop.id);
+  if(idx>=0) store.properties[idx]=prop; else store.properties.push(prop);
+  saveLocal(); sbPushProperty(prop);
+  document.getElementById('grPropModal').remove();
+  showToast(grEditId?'Property updated':'Property added');
+  render('gr-properties');
+};
+
+/* ══════════════
+   REVIEW MODAL WIRING
+══════════════ */
+window.grOpenAddReview = function(propId){
+  grReviewModal='add'; grEditId=null;
+  showGrReviewModal({propertyId:propId});
+};
+window.grOpenEditReview = function(id){
+  const r=store.reviews.find(x=>x.id===id); if(!r) return;
+  grReviewModal='edit'; grEditId=id;
+  showGrReviewModal(r);
+};
+window.grDeleteReview = function(id){
+  if(!confirm('Delete this review?')) return;
+  store.reviews=store.reviews.filter(r=>r.id!==id);
+  saveLocal(); sbDeleteReview(id);
+  showToast('Review deleted'); render('gr-reviews');
+};
+
+function showGrReviewModal(r){
+  const existing=document.getElementById('grRevModal');
+  if(existing) existing.remove();
+  const props=store.properties;
+  const div=document.createElement('div');
+  div.id='grRevModal'; div.className='modal-wrap';
+  div.innerHTML=`<div class="modal-box wide">
+    <div class="modal-title">${grReviewModal==='add'?'Add review':'Edit review'}</div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Property</label>
+        <select class="select" id="gr_prop">${props.map(p=>`<option value="${p.id}"${p.id===(r.propertyId||'')?' selected':''}>${p.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label class="field-label">Overall score (1–10)</label>
+        <input class="input" id="gr_score" type="number" min="1" max="10" step="0.1" value="${r.score||''}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Guest name</label><input class="input" id="gr_guest" value="${r.guest||''}" placeholder="e.g. Maria G."></div>
+      <div class="form-group"><label class="field-label">Review date</label><input class="input" id="gr_date" type="date" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Channel</label>
+        <select class="select" id="gr_channel">
+          ${['Airbnb','Booking.com','Google','Direct','VRBO','Expedia'].map(c=>`<option${(r.channel||'')==c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="field-label">Nationality (optional)</label><input class="input" id="gr_nationality" value="${r.nationality||''}" placeholder="e.g. British"></div>
+    </div>
+    <div class="form-group"><label class="field-label">Review text</label>
+      <textarea class="input" id="gr_text" rows="3" style="resize:vertical">${r.text||''}</textarea>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em">Sub-scores (optional, 1–10 each)</div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Cleanliness</label><input class="input" id="gr_cleanliness" type="number" min="1" max="10" step="0.1" value="${r.cleanliness||''}"></div>
+      <div class="form-group"><label class="field-label">Communication</label><input class="input" id="gr_communication" type="number" min="1" max="10" step="0.1" value="${r.communication||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Check-in</label><input class="input" id="gr_checkin" type="number" min="1" max="10" step="0.1" value="${r.checkin||''}"></div>
+      <div class="form-group"><label class="field-label">Accuracy</label><input class="input" id="gr_accuracy" type="number" min="1" max="10" step="0.1" value="${r.accuracy||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Location</label><input class="input" id="gr_location" type="number" min="1" max="10" step="0.1" value="${r.location||''}"></div>
+      <div class="form-group"><label class="field-label">Value</label><input class="input" id="gr_value" type="number" min="1" max="10" step="0.1" value="${r.value||''}"></div>
+    </div>
+    <div class="form-group"><label class="field-label">Management response (optional)</label>
+      <textarea class="input" id="gr_response" rows="2" style="resize:vertical" placeholder="Your public response to this guest…">${r.response||''}</textarea>
+    </div>
+    <div id="gr_err" style="font-size:10px;color:var(--red);min-height:14px"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('grRevModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="grSaveReview()">Save review</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+window.grSaveReview = function(){
+  const score=parseFloat(document.getElementById('gr_score')?.value);
+  const propId=document.getElementById('gr_prop')?.value;
+  if(!propId){ document.getElementById('gr_err').textContent='Select a property.'; return; }
+  if(isNaN(score)||score<1||score>10){ document.getElementById('gr_err').textContent='Score must be between 1 and 10.'; return; }
+  const dateVal=document.getElementById('gr_date')?.value;
+  const numOrNull=id=>{ const v=parseFloat(document.getElementById(id)?.value); return isNaN(v)?null:v; };
+  const review={
+    id: grEditId||'rev_'+Date.now(),
+    propertyId:propId, score, guest:document.getElementById('gr_guest').value.trim(),
+    ts: dateVal ? new Date(dateVal).getTime() : Date.now(),
+    channel:document.getElementById('gr_channel').value,
+    nationality:document.getElementById('gr_nationality').value.trim(),
+    text:document.getElementById('gr_text').value.trim(),
+    cleanliness:numOrNull('gr_cleanliness'), communication:numOrNull('gr_communication'),
+    checkin:numOrNull('gr_checkin'), accuracy:numOrNull('gr_accuracy'),
+    location:numOrNull('gr_location'), value:numOrNull('gr_value'),
+    response:document.getElementById('gr_response').value.trim()
+  };
+  const idx=store.reviews.findIndex(r=>r.id===review.id);
+  if(idx>=0) store.reviews[idx]=review; else store.reviews.push(review);
+  saveLocal(); sbPushReview(review);
+  document.getElementById('grRevModal').remove();
+  showToast(grEditId?'Review updated':'Review added');
+  render('gr-reviews');
+};
+
+/* ══════════════
+   HOSTAWAY REVIEW CSV PARSER
+   Expected cols: property_name/property_id, guest_name, date, overall_score,
+   cleanliness, communication, checkin, accuracy, location, value, review_text, channel
+══════════════ */
+function parseReviewCSV(csvText){
+  const res = Papa.parse(csvText,{header:true,skipEmptyLines:true});
+  if(!res.data.length) return {error:'CSV is empty or has no rows.'};
+
+  const imported=[], skipped=[];
+  res.data.forEach((row,i)=>{
+    // Flexible column name matching
+    const propName = (row.property_name||row.Property||row.property||row.listing||row.Listing||'').trim();
+    const guest    = (row.guest_name||row.Guest||row.guest||row.reviewer||'').trim();
+    const dateStr  = row.date||row.Date||row.review_date||row.created_at||'';
+    const score    = parseFloat(row.overall_score||row.score||row.rating||row.Overall||'');
+    const text     = (row.review_text||row.Review||row.comment||row.text||'').trim();
+    const channel  = (row.channel||row.Channel||row.source||'Hostaway').trim();
+
+    if(!propName && !guest){ skipped.push(i+2); return; }
+
+    // Find or auto-create property
+    let prop = store.properties.find(p=>p.name.toLowerCase()===propName.toLowerCase()||p.hostawayId===String(row.property_id||''));
+    if(!prop && propName){
+      prop = {id:'prop_'+Date.now()+'_'+i, name:propName, type:'Apartment', location:'', beds:0, hostawayId:String(row.property_id||''), status:'Active', notes:'Auto-created from import', createdAt:Date.now()};
+      store.properties.push(prop);
+      sbPushProperty(prop);
+    }
+
+    const ts = dateStr ? new Date(dateStr).getTime() : Date.now();
+    const review={
+      id:'csv_'+(row.id||Date.now()+'_'+i),
+      propertyId: prop?prop.id:null,
+      score: isNaN(score)?null:score,
+      guest: guest||'Guest '+(i+1),
+      ts: isNaN(ts)?Date.now():ts,
+      channel,
+      nationality:(row.nationality||'').trim(),
+      text,
+      cleanliness:parseFloat(row.cleanliness)||null,
+      communication:parseFloat(row.communication)||null,
+      checkin:parseFloat(row.checkin||row.check_in)||null,
+      accuracy:parseFloat(row.accuracy)||null,
+      location:parseFloat(row.location)||null,
+      value:parseFloat(row.value)||null,
+      response:(row.response||row.host_response||'').trim()
+    };
+
+    if(!store.reviews.find(r=>r.id===review.id)) imported.push(review);
+  });
+
+  imported.forEach(r=>{ store.reviews.push(r); sbPushReview(r); });
+  saveLocal();
+  return {imported:imported.length, skipped:skipped.length, total:res.data.length};
+}
+
+/* ══════════════
+   GR VIEWS
+══════════════ */
+function grPropertiesView(){
+  const q=(document.getElementById('grPropSearch')?.value||'').toLowerCase();
+  const props=grSearchFilter(store.properties,q,['name','location','type']);
+
+  return `<div class="panel">
+    <div class="gr-toolbar">
+      <div class="gr-search">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+        <input class="input" id="grPropSearch" placeholder="Search properties…" value="${q}" oninput="render('gr-properties')">
+      </div>
+      <select class="select" id="grPropFilter" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-properties')">
+        <option value="">All types</option>
+        ${['Apartment','Villa','Studio','Penthouse','Townhouse','Suite','Chalet'].map(t=>`<option${(document.getElementById('grPropFilter')?.value||'')==t?' selected':''}>${t}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary" onclick="grOpenAddProperty()">+ Add property</button>
+      <span class="text-muted">${props.length} propert${props.length===1?'y':'ies'}</span>
+    </div>
+    ${!store.properties.length
+      ? emptyState('🏠','No properties yet','Add your properties to start tracking guest reviews per unit.','<div style="margin-top:12px;"><button class="btn btn-primary" onclick="grOpenAddProperty()">Add first property</button></div>')
+      : !props.length
+      ? emptyState('🔍','No results','Try a different search term.')
+      : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:14px 16px;">
+          ${props.map(p=>{
+            const avg=propAvgScore(p.id), cnt=propReviewCount(p.id);
+            const dist=ratingDistribution(p.id);
+            return `<div class="prop-card">
+              <div class="prop-card-top">
+                <div>
+                  <div class="prop-name">${p.name}</div>
+                  <div class="prop-meta">${p.type}${p.location?' · '+p.location:''} ${p.beds?'· '+p.beds+' bed':''}</div>
+                  <div class="prop-meta" style="margin-top:2px;">${p.status==='Active'?'<span class="pill p-green">Active</span>':p.status==='Inactive'?'<span class="pill p-gray">Inactive</span>':'<span class="pill p-amber">Maintenance</span>'}${p.hostawayId?` <span class="text-muted">HA: ${p.hostawayId}</span>`:''}</div>
+                </div>
+                <div style="text-align:right">
+                  ${avg!=null?`<div class="prop-score">${avg} <span style="font-size:12px;color:var(--text3)">/10</span></div><div class="stars">${starsHTML(avg/2)}</div>`:
+                  '<div class="text-muted">No reviews</div>'}
+                  <div class="text-muted" style="margin-top:2px">${cnt} review${cnt===1?'':'s'}</div>
+                </div>
+              </div>
+              ${cnt>0?`<div class="prop-bar-wrap">
+                ${dist.map(d=>`<div class="prop-bar-row"><span style="min-width:12px">${d.star}★</span><div class="prop-bar-track"><div class="prop-bar-fill" style="width:${d.pct}%"></div></div><span>${d.count}</span></div>`).join('')}
+              </div>`:''}
+              <div class="prop-actions">
+                <button class="btn btn-sm" onclick="grOpenEditProperty('${p.id}')">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="grDeleteProperty('${p.id}')">Delete</button>
+                <button class="btn btn-sm" onclick="render('gr-reviews');setTimeout(()=>{document.getElementById('grRevPropFilter')&&(document.getElementById('grRevPropFilter').value='${p.id}');render('gr-reviews');},50)">View reviews</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`}
+  </div>`;
+}
+
+function grAnalysisView(){
+  if(!store.properties.length) return `<div class="panel">${emptyState('📊','No properties yet','Add properties and import reviews to see analysis.')}</div>`;
+
+  const propsWithReviews = store.properties.filter(p=>propReviewCount(p.id)>0);
+  const propsNoReviews   = store.properties.filter(p=>propReviewCount(p.id)===0);
+
+  // Attention threshold: avg < 8.0 or has declined month-over-month
+  const attention=[], good=[];
+  propsWithReviews.forEach(p=>{
+    const avg=propAvgScore(p.id);
+    const monthly=propMonthlyScores(p.id);
+    const trend = monthly.length>=2 ? monthly[monthly.length-1].avg - monthly[monthly.length-2].avg : 0;
+    if(avg<8.0||trend<-0.5) attention.push({...p, avg, trend, monthly});
+    else good.push({...p, avg, trend, monthly});
+  });
+
+  // Best and worst performing categories across all reviews
+  const catTotals={cleanliness:[], communication:[], checkin:[], accuracy:[], location:[], value:[]};
+  store.reviews.forEach(r=>{ REVIEW_CATS.forEach(c=>{ if(r[c]!=null) catTotals[c].push(r[c]); }); });
+  const catAvgs=Object.entries(catTotals).map(([c,vals])=>({cat:c, avg:vals.length?+(vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(2):null, count:vals.length})).filter(x=>x.avg!=null);
+  catAvgs.sort((a,b)=>b.avg-a.avg);
+
+  // Month labels for last 6 months
+  const now=new Date(), monthLabels=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); monthLabels.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+
+  // Overall score trend across all properties
+  const overallMonthly=monthLabels.map(m=>{
+    const revs=store.reviews.filter(r=>{ const d=new Date(r.ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m && r.score!=null; });
+    return revs.length ? +(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2) : null;
+  });
+
+  return `
+  <!-- Summary strip -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total properties</div><div class="stat-val">${store.properties.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Properties with reviews</div><div class="stat-val">${propsWithReviews.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Need attention</div><div class="stat-val down">${attention.length}</div><div class="stat-sub">avg below 8.0 or declining</div></div>
+    <div class="stat-card"><div class="stat-label">Doing well</div><div class="stat-val up">${good.length}</div><div class="stat-sub">avg 8.0+ and stable or rising</div></div>
+  </div>
+
+  <!-- Overall trend chart -->
+  <div class="panel">
+    <div class="ph"><span class="pt">Overall average score — last 6 months</span></div>
+    <div class="chart-wrap"><canvas id="overallTrendChart"></canvas></div>
+  </div>
+
+  <!-- Properties needing attention -->
+  ${attention.length ? `<div class="panel">
+    <div class="ph"><span class="pt" style="color:var(--red)">⚠ Properties needing attention (${attention.length})</span></div>
+    <div class="analysis-grid" style="padding:14px 16px;">
+      ${attention.map(p=>`<div class="analysis-card attention">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div><div class="prop-name">${p.name}</div><div class="prop-meta">${p.type}${p.location?' · '+p.location:''}</div></div>
+          <div style="text-align:right"><div class="prop-score ${p.avg<7?'down':''}" style="font-size:18px">${p.avg}</div><div class="text-muted">/10</div></div>
+        </div>
+        ${p.trend!==0?`<div class="text-muted" style="margin-bottom:6px">${p.trend<0?'<span class="down">↓ Declining '+Math.abs(p.trend).toFixed(2)+'pts</span>':'<span class="up">↑ Improving</span>'} month-over-month</div>`:''}
+        ${p.monthly.length>1?`<div style="height:40px;position:relative"><canvas id="mini_${p.id}" style="max-height:40px"></canvas></div>`:'<div class="text-muted">Not enough data for trend</div>'}
+        <div class="prop-actions" style="margin-top:8px">
+          <button class="btn btn-sm" onclick="grOpenEditProperty('${p.id}')">Edit</button>
+          <button class="btn btn-sm" onclick="render('gr-reviews');setTimeout(()=>{const s=document.getElementById('grRevPropFilter');if(s){s.value='${p.id}';render('gr-reviews');}},50)">Reviews</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <!-- Properties doing well -->
+  ${good.length ? `<div class="panel">
+    <div class="ph"><span class="pt" style="color:var(--green)">✓ Doing well (${good.length})</span></div>
+    <div class="analysis-grid" style="padding:14px 16px;">
+      ${good.map(p=>`<div class="analysis-card good">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+          <div><div class="prop-name">${p.name}</div><div class="prop-meta">${p.type}${p.location?' · '+p.location:''}</div></div>
+          <div style="text-align:right"><div class="prop-score up" style="font-size:18px">${p.avg}</div><div class="text-muted">/10</div></div>
+        </div>
+        ${p.trend>0?`<div class="text-muted" style="margin-bottom:4px"><span class="up">↑ +${p.trend.toFixed(2)}pts</span> vs last month</div>`:''}
+        <div style="font-size:10px;color:var(--text3)">${propReviewCount(p.id)} reviews</div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <!-- Category breakdown -->
+  ${catAvgs.length ? `<div class="panel">
+    <div class="ph"><span class="pt">Category averages across all properties</span></div>
+    <div class="pp">
+      ${catAvgs.map(c=>`<div class="rating-row" style="margin-bottom:8px">
+        <span style="min-width:100px;text-transform:capitalize">${c.cat}</span>
+        <div class="bar"><div class="fill" style="width:${c.avg*10}%"></div></div>
+        <span style="min-width:32px;text-align:right">${c.avg}</span>
+        <span class="text-muted">${c.count} reviews</span>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  ${propsNoReviews.length ? `<div class="panel">
+    <div class="ph"><span class="pt">No reviews yet (${propsNoReviews.length})</span></div>
+    <div class="pp">${propsNoReviews.map(p=>`<span class="pill p-gray" style="margin:2px">${p.name}</span>`).join('')}</div>
+  </div>` : ''}`;
+}
+
+function grReviewsView(){
+  const propFilter = document.getElementById('grRevPropFilter')?.value||'';
+  const q          = (document.getElementById('grRevSearch')?.value||'').toLowerCase();
+  const sortBy     = document.getElementById('grRevSort')?.value||'newest';
+  const chanFilter = document.getElementById('grRevChan')?.value||'';
+
+  let revs = store.reviews.slice();
+  if(propFilter) revs=revs.filter(r=>r.propertyId===propFilter);
+  if(chanFilter) revs=revs.filter(r=>r.channel===chanFilter);
+  if(q) revs=revs.filter(r=>(r.guest||'').toLowerCase().includes(q)||(r.text||'').toLowerCase().includes(q));
+  if(sortBy==='newest') revs.sort((a,b)=>b.ts-a.ts);
+  else if(sortBy==='oldest') revs.sort((a,b)=>a.ts-b.ts);
+  else if(sortBy==='highest') revs.sort((a,b)=>(b.score||0)-(a.score||0));
+  else if(sortBy==='lowest') revs.sort((a,b)=>(a.score||10)-(b.score||10));
+
+  const props=store.properties;
+  const getPropName=pid=>{ const p=props.find(x=>x.id===pid); return p?p.name:'Unknown'; };
+  const channels=[...new Set(store.reviews.map(r=>r.channel).filter(Boolean))];
+
+  return `<div class="panel">
+    <div class="gr-toolbar">
+      <div class="gr-search">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+        <input class="input" id="grRevSearch" placeholder="Search guest or review…" value="${q}" oninput="render('gr-reviews')">
+      </div>
+      <select class="select" id="grRevPropFilter" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-reviews')">
+        <option value="">All properties</option>
+        ${props.map(p=>`<option value="${p.id}"${p.id===propFilter?' selected':''}>${p.name}</option>`).join('')}
+      </select>
+      <select class="select" id="grRevChan" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-reviews')">
+        <option value="">All channels</option>
+        ${channels.map(c=>`<option${c===chanFilter?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <select class="select" id="grRevSort" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-reviews')">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="highest">Highest score</option>
+        <option value="lowest">Lowest score</option>
+      </select>
+      <button class="btn btn-primary" onclick="grOpenAddReview(${propFilter?`'${propFilter}'`:'store.properties[0]&&store.properties[0].id'})">+ Add review</button>
+      <button class="btn btn-sm" onclick="exportReviewsCSV()">Export CSV</button>
+      <span class="text-muted">${revs.length} review${revs.length===1?'':'s'}</span>
+    </div>
+    ${!store.reviews.length
+      ? emptyState('⭐','No reviews yet','Import a CSV from Hostaway or add reviews manually.','<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'gr-import\')">Import CSV</button><button class="btn" onclick="grOpenAddReview(store.properties[0]&&store.properties[0].id)">Add manually</button></div>')
+      : !revs.length
+      ? emptyState('🔍','No results','Try adjusting the filters above.')
+      : revs.map(r=>{
+          const sc=r.score!=null?r.score:null;
+          const cls=sc!=null?(sc>=8?'score-great':sc>=6?'score-good':'score-bad'):'';
+          const subCats=[['Cleanliness',r.cleanliness],['Communication',r.communication],['Check-in',r.checkin],['Accuracy',r.accuracy],['Location',r.location],['Value',r.value]].filter(([,v])=>v!=null);
+          return `<div class="review-row">
+            <div class="review-score-badge ${cls}">${sc!=null?sc:'—'}</div>
+            <div class="review-body">
+              <div class="review-top">
+                <span class="review-guest">${r.guest||'Anonymous'} <span class="prop-tag">${getPropName(r.propertyId)}</span></span>
+                <span class="review-date">${r.ts?new Date(r.ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}):''} · ${r.channel||''}</span>
+              </div>
+              ${r.text?`<div class="review-text">"${r.text}"</div>`:''}
+              ${subCats.length?`<div class="review-footer">${subCats.map(([l,v])=>`<span class="text-muted">${l}: <span style="color:var(--text)">${v}</span></span>`).join(' · ')}</div>`:''}
+              ${r.response?`<div style="font-size:10px;color:var(--accent);margin-top:6px;padding:6px 8px;background:var(--accent-bg);border-radius:4px;line-height:1.5">Management: "${r.response}"</div>`:''}
+              <div class="review-footer" style="margin-top:6px">
+                <button class="btn btn-sm" onclick="grOpenEditReview('${r.id}')">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="grDeleteReview('${r.id}')">Delete</button>
+                ${r.nationality?`<span class="text-muted">${r.nationality}</span>`:''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+  </div>`;
+}
+
+function grImportView(){
+  return `<div class="panel">
+    <div class="ph"><span class="pt">Import reviews from Hostaway — CSV</span></div>
+    <div class="pp">
+      <div class="import-result info" style="margin-bottom:14px">
+        <strong style="font-size:11px;font-weight:500">Expected CSV columns</strong><br>
+        <span class="text-muted">Required: <code class="ic">property_name</code>, <code class="ic">guest_name</code>, <code class="ic">date</code>, <code class="ic">overall_score</code></span><br>
+        <span class="text-muted">Optional: <code class="ic">cleanliness</code>, <code class="ic">communication</code>, <code class="ic">checkin</code>, <code class="ic">accuracy</code>, <code class="ic">location</code>, <code class="ic">value</code>, <code class="ic">review_text</code>, <code class="ic">channel</code>, <code class="ic">nationality</code>, <code class="ic">response</code>, <code class="ic">property_id</code></span><br>
+        <span class="text-muted">Scores: 1–10 scale. New properties are auto-created from property_name if they don't exist yet.</span>
+      </div>
+      <label class="upload-zone" id="revCsvZone" style="margin-bottom:10px">
+        <input type="file" id="revCsvFile" accept=".csv">
+        <div class="upload-icon">⭐</div>
+        <div class="upload-lbl">Drop .csv file or click to browse</div>
+        <div class="upload-sub">Hostaway review export</div>
+      </label>
+      <div id="revCsvResult"></div>
+      <div id="revCsvPreview" style="display:none"></div>
+      <button class="btn btn-primary" id="revCsvParseBtn" style="width:100%;justify-content:center;margin-top:8px">Parse & preview</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Sample CSV format</span></div>
+    <div class="pp">
+      <div style="font-size:10px;font-family:monospace;background:var(--bg2);padding:10px;border-radius:4px;overflow-x:auto;white-space:pre;color:var(--text2)">property_name,guest_name,date,overall_score,cleanliness,communication,checkin,review_text,channel
+Ocean Suite,Maria G.,2024-03-15,9.2,9.5,10,9.0,"Beautiful apartment, great location",Airbnb
+Villa Azul,John D.,2024-03-18,8.5,8.0,9.0,8.5,"Comfortable stay, would return",Booking.com
+Ocean Suite,Sara L.,2024-04-02,6.0,6.5,7.0,5.5,"Needs some maintenance",Airbnb</div>
+      <button class="btn btn-sm" style="margin-top:8px" onclick="downloadSampleCSV()">Download sample CSV</button>
+    </div>
+  </div>
+  ${store.importLog.filter(l=>l.includes('review')).length?`<div class="panel"><div class="ph"><span class="pt">Review import history</span></div><div class="pp">${store.importLog.filter(l=>l.includes('review')||l.includes('Review')).slice(0,8).map(l=>`<div class="text-muted" style="margin-bottom:3px">· ${l}</div>`).join('')}</div></div>`:''}`;
+}
+
+/* ══════════════
+   WIRE REVIEW IMPORT + SAMPLE DOWNLOAD
+══════════════ */
+function wireReviewImport(){
+  const zone=document.getElementById('revCsvZone'); if(!zone) return;
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');const inp=zone.querySelector('input[type=file]');if(inp&&e.dataTransfer.files.length){const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);inp.files=dt.files;document.getElementById('revCsvResult').innerHTML=`<div class="import-result info">File selected: ${e.dataTransfer.files[0].name}</div>`;}});
+  const f=document.getElementById('revCsvFile');
+  if(f) f.onchange=()=>{ if(f.files[0]) document.getElementById('revCsvResult').innerHTML=`<div class="import-result info">File selected: ${f.files[0].name} (${(f.files[0].size/1024).toFixed(0)} KB)</div>`; };
+
+  const btn=document.getElementById('revCsvParseBtn');
+  if(!btn) return;
+  btn.onclick=()=>{
+    const file=document.getElementById('revCsvFile')?.files[0];
+    const res=document.getElementById('revCsvResult');
+    const prev=document.getElementById('revCsvPreview');
+    if(!file){res.innerHTML='<div class="import-result err">Select a .csv file first.</div>';return;}
+    res.innerHTML='<div class="import-result info">Parsing…</div>';
+    const rd=new FileReader();
+    rd.onload=e=>{
+      try{
+        // Parse for preview first without saving
+        const parsed=Papa.parse(e.target.result,{header:true,skipEmptyLines:true});
+        if(!parsed.data.length){res.innerHTML='<div class="import-result err">File is empty or cannot be parsed.</div>';return;}
+        res.innerHTML=`<div class="import-result ok">✓ ${parsed.data.length} rows found in file — review preview below then confirm</div>`;
+        prev.style.display='block';
+        prev.innerHTML=`<div style="font-size:11px;color:var(--text);margin:10px 0 6px">Preview — first 5 rows</div>
+          <div class="tw" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;margin-bottom:10px">
+            <table><thead><tr>${Object.keys(parsed.data[0]||{}).slice(0,8).map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${parsed.data.slice(0,5).map(row=>`<tr>${Object.values(row).slice(0,8).map(v=>`<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${v}</td>`).join('')}</tr>`).join('')}</tbody></table>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" id="revConfirmBtn">Confirm & import ${parsed.data.length} reviews</button>`;
+        document.getElementById('revConfirmBtn').onclick=()=>{
+          const result=parseReviewCSV(e.target.result);
+          if(result.error){res.innerHTML=`<div class="import-result err">${result.error}</div>`;return;}
+          const logEntry=new Date().toLocaleString()+' — Reviews import: '+result.imported+' imported, '+result.skipped+' skipped from '+file.name;
+          store.importLog.unshift(logEntry); sbLogImport(logEntry);
+          saveLocal();
+          prev.innerHTML=`<div class="import-result ok">✓ ${result.imported} reviews imported · ${result.skipped} skipped · Dashboard updated</div>`;
+          showToast(result.imported+' reviews imported');
+        };
+      }catch(err){res.innerHTML=`<div class="import-result err">Parse error: ${err.message}</div>`;}
+    };
+    rd.readAsText(file);
+  };
+}
+
+/* ══════════════
+   EXPORT REVIEWS CSV
+══════════════ */
+function exportReviewsCSV(){
+  const rows=store.reviews.map(r=>{
+    const p=store.properties.find(x=>x.id===r.propertyId);
+    return {
+      property:p?p.name:'',guest:r.guest||'',date:r.ts?new Date(r.ts).toISOString().slice(0,10):'',
+      overall_score:r.score||'',channel:r.channel||'',cleanliness:r.cleanliness||'',
+      communication:r.communication||'',checkin:r.checkin||'',accuracy:r.accuracy||'',
+      location:r.location||'',value:r.value||'',review_text:r.text||'',
+      nationality:r.nationality||'',response:r.response||''
+    };
+  });
+  exportCSV(rows,['property','guest','date','overall_score','channel','cleanliness','communication','checkin','accuracy','location','value','review_text','nationality','response'],'guest_reviews_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+/* ══════════════
+   SAMPLE CSV DOWNLOAD
+══════════════ */
+window.downloadSampleCSV = function(){
+  const csv=`property_name,guest_name,date,overall_score,cleanliness,communication,checkin,accuracy,location,value,review_text,channel,nationality,response
+Ocean Suite,Maria G.,2024-03-15,9.2,9.5,10,9.0,9.0,9.5,8.5,"Beautiful apartment, great location",Airbnb,British,"Thank you so much Maria!"
+Villa Azul,John D.,2024-03-18,8.5,8.0,9.0,8.5,8.0,9.0,8.0,"Comfortable stay, would return",Booking.com,German,""
+Ocean Suite,Sara L.,2024-04-02,6.0,6.5,7.0,5.5,6.0,8.0,5.5,"Needs some maintenance attention",Airbnb,American,"We apologise and are addressing this."`;
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sample_reviews.csv';a.click();URL.revokeObjectURL(a.href);
+};
+
+/* ══════════════
+   PATCH initCharts for analysis view
+══════════════ */
+const _origInitCharts2=initCharts;
+initCharts=function(v){
+  _origInitCharts2(v);
+  if(v==='gr-analysis'){
+    // Overall trend chart
+    const now=new Date(), monthLabels=[];
+    for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); monthLabels.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+    const overallData=monthLabels.map(m=>{
+      const revs=store.reviews.filter(r=>{ const d=new Date(r.ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m&&r.score!=null; });
+      return revs.length?+(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2):null;
+    });
+    mkChart('overallTrendChart',{type:'line',data:{labels:monthLabels.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'});}),datasets:[{label:'Avg score',data:overallData,borderColor:'#2563eb',backgroundColor:'#2563eb18',fill:true,spanGaps:true}]},options:{...CD,responsive:true,scales:{...CD.scales,y:{...CD.scales.y,min:0,max:10}}}});
+
+    // Mini trend charts for attention properties
+    store.properties.forEach(p=>{
+      const monthly=propMonthlyScores(p.id);
+      if(monthly.length<2) return;
+      setTimeout(()=>{
+        mkChart('mini_'+p.id,{type:'line',data:{labels:monthly.map(m=>m.month),datasets:[{data:monthly.map(m=>m.avg),borderColor:propAvgScore(p.id)<8?'var(--red)':'var(--green)',borderWidth:1.5,tension:.4,pointRadius:0}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0,max:10}},elements:{line:{fill:false}}}});
+      },50);
+    });
+  }
+};
+
+/* ══════════════
+   PATCH render for reviews module
+══════════════ */
+const _origRender2=window.render;
+window.render=function(v){
+  _origRender2(v);
+  if(['gr-import'].includes(v)) wireReviewImport();
+  populateAgentFilter(); updateFilterCount();
+};
+
+LBL['gr-properties']='Properties';
+LBL['gr-analysis']='Review analysis';
+LBL['gr-reviews']='Guest reviews';
+LBL['gr-import']='Import reviews';
+
+// Load reviews from Supabase on boot
+sbLoadReviews();
+
 document.querySelector('.sb-item[data-view="overview"]').classList.add('active');
 sbLoad();
 
