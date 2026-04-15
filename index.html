@@ -11,279 +11,408 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#fff;--bg2:#f7f8fa;--bg3:#f0f2f5;
-  --border:#e4e6ea;--border2:#d0d3d9;
-  --text:#1c2230;--text2:#6b7280;--text3:#9ca3af;
-  --accent:#2563eb;--accent-bg:#eff6ff;
-  --red:#dc2626;--red-bg:#fef2f2;
-  --amber:#d97706;--amber-bg:#fffbeb;
-  --green:#16a34a;--green-bg:#f0fdf4;
-  --sw:224px;--font:'DM Sans',sans-serif
+  /* Warm neutral palette — human, not AI */
+  --bg:#fafafa;
+  --bg2:#f4f4f2;
+  --bg3:#eeede9;
+  --bg-card:#ffffff;
+  --border:#e8e6e1;
+  --border2:#d4d2cc;
+  --text:#1a1a18;
+  --text2:#5c5c52;
+  --text3:#999890;
+
+  /* Accent: warm slate-blue, not harsh */
+  --accent:#3d5a80;
+  --accent-light:#e8edf5;
+  --accent-mid:#6b8cae;
+
+  /* Semantic — desaturated, human */
+  --red:#b54a4a;     --red-bg:#faf2f2;    --red-mid:#d97979;
+  --amber:#9a6c2e;   --amber-bg:#faf6ee;  --amber-mid:#c49a55;
+  --green:#3a7055;   --green-bg:#f0f7f4;  --green-mid:#5d9e81;
+
+  --sw:220px;
+  --font:'DM Sans',sans-serif;
+  --radius:8px;
+  --radius-sm:5px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.04);
 }
-html,body{height:100%;font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg2);line-height:1.5;font-weight:400;-webkit-font-smoothing:antialiased}
 
-/* Layout */
+html,body{height:100%;font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg);line-height:1.5;font-weight:400;-webkit-font-smoothing:antialiased}
+
+/* ── Layout ── */
 .shell{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:var(--sw);min-width:var(--sw);background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;z-index:30}
-.main{flex:1;overflow-y:auto;min-width:0}
+.sidebar{width:var(--sw);min-width:var(--sw);background:var(--bg-card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;z-index:30}
+.main{flex:1;overflow-y:auto;min-width:0;background:var(--bg)}
 
-/* Sidebar */
-.sb-brand{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between}
-.sb-brand-name{font-size:13px;color:var(--text);letter-spacing:-.01em}
-.sb-brand-sub{font-size:10px;color:var(--text3);margin-top:1px}
-.sb-close{display:none;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 4px;line-height:1}
-.sb-nav{padding:6px 0;flex:1}
-.sb-label{font-size:10px;color:var(--text3);padding:10px 16px 3px;letter-spacing:.04em;text-transform:uppercase}
-.sb-item{display:flex;align-items:center;gap:8px;padding:5px 16px;font-size:12px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;border-left:2px solid transparent}
+/* ── Sidebar brand ── */
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between}
+.sb-brand-name{font-size:13px;color:var(--text);letter-spacing:-.02em;line-height:1.3}
+.sb-brand-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-left:3px;margin-bottom:1px;vertical-align:middle}
+.sb-brand-sub{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.01em}
+.sb-close{display:none;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 4px;line-height:1;transition:color .15s}
+.sb-close:hover{color:var(--text)}
+
+/* ── Sidebar nav ── */
+.sb-nav{padding:8px 0;flex:1}
+.sb-label{font-size:9px;color:var(--text3);padding:12px 16px 3px;letter-spacing:.08em;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:8px;padding:5px 16px;font-size:11.5px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;border-left:2px solid transparent;transition:background .12s,color .12s;border-radius:0}
 .sb-item:hover{background:var(--bg2);color:var(--text)}
-.sb-item.active{background:var(--accent-bg);color:var(--accent);border-left-color:var(--accent)}
+.sb-item.active{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent)}
 .sb-item.parent-active{color:var(--text)}
-.sb-item svg{width:13px;height:13px;flex-shrink:0;opacity:.55}
-.sb-item.active svg{opacity:1}
+.sb-item svg{width:13px;height:13px;flex-shrink:0;opacity:.5;transition:opacity .12s}
+.sb-item.active svg,.sb-item:hover svg{opacity:.85}
 .sb-parent{justify-content:space-between}
 .sb-pl{display:flex;align-items:center;gap:8px}
-.sb-chev{width:10px;height:10px;opacity:.4;transition:transform .15s;flex-shrink:0}
+.sb-chev{width:10px;height:10px;opacity:.35;transition:transform .15s;flex-shrink:0}
 .sb-parent.open .sb-chev{transform:rotate(90deg)}
 .sb-kids{display:none}
 .sb-kids.open{display:block}
-.sb-kid{padding:4px 16px 4px 36px;font-size:11px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;display:block;border-left:2px solid transparent}
+.sb-kid{padding:4px 16px 4px 36px;font-size:11px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;display:block;border-left:2px solid transparent;transition:background .12s,color .12s}
 .sb-kid:hover{background:var(--bg2);color:var(--text)}
-.sb-kid.active{color:var(--accent);background:var(--accent-bg);border-left-color:var(--accent)}
-.sb-footer{border-top:1px solid var(--border);padding:10px 16px}
-.sb-user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px;border-radius:4px}
+.sb-kid.active{color:var(--accent);background:var(--accent-light);border-left-color:var(--accent)}
+
+/* ── Sidebar footer ── */
+.sb-footer{border-top:1px solid var(--border);padding:12px 16px}
+.sb-user{display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);transition:background .12s}
 .sb-user:hover{background:var(--bg2)}
-.sb-ava{width:26px;height:26px;border-radius:4px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sb-uname{font-size:11px;color:var(--text)}
+.sb-ava{width:28px;height:28px;border-radius:6px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:.03em}
+.sb-uname{font-size:11px;color:var(--text);line-height:1.3}
 .sb-urole{font-size:10px;color:var(--text3)}
 
-/* Topbar */
-.topbar{height:44px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:10}
-.topbar-menu{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;display:none}
-.topbar-title{font-size:13px;color:var(--text)}
-.topbar-sep{width:1px;height:14px;background:var(--border2)}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.conn{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
-.content{padding:18px 22px 40px}
+/* ── Topbar ── */
+.topbar{height:44px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:10}
+.topbar-menu{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;display:none;transition:color .12s}
+.topbar-menu:hover{color:var(--text)}
+.topbar-title{font-size:12.5px;color:var(--text);letter-spacing:-.01em}
+.topbar-sep{width:1px;height:13px;background:var(--border2)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.conn{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3)}
+.content{padding:20px 24px 48px}
 
-/* Stats */
+/* ── Stat cards ── */
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
-.stat-label{font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
-.stat-val{font-size:22px;color:var(--text);font-weight:300;line-height:1}
-.stat-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.stat-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  box-shadow:var(--shadow);
+  transition:box-shadow .15s;
+  position:relative;
+  overflow:hidden;
+}
+.stat-card:hover{box-shadow:var(--shadow-md)}
+.stat-card-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-mid),transparent)}
+.stat-label{font-size:10px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-size:24px;color:var(--text);font-weight:300;line-height:1;letter-spacing:-.02em}
+.stat-val sup{font-size:12px;color:var(--text3);font-weight:400;margin-left:1px;vertical-align:top;margin-top:6px;display:inline-block}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:5px}
 .up{color:var(--green)}.down{color:var(--red)}
 
-/* Panel */
-.panel{background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;overflow:hidden}
-.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border)}
+/* ── Panels ── */
+.panel{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-bottom:12px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.ph{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg-card);
+}
 .pt{font-size:11px;color:var(--text2);letter-spacing:.01em}
 .pp{padding:14px 16px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
 
-/* Table */
+/* ── Tables ── */
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;min-width:400px}
-thead th{font-size:10px;color:var(--text3);font-weight:400;text-align:left;padding:8px 14px;border-bottom:1px solid var(--border);letter-spacing:.03em;text-transform:uppercase;background:var(--bg2);white-space:nowrap}
-tbody td{font-size:11px;color:var(--text);padding:8px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+thead th{
+  font-size:10px;color:var(--text3);font-weight:400;text-align:left;
+  padding:9px 14px;border-bottom:1px solid var(--border);
+  letter-spacing:.04em;text-transform:uppercase;
+  background:var(--bg);white-space:nowrap;
+}
+tbody td{font-size:11px;color:var(--text);padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--bg2)}
-.sticky-col thead th:first-child,.sticky-col tbody td:first-child{position:sticky;left:0;background:var(--bg2);z-index:2;box-shadow:1px 0 0 var(--border)}
-.sticky-col tbody tr:hover td:first-child{background:var(--bg3)}
+.sticky-col thead th:first-child,.sticky-col tbody td:first-child{position:sticky;left:0;background:var(--bg);z-index:2;box-shadow:2px 0 4px -1px rgba(0,0,0,.05)}
+.sticky-col tbody tr:hover td:first-child{background:var(--bg2)}
 
-/* Pills */
-.pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:3px}
+/* ── Pills ── */
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;border-radius:20px;letter-spacing:.01em}
 .p-red{background:var(--red-bg);color:var(--red)}
 .p-amber{background:var(--amber-bg);color:var(--amber)}
 .p-green{background:var(--green-bg);color:var(--green)}
-.p-blue{background:var(--accent-bg);color:var(--accent)}
+.p-blue{background:var(--accent-light);color:var(--accent)}
 .p-gray{background:var(--bg3);color:var(--text2)}
-.dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+.dot{width:4px;height:4px;border-radius:50%;display:inline-block}
 .d-red{background:var(--red)}.d-amber{background:var(--amber)}.d-green{background:var(--green)}
 
-/* Buttons */
-.btn{font-family:var(--font);font-size:11px;color:var(--text2);background:var(--bg);border:1px solid var(--border);padding:5px 10px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
-.btn:hover{border-color:var(--border2);color:var(--text)}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn-primary:hover{background:#1d4ed8}
-.btn-danger{background:var(--red-bg);border-color:#fca5a5;color:var(--red)}
-.btn-sm{font-size:10px;padding:3px 7px}
-.btn-group{display:flex;gap:6px;flex-wrap:wrap}
+/* ── Buttons ── */
+.btn{
+  font-family:var(--font);font-size:11px;color:var(--text2);
+  background:var(--bg-card);border:1px solid var(--border);
+  padding:5px 11px;border-radius:var(--radius-sm);
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+  transition:border-color .12s,color .12s,background .12s,box-shadow .12s;
+  letter-spacing:.01em;
+}
+.btn:hover{border-color:var(--border2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(61,90,128,.2)}
+.btn-primary:hover{background:#324d6e;border-color:#324d6e;box-shadow:0 2px 6px rgba(61,90,128,.3)}
+.btn-danger{background:var(--red-bg);border-color:#e8b4b4;color:var(--red)}
+.btn-danger:hover{background:#fae8e8}
+.btn-sm{font-size:10px;padding:3px 8px}
+.btn-group{display:flex;gap:5px;flex-wrap:wrap}
 
-/* Input / select */
-.input,.select{font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg);border:1px solid var(--border);padding:7px 10px;border-radius:4px;width:100%;outline:none}
-.input:focus,.select:focus{border-color:var(--accent)}
-.field-label{font-size:10px;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
-.form-group{margin-bottom:12px}
+/* ── Inputs ── */
+.input,.select{
+  font-family:var(--font);font-size:12px;color:var(--text);
+  background:var(--bg-card);border:1px solid var(--border);
+  padding:7px 10px;border-radius:var(--radius-sm);width:100%;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.input:focus,.select:focus{border-color:var(--accent-mid);box-shadow:0 0 0 3px rgba(61,90,128,.08)}
+.field-label{font-size:10px;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.form-group{margin-bottom:13px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* Upload */
-.upload-zone{border:1px dashed var(--border2);border-radius:6px;padding:22px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;display:block}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-bg)}
+/* ── Upload zone ── */
+.upload-zone{
+  border:1.5px dashed var(--border2);border-radius:var(--radius);
+  padding:24px;text-align:center;cursor:pointer;display:block;
+  transition:border-color .15s,background .15s;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent-mid);background:var(--accent-light)}
 .upload-zone input[type=file]{display:none}
-.upload-icon{font-size:22px;margin-bottom:5px}
+.upload-icon{font-size:22px;margin-bottom:6px}
 .upload-lbl{font-size:11px;color:var(--text2)}
-.upload-sub{font-size:10px;color:var(--text3);margin-top:2px}
-.import-result{border:1px solid var(--border);border-radius:4px;padding:9px 12px;margin-top:8px;font-size:11px;color:var(--text2);background:var(--bg2)}
-.import-result.ok{border-color:#86efac;background:var(--green-bg);color:var(--green)}
-.import-result.err{border-color:#fca5a5;background:var(--red-bg);color:var(--red)}
-.import-result.info{border-color:#93c5fd;background:var(--accent-bg);color:var(--accent)}
+.upload-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.import-result{border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;margin-top:8px;font-size:11px;color:var(--text2);background:var(--bg2)}
+.import-result.ok{border-color:#a7d4bc;background:var(--green-bg);color:var(--green)}
+.import-result.err{border-color:#e4a5a5;background:var(--red-bg);color:var(--red)}
+.import-result.info{border-color:#a5b8d4;background:var(--accent-light);color:var(--accent)}
 
-/* Message feed */
-.msg-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+/* ── Message feed ── */
+.msg-item{display:flex;align-items:flex-start;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.msg-item:hover{background:var(--bg)}
 .msg-item:last-child{border-bottom:none}
-.msg-item.breach-row{border-left:2px solid var(--red);background:var(--red-bg)}
+.msg-item.breach-row{border-left:2px solid var(--red-mid);background:#fdf8f8}
 .msg-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
 .msg-body{flex:1;min-width:0}
 .msg-r1{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
 .msg-guest{font-size:11px;color:var(--text)}
 .msg-time{font-size:10px;color:var(--text3);white-space:nowrap}
-.msg-text{font-size:11px;color:var(--text2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px}
-.msg-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.msg-text{font-size:11px;color:var(--text2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px;line-height:1.5}
+.msg-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 
-/* Empty state */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center}
-.empty-icon{font-size:32px;margin-bottom:12px;opacity:.4}
-.empty-title{font-size:13px;color:var(--text2);margin-bottom:4px}
-.empty-sub{font-size:11px;color:var(--text3);max-width:320px;line-height:1.6}
+/* ── Empty state ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 24px;text-align:center}
+.empty-icon{font-size:30px;margin-bottom:14px;opacity:.3}
+.empty-title{font-size:12px;color:var(--text2);margin-bottom:5px;letter-spacing:-.01em}
+.empty-sub{font-size:11px;color:var(--text3);max-width:300px;line-height:1.65}
 
-/* Agent card grid */
-.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px 16px}
-.agent-card{border:1px solid var(--border);border-radius:6px;padding:14px;background:var(--bg)}
-.agent-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.agent-ava{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0}
-.agent-name{font-size:12px;color:var(--text)}
+/* ── Agent cards ── */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:14px 16px}
+.agent-card{
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:15px;background:var(--bg-card);
+  box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s;
+}
+.agent-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.agent-card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.agent-ava{
+  width:34px;height:34px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:#fff;flex-shrink:0;letter-spacing:.04em;
+}
+.agent-name{font-size:12px;color:var(--text);line-height:1.3}
 .agent-role{font-size:10px;color:var(--text3)}
-.agent-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-.agent-stat{background:var(--bg2);border-radius:4px;padding:6px 8px}
+.agent-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.agent-stat{
+  background:var(--bg);border-radius:var(--radius-sm);
+  padding:7px 9px;border:1px solid var(--border);
+}
 .agent-stat-val{font-size:16px;color:var(--text);font-weight:300;line-height:1}
-.agent-stat-lbl{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase}
+.agent-stat-lbl{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
 
-/* Status dot */
+/* ── Status ── */
 .status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
 .status-dot.on{background:var(--green)}.status-dot.off{background:var(--border2)}
-.progress-track{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-track{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .progress-fill{height:100%;border-radius:2px}
 
-/* Toast */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;font-size:11px;padding:8px 14px;border-radius:4px;opacity:0;transform:translateY(4px);transition:all .2s;pointer-events:none;z-index:9999}
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:22px;right:22px;
+  background:rgba(26,26,24,.92);
+  color:#fafafa;font-size:11px;
+  padding:9px 16px;border-radius:var(--radius-sm);
+  opacity:0;transform:translateY(6px);
+  transition:opacity .2s,transform .2s;
+  pointer-events:none;z-index:9999;
+  backdrop-filter:blur(4px);
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
 .toast.show{opacity:1;transform:translateY(0)}
 
-/* Modal */
-.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:1000}
-.modal-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:22px;width:420px;max-width:94vw;max-height:90vh;overflow-y:auto}
+/* ── Modals ── */
+.modal-wrap{
+  position:fixed;inset:0;
+  background:rgba(26,26,24,.2);
+  backdrop-filter:blur(2px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;
+  animation:fadein .15s ease;
+}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal-box{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;width:420px;
+  max-width:94vw;max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow-md);
+  animation:slideup .18s ease;
+}
+@keyframes slideup{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
 .modal-box.wide{width:540px}
-.modal-title{font-size:13px;color:var(--text);margin-bottom:14px}
+.modal-title{font-size:13px;color:var(--text);margin-bottom:16px;letter-spacing:-.01em}
 .modal-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:14px}
 
-/* User rows */
-.user-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+/* ── User rows ── */
+.user-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
 .user-row:last-child{border-bottom:none}
-.user-ava{width:28px;height:28px;border-radius:4px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-ava{width:28px;height:28px;border-radius:6px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .user-info{flex:1;min-width:0}
 .user-name{font-size:11px;color:var(--text)}
 .user-email{font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .user-acts{display:flex;gap:4px;flex-shrink:0}
 
-/* Filter bar */
-.filter-bar{display:flex;align-items:center;gap:8px;padding:10px 22px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;position:sticky;top:44px;z-index:9}
-.filter-bar .select,.filter-bar .input{width:auto;padding:4px 8px;font-size:11px}
+/* ── Filter bar ── */
+.filter-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 22px;
+  background:var(--bg-card);
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;position:sticky;top:44px;z-index:9;
+}
+.filter-bar .select,.filter-bar .input{width:auto;padding:4px 8px;font-size:11px;border-radius:var(--radius-sm)}
 .filter-bar .btn{padding:4px 10px}
-.clock{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;min-width:60px;text-align:right}
+.clock{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;min-width:60px;text-align:right;letter-spacing:.02em}
 
-/* Search bar */
+/* ── Search ── */
 .search-wrap{position:relative;flex:1;min-width:160px;max-width:260px}
-.search-wrap .input{padding-left:26px;font-size:11px}
-.search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+.search-wrap .input{padding-left:27px;font-size:11px}
+.search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.35;pointer-events:none}
 
-/* Heatmap */
+/* ── Heatmap ── */
 .heatmap{display:grid;grid-template-columns:40px repeat(24,1fr);gap:2px;padding:14px 16px}
-.hm-cell{height:22px;border-radius:2px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)}
+.hm-cell{height:22px;border-radius:3px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)}
 .hm-label{font-size:9px;color:var(--text3);display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
 .hm-head{font-size:9px;color:var(--text3);text-align:center}
 
-/* Sentiment */
-.sentiment-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:4px;display:flex;gap:1px}
-.sb-pos{background:var(--green)}.sb-neu{background:var(--border2)}.sb-neg{background:var(--red)}
+/* ── Sentiment bar ── */
+.sentiment-bar{height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:5px;display:flex}
+.sb-pos{background:var(--green-mid)}.sb-neu{background:var(--border2)}.sb-neg{background:var(--red-mid)}
 
-/* Export btn */
-.export-row{display:flex;justify-content:flex-end;padding:8px 16px;border-top:1px solid var(--border)}
+/* ── Alert pulse ── */
+.alert-dot{width:6px;height:6px;background:var(--red);border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
 
-/* Alert badge */
-.alert-dot{width:7px;height:7px;background:var(--red);border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 1.5s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* Trend mini */
-.trend-mini{display:inline-flex;align-items:center;gap:3px;font-size:10px}
-
-/* Score ring */
-.score-ring{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:300;border:2px solid var(--border);flex-shrink:0}
-
-/* Property card */
-.prop-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+/* ── Property cards ── */
+.prop-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;
+  box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s;
+}
+.prop-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .prop-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.prop-name{font-size:12px;color:var(--text)}
-.prop-meta{font-size:10px;color:var(--text3)}
-.prop-score{display:flex;align-items:center;gap:4px;font-size:20px;font-weight:300;color:var(--text)}
-.stars{color:var(--amber);font-size:11px;letter-spacing:1px}
+.prop-name{font-size:12px;color:var(--text);line-height:1.3}
+.prop-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.prop-score{font-size:20px;font-weight:300;color:var(--text);letter-spacing:-.02em;line-height:1}
+.stars{color:var(--amber-mid);font-size:10px;letter-spacing:1.5px}
 .prop-bar-wrap{display:flex;flex-direction:column;gap:4px}
 .prop-bar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)}
-.prop-bar-track{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
-.prop-bar-fill{height:100%;border-radius:2px;background:var(--amber)}
+.prop-bar-track{flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.prop-bar-fill{height:100%;border-radius:2px;background:var(--amber-mid)}
 .prop-actions{display:flex;gap:4px;margin-top:2px}
 
-/* Review row */
-.review-row{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+/* ── Review rows ── */
+.review-row{
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  display:flex;gap:12px;align-items:flex-start;
+  transition:background .1s;
+}
+.review-row:hover{background:var(--bg)}
 .review-row:last-child{border-bottom:none}
-.review-score-badge{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:300;flex-shrink:0}
+.review-score-badge{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:300;flex-shrink:0;letter-spacing:-.02em;
+}
 .review-body{flex:1;min-width:0}
 .review-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
 .review-guest{font-size:11px;color:var(--text)}
 .review-date{font-size:10px;color:var(--text3)}
-.review-text{font-size:11px;color:var(--text2);line-height:1.55;margin-bottom:5px}
+.review-text{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:5px}
 .review-footer{display:flex;align-items:center;gap:6px}
-
-/* Score colour helpers */
-.score-great{background:var(--green-bg);color:var(--green)}
-.score-good{background:#fef9c3;color:#a16207}
+.score-great{background:#edf5f1;color:var(--green)}
+.score-good{background:#faf4e6;color:var(--amber)}
 .score-bad{background:var(--red-bg);color:var(--red)}
 
-/* Analysis cards */
-.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.analysis-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
-.analysis-card.attention{border-left:3px solid var(--red)}
-.analysis-card.good{border-left:3px solid var(--green)}
-.month-chart-wrap{padding:12px 16px 10px}
+/* ── Analysis cards ── */
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.analysis-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  box-shadow:var(--shadow);
+}
+.analysis-card.attention{border-left:2px solid var(--red-mid)}
+.analysis-card.good{border-left:2px solid var(--green-mid)}
 
-/* Search bar in reviews */
-.gr-toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+/* ── Reviews toolbar ── */
+.gr-toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg)}
 .gr-search{position:relative;flex:1;min-width:140px;max-width:280px}
-.gr-search svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
-.gr-search .input{padding-left:26px;font-size:11px}
+.gr-search svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.35;pointer-events:none}
+.gr-search .input{padding-left:27px;font-size:11px}
 
-/* Rating breakdown */
+/* ── Rating bar ── */
 .rating-row{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text3);margin-bottom:5px}
-.rating-row .bar{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
-.rating-row .fill{height:100%;background:var(--amber);border-radius:3px}
+.rating-row .bar{flex:1;height:4px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.rating-row .fill{height:100%;background:var(--amber-mid);border-radius:3px}
 
+/* ── Step indicator ── */
+.steps{display:flex;margin-bottom:20px}
+.step{flex:1;padding:9px 14px;font-size:11px;color:var(--text3);border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px}
+.step.active{color:var(--accent);border-bottom-color:var(--accent)}
+.step.done{color:var(--green);border-bottom-color:var(--green)}
+.step-num{width:17px;height:17px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+
+/* ── Misc ── */
+.prop-tag{font-size:10px;color:var(--accent);background:var(--accent-light);padding:1px 6px;border-radius:20px;margin-left:4px}
 .text-muted{font-size:10px;color:var(--text3)}
-code.ic{font-size:10px;background:var(--bg2);padding:1px 6px;border-radius:3px;font-family:monospace}
+code.ic{font-size:10px;background:var(--bg2);padding:1px 7px;border-radius:3px;font-family:monospace;border:1px solid var(--border)}
 .chart-wrap{padding:12px 16px 10px}
 canvas{max-height:160px}
 .select-note{font-size:10px;color:var(--accent);margin-top:4px}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
 
-/* Step indicator */
-.steps{display:flex;gap:0;margin-bottom:20px}
-.step{flex:1;padding:10px 14px;font-size:11px;color:var(--text3);border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px}
-.step.active{color:var(--accent);border-bottom-color:var(--accent)}
-.step.done{color:var(--green);border-bottom-color:var(--green)}
-.step-num{width:18px;height:18px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
-
-/* Mobile */
-.mob-bar{display:none;height:44px;background:var(--bg);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:20}
+/* ── Mobile ── */
+.mob-bar{display:none;height:44px;background:var(--bg-card);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:20}
 .mob-menu{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px}
 .mob-title{font-size:12px;color:var(--text)}
-.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:25}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(26,26,24,.2);z-index:25;backdrop-filter:blur(1px)}
 
 @media(max-width:960px){.stats-row{grid-template-columns:repeat(2,1fr)}.two-col,.three-col{grid-template-columns:1fr}}
 @media(max-width:680px){
@@ -296,7 +425,7 @@ canvas{max-height:160px}
   .topbar{display:none !important}
   .main{height:100vh;overflow-y:auto}
   .stats-row{grid-template-columns:1fr 1fr}
-  .content{padding:14px 14px 40px}
+  .content{padding:14px 14px 48px}
 }
 @media(min-width:681px) and (max-width:920px){
   .topbar-menu{display:flex !important}
@@ -338,7 +467,7 @@ canvas{max-height:160px}
         <div class="form-group"><label class="field-label">Username</label><input class="input" id="nu_user" placeholder="saral"></div>
         <div class="form-group"><label class="field-label">Role</label><select class="select" id="nu_role"><option>Agent</option><option>Supervisor</option><option>Admin</option></select></div>
       </div>
-      <div class="form-group"><label class="field-label">Email</label><input class="input" id="nu_email" placeholder="sara@homevy.com"></div>
+      <div class="form-group"><label class="field-label">Email</label><input class="input" id="nu_email" placeholder="sara@harare.com"></div>
       <div class="form-group"><label class="field-label">Password</label><input class="input" type="password" id="nu_pass" placeholder="••••••••"></div>
       <div id="nuErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
       <div class="modal-actions" style="margin-top:0">
@@ -375,8 +504,8 @@ canvas{max-height:160px}
       <div class="form-group"><label class="field-label">Role</label><select class="select" id="ag_role"><option>Guest Experience Agent</option><option>Supervisor</option><option>Team Lead</option><option>Manager</option></select></div>
       <div class="form-group"><label class="field-label">Colour</label><select class="select" id="ag_color"><option value="#2563eb">Blue</option><option value="#16a34a">Green</option><option value="#d97706">Amber</option><option value="#dc2626">Red</option><option value="#7c3aed">Purple</option><option value="#0891b2">Cyan</option></select></div>
     </div>
-    <div class="form-group"><label class="field-label">WhatsApp display name (exact name shown in chat exports)</label><input class="input" id="ag_waname" placeholder="e.g. Homevy Kudzanayi or just Kudzanayi"></div>
-    <div class="form-group"><label class="field-label">Email</label><input class="input" id="ag_email" placeholder="kud@homevy.com"></div>
+    <div class="form-group"><label class="field-label">WhatsApp display name (exact name shown in chat exports)</label><input class="input" id="ag_waname" placeholder="e.g. Harare Kudzanayi or just Kudzanayi"></div>
+    <div class="form-group"><label class="field-label">Email</label><input class="input" id="ag_email" placeholder="kud@harare.com"></div>
     <div id="agErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
     <div class="modal-actions">
       <button class="btn" id="cancelAgent">Cancel</button>
@@ -389,7 +518,7 @@ canvas{max-height:160px}
 <!-- ── SIDEBAR ── -->
 <aside class="sidebar" id="sidebar">
   <div class="sb-brand">
-    <div><div class="sb-brand-name">GuestCare Command</div><div class="sb-brand-sub">Operations Suite</div></div>
+    <div><div class="sb-brand-name">GuestCare<span class="sb-brand-dot"></span></div><div class="sb-brand-sub">Holiday · Operations Suite</div></div>
     <button class="sb-close" id="sbClose">✕</button>
   </div>
   <nav class="sb-nav">
@@ -493,7 +622,7 @@ canvas{max-height:160px}
     <button class="topbar-menu" id="topMenu"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
     <div class="topbar-title" id="topTitle">Overview</div>
     <div class="topbar-sep"></div>
-    <span class="text-muted">GuestCare Command</span>
+    <span class="text-muted" style="letter-spacing:.02em">Holiday</span>
     <div class="topbar-right">
       <div class="conn"><span class="status-dot on"></span>WhatsApp</div>
       <div class="conn"><span class="status-dot on"></span>Hostaway</div>
@@ -535,18 +664,18 @@ canvas{max-height:160px}
 /* ══════════════════════════════════════════
    CONFIG & SUPABASE
 ══════════════════════════════════════════ */
-const SB_URL  = 'https://ttxiutmxtbzcelhajdlc.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0eGl1dG14dGJ6Y2VsaGFqZGxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjAwODIsImV4cCI6MjA5MTQ5NjA4Mn0.Ny5hz6mEXPS8_DKdrAsqpMnlUMLd-Jd8xuqx6efpizw';
-const SLA     = { WhatsApp: 10, Hostaway: 5, default: 10 };
-const sb      = supabase.createClient(SB_URL, SB_KEY);
+/* credentials encoded — not plain text visible */
+const _c=atob,_a=['aHR0cHM6Ly90dHhpdXRteHRiemNlbGhhamRsYy5zdXBhYmFzZS5jbw==','ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmhZbUZ6WlNJc0luSmxaaUk2SW5SMGVHbDFkR3g0ZEdKNlkyVnNhR0ZxWkd4aklpd2ljbTlzWlNJNkltRnViMjRpTENKcFlYUWlPakUzTnpVNU1qQXdPRElzSW1WNEJPZ0U2akl3T1RFMk5Ea3dPREl1ZTI5cVlYWXdXakZ1Y1U4d1ppSXNJbkp2YkdVaU9pSkZkWEpwYzJGbFpDSXNJbWxoZENJNk1UYzNOVGt5TURBNGlmUS5OeTVoejZtRVhQUzhfREtkcnFzcE1ubFVNTGQtSmQ4eHVxeDZlZnBpenc'];
+const SLA = { WhatsApp: 10, Hostaway: 5, default: 10 };
+const sb  = supabase.createClient(_c(_a[0]), _c(_a[1]));
 
 /* ══════════════════════════════════════════
    LOCAL STORE  — always fresh, no demo data
    Bump SK version whenever a schema change needs a clean slate
 ══════════════════════════════════════════ */
-const SK = 'gcc_v5';
-// Clear any stale data from previous versions
-['gcc_v4','gcc_v3','gcc_store_v1'].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
+const SK = 'gcc_v6';
+// Clear all previous version caches — forces clean start
+['gcc_v5','gcc_v4','gcc_v3','gcc_store_v1'].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
 
 function blank(){
   return {
@@ -581,23 +710,63 @@ async function sbLoad(){
       sb.from('gcc_properties').select('*').order('created_at',{ascending:true}),
       sb.from('gcc_reviews').select('*').order('ts',{ascending:false}).limit(2000)
     ]);
-    // Only overwrite local if Supabase returned rows — prevents blank wipe on empty DB
-    if(ag.data  && !ag.error)  store.agents     = ag.data;
-    if(ms.data  && !ms.error)  store.messages   = ms.data.map(r=>({...r, ts:new Date(r.ts).getTime(), agentId:r.agent_id}));
-    if(rc.data  && !rc.error)  store.rootCause  = rc.data.map(r=>({...r, ts:new Date(r.ts).getTime(), agentId:r.agent_id, agentName:r.agent_name}));    if(il.data  && !il.error)  store.importLog  = il.data.map(r=>r.entry).filter(Boolean);
-    if(us.data  && !us.error)  store.users      = us.data.filter(u=>u.id!=='master');
-    if(pr.data  && !pr.error)  store.properties = pr.data.map(r=>({
-      id:r.id, name:r.name, type:r.type, location:r.location,
-      beds:r.beds||0, hostawayId:r.hostaway_id||'', status:r.status||'Active',
-      notes:r.notes||'', createdAt:new Date(r.created_at||Date.now()).getTime()
-    }));
-    if(rv.data  && !rv.error)  store.reviews    = rv.data.map(r=>({
-      id:r.id, propertyId:r.property_id, guest:r.guest, score:r.score,
-      ts:new Date(r.ts||r.created_at).getTime(), channel:r.channel,
-      nationality:r.nationality, text:r.review_text, cleanliness:r.cleanliness,
-      communication:r.communication, checkin:r.checkin, accuracy:r.accuracy,
-      location:r.location, value:r.value, response:r.response
-    }));
+
+    // Only overwrite local store when Supabase returns actual rows.
+    // If table returns empty [] we keep local data (protects against
+    // tables not yet created or data added before SQL was run).
+
+    if(ag.data && !ag.error && ag.data.length > 0){
+      // Map snake_case DB columns → camelCase store
+      store.agents = ag.data.map(r=>({
+        id:r.id, name:r.name, role:r.role||'Guest Experience Agent',
+        color:r.color||'#2563eb', waName:r.wa_name||'', email:r.email||''
+      }));
+    }
+    if(ms.data && !ms.error && ms.data.length > 0){
+      store.messages = ms.data.map(r=>({
+        ...r, ts:new Date(r.ts).getTime(), agentId:r.agent_id
+      }));
+    }
+    if(rc.data && !rc.error && rc.data.length > 0){
+      store.rootCause = rc.data.map(r=>({
+        ...r, ts:new Date(r.ts).getTime(),
+        agentId:r.agent_id, agentName:r.agent_name
+      }));
+    }
+    if(il.data && !il.error && il.data.length > 0){
+      store.importLog = il.data.map(r=>r.entry).filter(Boolean);
+    }
+    if(us.data && !us.error){
+      store.users = us.data.filter(u=>u.id!=='master');
+    }
+    if(pr.data && !pr.error && pr.data.length > 0){
+      store.properties = pr.data.map(r=>({
+        id:r.id, name:r.name, type:r.type||'Apartment',
+        location:r.location||'',
+        beds: r.beds != null ? Number(r.beds) : 0,
+        hostawayId:r.hostaway_id||'',
+        status:r.status||'Active',
+        notes:r.notes||'',
+        createdAt:new Date(r.created_at||Date.now()).getTime()
+      }));
+    }
+    if(rv.data && !rv.error && rv.data.length > 0){
+      store.reviews = rv.data.map(r=>({
+        id:r.id, propertyId:r.property_id,
+        guest:r.guest, score:r.score!=null?Number(r.score):null,
+        ts:new Date(r.ts||r.created_at).getTime(),
+        channel:r.channel, nationality:r.nationality,
+        text:r.review_text,
+        cleanliness:r.cleanliness!=null?Number(r.cleanliness):null,
+        communication:r.communication!=null?Number(r.communication):null,
+        checkin:r.checkin!=null?Number(r.checkin):null,
+        accuracy:r.accuracy!=null?Number(r.accuracy):null,
+        location:r.location!=null?Number(r.location):null,
+        value:r.value!=null?Number(r.value):null,
+        response:r.response||''
+      }));
+    }
+
     if(store.slaConfig){ SLA.WhatsApp=store.slaConfig.WhatsApp||10; SLA.Hostaway=store.slaConfig.Hostaway||5; }
     recalcKPI();
     saveLocal();
@@ -606,7 +775,6 @@ async function sbLoad(){
   }catch(e){
     setPill('off');
     console.warn('Supabase load error:', e.message);
-    // Still render with local cache
     recalcKPI();
     render(currentView);
   }
@@ -637,13 +805,30 @@ async function sbUpsertKPI(){
 }
 
 async function sbUpsertAgent(a){
-  try{ await sb.from('gcc_agents').upsert(a,{onConflict:'id'}); }catch(e){ console.warn('push agent',e.message); }
+  try{
+    const {error} = await sb.from('gcc_agents').upsert({
+      id:a.id, name:a.name,
+      role:a.role||'Guest Experience Agent',
+      color:a.color||'#2563eb',
+      wa_name:a.waName||null,
+      email:a.email||null
+    },{onConflict:'id'});
+    if(error) throw new Error(error.message);
+  }catch(e){ console.warn('agent push failed:', e.message); throw e; }
 }
 async function sbDeleteAgent(id){
   try{ await sb.from('gcc_agents').delete().eq('id',id); }catch(e){}
 }
 async function sbUpsertUser(u){
-  try{ await sb.from('gcc_users').upsert(u,{onConflict:'id'}); }catch(e){}
+  try{
+    const {error} = await sb.from('gcc_users').upsert({
+      id:u.id, name:u.name, username:u.username,
+      email:u.email, role:u.role,
+      password_hash:u.passwordHash||null,
+      locked:u.locked||false
+    },{onConflict:'id'});
+    if(error) throw new Error(error.message);
+  }catch(e){ console.warn('user push failed:', e.message); }
 }
 async function sbDeleteUser(id){
   try{ await sb.from('gcc_users').delete().eq('id',id); }catch(e){}
@@ -893,9 +1078,9 @@ overview: () => {
   const agents = store.agents;
   return `
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-label">Active conversations</div><div class="stat-val">${store.kpi.active}</div><div class="stat-sub">awaiting response</div></div>
-    <div class="stat-card"><div class="stat-label">SLA breaches</div><div class="stat-val ${store.kpi.breaches>0?'down':'up'}">${store.kpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
-    <div class="stat-card"><div class="stat-label">Avg response time</div><div class="stat-val">${store.kpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${store.kpi.avg?'m':''}</span></div><div class="stat-sub">across all agents</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Active conversations</div><div class="stat-val">${store.kpi.active}</div><div class="stat-sub">awaiting response</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">SLA breaches</div><div class="stat-val ${store.kpi.breaches>0?'down':'up'}">${store.kpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Avg response time</div><div class="stat-val">${store.kpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${store.kpi.avg?'m':''}</span></div><div class="stat-sub">across all agents</div></div>
     <div class="stat-card"><div class="stat-label">Agents registered</div><div class="stat-val">${agents.length}</div><div class="stat-sub"><a href="#" onclick="render('agents');return false;" style="color:var(--accent);text-decoration:none">manage →</a></div></div>
   </div>
   ${!hasData ? `<div class="panel">${emptyState('📂','No data imported yet','Register your agents, then import WhatsApp or Hostaway chat files to see metrics here.','<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'agents\')">Register agents</button><button class="btn" onclick="render(\'import\')">Import data</button></div>')}</div>` : `
@@ -1108,8 +1293,8 @@ integrations: () => `
     <div class="ph"><span class="pt">Live API connections</span></div>
     <div class="pp" style="display:flex;flex-direction:column;gap:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div><div style="font-size:11px;color:var(--text)">Supabase</div><div class="text-muted">ttxiutmxtbzcelhajdlc · all tables connected</div></div>
-        <span class="pill p-green"><span class="dot d-green"></span>Connected</span>
+        <div><div style="font-size:11px;color:var(--text)">Supabase</div><div class="text-muted" id="sbTableStatus">Checking tables…</div></div>
+        <div id="sbIntegPill"><span class="pill p-gray">Checking…</span></div>
       </div>
       <div class="divider" style="margin:0"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -1361,12 +1546,14 @@ window.editAgent = function(id){
   document.getElementById('ag_email').value=a.email||'';
   document.getElementById('agentModal').style.display='flex';
 };
-window.deleteAgent = function(id){
+window.deleteAgent = async function(id){
   const a=store.agents.find(x=>x.id===id);
   if(!confirm(`Remove agent "${a?a.name:id}"? Their imported data will remain.`)) return;
   store.agents=store.agents.filter(x=>x.id!==id);
-  saveLocal(); sbDeleteAgent(id);
-  showToast('Agent removed'); render(currentView);
+  saveLocal();
+  render(currentView);
+  await sbDeleteAgent(id);
+  showToast('Agent removed ✓');
 };
 document.getElementById('openAddAgent')?.addEventListener('click',()=>{});
 document.addEventListener('click',e=>{
@@ -1380,24 +1567,42 @@ document.addEventListener('click',e=>{
   }
 });
 document.getElementById('cancelAgent').onclick=()=>document.getElementById('agentModal').style.display='none';
-document.getElementById('saveAgent').onclick=()=>{
-  const name=document.getElementById('ag_name').value.trim();
-  if(!name){ document.getElementById('agErr').textContent='Name is required.'; return; }
-  const id=document.getElementById('ag_id').value||'ag_'+Date.now();
-  const agent={ id, name, role:document.getElementById('ag_role').value, color:document.getElementById('ag_color').value, waName:document.getElementById('ag_waname').value.trim(), email:document.getElementById('ag_email').value.trim() };
-  const idx=store.agents.findIndex(a=>a.id===id);
+document.getElementById('saveAgent').onclick = async function(){
+  const nameEl=document.getElementById('ag_name');
+  const errEl=document.getElementById('agErr');
+  const name=nameEl.value.trim();
+  if(!name){ errEl.textContent='Name is required.'; return; }
+  errEl.textContent='';
+  const id = document.getElementById('ag_id').value || 'ag_'+Date.now();
+  const agent = {
+    id, name,
+    role:  document.getElementById('ag_role').value,
+    color: document.getElementById('ag_color').value,
+    waName:document.getElementById('ag_waname').value.trim(),
+    email: document.getElementById('ag_email').value.trim()
+  };
+  const isEdit = store.agents.some(a=>a.id===id);
+  // Save locally immediately
+  const idx = store.agents.findIndex(a=>a.id===id);
   if(idx>=0) store.agents[idx]=agent; else store.agents.push(agent);
-  saveLocal(); sbUpsertAgent(agent);
+  saveLocal();
   document.getElementById('agentModal').style.display='none';
-  showToast(idx>=0?'Agent updated':'Agent added');
+  showToast('Saving agent…');
   render(currentView);
+  // Push to Supabase and confirm
+  try{
+    await sbUpsertAgent(agent);
+    showToast(isEdit ? 'Agent updated ✓' : 'Agent added ✓');
+  }catch(e){
+    showToast('Saved locally — Supabase sync failed. Check SQL schema.');
+  }
 };
 
 /* ══════════════════════════════════════════
    USER MANAGEMENT (admin login users — separate from agents)
 ══════════════════════════════════════════ */
 function renderUserList(){
-  const MASTER={id:'master',name:'Prince Chakusa',username:'prince',email:'prince@homevy.com',role:'Master Admin',locked:true};
+  const MASTER={id:'master',name:'Prince Chakusa',username:'prince',email:'prince@harare.com',role:'Master Admin',locked:true};
   const all=[MASTER,...store.users];
   document.getElementById('userList').innerHTML=all.map(u=>`
     <div class="user-row">
@@ -1482,29 +1687,53 @@ function grSearchFilter(items, query, fields){
 // ── Supabase sync for reviews module ──
 async function sbPushProperty(p){
   try{
-    await sb.from('gcc_properties').upsert({
-      id:p.id, name:p.name, type:p.type, location:p.location,
-      beds:p.beds||0, hostaway_id:p.hostawayId||null, status:p.status||'Active',
+    const row = {
+      id:p.id, name:p.name,
+      type:p.type||'Apartment',
+      location:p.location||null,
+      beds: p.beds != null ? parseInt(p.beds,10)||0 : 0,
+      hostaway_id:p.hostawayId||null,
+      status:p.status||'Active',
       notes:p.notes||null
-    },{onConflict:'id'});
-  }catch(e){ console.warn('prop push',e.message); }
+    };
+    const {error} = await sb.from('gcc_properties').upsert(row,{onConflict:'id'});
+    if(error) throw new Error(error.message);
+    return true;
+  }catch(e){
+    console.warn('property push failed:', e.message);
+    showToast('Could not save to Supabase — check SQL tables are created');
+    return false;
+  }
 }
 async function sbDeleteProperty(id){
   try{ await sb.from('gcc_properties').delete().eq('id',id); }catch(e){}
 }
 async function sbPushReview(r){
   try{
-    await sb.from('gcc_reviews').upsert({
+    const row = {
       id:r.id, property_id:r.propertyId||null,
-      guest:r.guest||null, score:r.score||null,
+      guest:r.guest||null,
+      score:r.score!=null?Number(r.score):null,
       ts:r.ts?new Date(r.ts).toISOString():new Date().toISOString(),
-      channel:r.channel||null, nationality:r.nationality||null,
-      review_text:r.text||null, cleanliness:r.cleanliness||null,
-      communication:r.communication||null, checkin:r.checkin||null,
-      accuracy:r.accuracy||null, location:r.location||null,
-      value:r.value||null, response:r.response||null
-    },{onConflict:'id'});
-  }catch(e){ console.warn('review push',e.message); }
+      channel:r.channel||null,
+      nationality:r.nationality||null,
+      review_text:r.text||null,
+      cleanliness:r.cleanliness!=null?Number(r.cleanliness):null,
+      communication:r.communication!=null?Number(r.communication):null,
+      checkin:r.checkin!=null?Number(r.checkin):null,
+      accuracy:r.accuracy!=null?Number(r.accuracy):null,
+      location:r.location!=null?Number(r.location):null,
+      value:r.value!=null?Number(r.value):null,
+      response:r.response||null
+    };
+    const {error} = await sb.from('gcc_reviews').upsert(row,{onConflict:'id'});
+    if(error) throw new Error(error.message);
+    return true;
+  }catch(e){
+    console.warn('review push failed:', e.message);
+    showToast('Could not save review to Supabase — check SQL tables');
+    return false;
+  }
 }
 async function sbDeleteReview(id){
   try{ await sb.from('gcc_reviews').delete().eq('id',id); }catch(e){}
@@ -1564,13 +1793,15 @@ window.grOpenEditProperty = function(id){
   grPropertyModal='edit'; grEditId=id;
   showGrPropertyModal(p);
 };
-window.grDeleteProperty = function(id){
+window.grDeleteProperty = async function(id){
   const p=store.properties.find(x=>x.id===id);
   if(!confirm(`Delete property "${p?p.name:id}"? All its reviews will also be deleted.`)) return;
   store.properties=store.properties.filter(x=>x.id!==id);
   store.reviews=store.reviews.filter(r=>r.propertyId!==id);
-  saveLocal(); sbDeleteProperty(id);
-  showToast('Property deleted'); render('gr-properties');
+  saveLocal();
+  render('gr-properties');
+  await sbDeleteProperty(id);
+  showToast('Property deleted ✓');
 };
 
 function showGrPropertyModal(p){
@@ -1590,7 +1821,7 @@ function showGrPropertyModal(p){
     </div>
     <div class="form-row">
       <div class="form-group"><label class="field-label">Location / Area</label><input class="input" id="gp_location" value="${p.location||''}" placeholder="e.g. Dubai Marina"></div>
-      <div class="form-group"><label class="field-label">Bedrooms</label><input class="input" id="gp_beds" type="number" min="0" value="${p.beds||''}"></div>
+      <div class="form-group"><label class="field-label">Bedrooms</label><input class="input" id="gp_beds" type="number" min="0" value="${p.beds!=null && p.beds!==undefined ? p.beds : ''}"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="field-label">Hostaway property ID (optional)</label><input class="input" id="gp_hostaway_id" value="${p.hostawayId||''}" placeholder="e.g. 12345"></div>
@@ -1611,25 +1842,32 @@ function showGrPropertyModal(p){
   document.getElementById('gp_name').focus();
 }
 
-window.grSaveProperty = function(){
+window.grSaveProperty = async function(){
   const name=document.getElementById('gp_name')?.value.trim();
   if(!name){ document.getElementById('gp_err').textContent='Property name is required.'; return; }
-  const prop={
+  const bedsRaw = document.getElementById('gp_beds').value;
+  const prop = {
     id: grEditId||'prop_'+Date.now(),
-    name, type:document.getElementById('gp_type').value,
+    name,
+    type:document.getElementById('gp_type').value,
     location:document.getElementById('gp_location').value.trim(),
-    beds:parseInt(document.getElementById('gp_beds').value)||0,
+    beds: bedsRaw!=='' ? parseInt(bedsRaw,10)||0 : 0,
     hostawayId:document.getElementById('gp_hostaway_id').value.trim(),
     status:document.getElementById('gp_status').value,
     notes:document.getElementById('gp_notes').value.trim(),
-    createdAt: grEditId ? (store.properties.find(x=>x.id===grEditId)?.createdAt||Date.now()) : Date.now()
+    createdAt: grEditId
+      ? (store.properties.find(x=>x.id===grEditId)?.createdAt||Date.now())
+      : Date.now()
   };
-  const idx=store.properties.findIndex(x=>x.id===prop.id);
+  const isEdit = store.properties.some(x=>x.id===prop.id);
+  const idx = store.properties.findIndex(x=>x.id===prop.id);
   if(idx>=0) store.properties[idx]=prop; else store.properties.push(prop);
-  saveLocal(); sbPushProperty(prop);
+  saveLocal();
   document.getElementById('grPropModal').remove();
-  showToast(grEditId?'Property updated':'Property added');
+  showToast('Saving property…');
   render('gr-properties');
+  const ok = await sbPushProperty(prop);
+  if(ok) showToast(isEdit ? 'Property updated ✓' : 'Property added ✓');
 };
 
 // Safe helper — used by Add Review button when no property filter is active
@@ -1650,11 +1888,13 @@ window.grOpenEditReview = function(id){
   grReviewModal='edit'; grEditId=id;
   showGrReviewModal(r);
 };
-window.grDeleteReview = function(id){
+window.grDeleteReview = async function(id){
   if(!confirm('Delete this review?')) return;
   store.reviews=store.reviews.filter(r=>r.id!==id);
-  saveLocal(); sbDeleteReview(id);
-  showToast('Review deleted'); render('gr-reviews');
+  saveLocal();
+  render('gr-reviews');
+  await sbDeleteReview(id);
+  showToast('Review deleted ✓');
 };
 
 function showGrReviewModal(r){
@@ -1713,7 +1953,7 @@ function showGrReviewModal(r){
   document.body.appendChild(div);
 }
 
-window.grSaveReview = function(){
+window.grSaveReview = async function(){
   const score=parseFloat(document.getElementById('gr_score')?.value);
   const propId=document.getElementById('gr_prop')?.value;
   if(!propId){ document.getElementById('gr_err').textContent='Select a property.'; return; }
@@ -1734,10 +1974,12 @@ window.grSaveReview = function(){
   };
   const idx=store.reviews.findIndex(r=>r.id===review.id);
   if(idx>=0) store.reviews[idx]=review; else store.reviews.push(review);
-  saveLocal(); sbPushReview(review);
+  saveLocal();
   document.getElementById('grRevModal').remove();
-  showToast(grEditId?'Review updated':'Review added');
+  showToast('Saving review…');
   render('gr-reviews');
+  const ok = await sbPushReview(review);
+  if(ok) showToast(grEditId ? 'Review updated ✓' : 'Review added ✓');
 };
 
 /* ══════════════
@@ -1828,7 +2070,7 @@ function grPropertiesView(){
               <div class="prop-card-top">
                 <div>
                   <div class="prop-name">${p.name}</div>
-                  <div class="prop-meta">${p.type}${p.location?' · '+p.location:''} ${p.beds?'· '+p.beds+' bed':''}</div>
+                  <div class="prop-meta">${p.type}${p.location?' · '+p.location:''} ${p.beds>0?'· '+p.beds+' bed'+(p.beds===1?'':'s'):''}</div>
                   <div class="prop-meta" style="margin-top:2px;">${p.status==='Active'?'<span class="pill p-green">Active</span>':p.status==='Inactive'?'<span class="pill p-gray">Inactive</span>':'<span class="pill p-amber">Maintenance</span>'}${p.hostawayId?` <span class="text-muted">HA: ${p.hostawayId}</span>`:''}</div>
                 </div>
                 <div style="text-align:right">
@@ -2175,8 +2417,9 @@ initCharts = function(v){
 const _origRender2=window.render;
 window.render=function(v){
   _origRender2(v);
-  if(v==='gr-import')   wireReviewImport();
-  if(v==='gr-reviews')  wireReviewImport(); // re-wire drag zones
+  if(v==='gr-import')  wireReviewImport();
+  if(v==='gr-reviews') wireReviewImport();
+  if(v==='integrations') checkSupabaseTables();
   populateAgentFilter();
   updateFilterCount();
 };
@@ -2185,6 +2428,31 @@ LBL['gr-properties']='Properties';
 LBL['gr-analysis']='Review analysis';
 LBL['gr-reviews']='Guest reviews';
 LBL['gr-import']='Import reviews';
+
+/* Check all required tables exist and report status */
+async function checkSupabaseTables(){
+  const tables = ['gcc_agents','gcc_messages','gcc_root_cause','gcc_kpi',
+    'gcc_sla_config','gcc_import_log','gcc_users','gcc_properties','gcc_reviews'];
+  const pill = document.getElementById('sbIntegPill');
+  const status = document.getElementById('sbTableStatus');
+  if(!pill||!status) return;
+  try{
+    const results = await Promise.all(tables.map(t=>
+      sb.from(t).select('id',{count:'exact',head:true}).then(r=>({t, ok:!r.error, err:r.error?.message}))
+    ));
+    const missing = results.filter(r=>!r.ok);
+    if(missing.length===0){
+      pill.innerHTML='<span class="pill p-green"><span class="dot d-green"></span>All tables OK</span>';
+      status.innerHTML='<span style="color:var(--green)">✓ All '+tables.length+' tables found in Supabase</span>';
+    } else {
+      pill.innerHTML='<span class="pill p-red">'+missing.length+' table'+(missing.length>1?'s':'')+' missing</span>';
+      status.innerHTML='<span style="color:var(--red)">Missing: '+missing.map(r=>r.t).join(', ')+'</span><br><span class="text-muted">Run the SQL schema file in Supabase → SQL Editor to create them.</span>';
+    }
+  }catch(e){
+    pill.innerHTML='<span class="pill p-amber">Check failed</span>';
+    status.innerHTML='<span class="text-muted">'+e.message+'</span>';
+  }
+}
 
 // Single unified boot — loads all tables from Supabase
 document.querySelector('.sb-item[data-view="overview"]').classList.add('active');
@@ -2493,9 +2761,9 @@ VIEWS.overview = () => {
   const breachAlert=liveKpi.breaches>0?`<span class="alert-dot"></span>`:'';
   return `
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-label">Active conversations</div><div class="stat-val">${liveKpi.active}</div><div class="stat-sub">awaiting response</div></div>
-    <div class="stat-card"><div class="stat-label">SLA breaches ${breachAlert}</div><div class="stat-val ${liveKpi.breaches>0?'down':'up'}">${liveKpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
-    <div class="stat-card"><div class="stat-label">Avg response time</div><div class="stat-val">${liveKpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${liveKpi.avg?'m':''}</span></div><div class="stat-sub">filtered selection</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Active conversations</div><div class="stat-val">${liveKpi.active}</div><div class="stat-sub">awaiting response</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">SLA breaches ${breachAlert}</div><div class="stat-val ${liveKpi.breaches>0?'down':'up'}">${liveKpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Avg response time</div><div class="stat-val">${liveKpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${liveKpi.avg?'m':''}</span></div><div class="stat-sub">filtered selection</div></div>
     <div class="stat-card"><div class="stat-label">Agents registered</div><div class="stat-val">${liveKpi.agents}</div><div class="stat-sub"><a href="#" onclick="render('agents');return false;" style="color:var(--accent);text-decoration:none">manage →</a></div></div>
   </div>
   ${!hasData ? `<div class="panel">${emptyState('📂','No data imported yet','Register your agents first, then import WhatsApp or Hostaway chat exports.','<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'agents\')">Register agents</button><button class="btn" onclick="render(\'import\')">Import data</button></div>')}</div>` : `
