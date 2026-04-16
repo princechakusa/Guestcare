@@ -17,6 +17,22 @@ app.get('/', (req, res) => {
   res.send('Guest Experience Tracker API is running...');
 });
 
+// Temporary Debug Endpoint
+app.get('/api/debug/db', async (req, res) => {
+  const { query } = require('./config/db');
+  try {
+    const result = await query('SELECT NOW()');
+    res.json({ success: true, time: result.rows[0].now });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+  }
+});
+
 // Error handler must be last!
 app.use(errorHandler);
 

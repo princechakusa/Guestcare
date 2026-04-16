@@ -4,27 +4,30 @@ require('dotenv').config();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Required for Render
+    rejectUnauthorized: false, // Required for Render's self-signed certificates
   },
-  connectionTimeoutMillis: 10000, // Wait 10 seconds for connection
-  idleTimeoutMillis: 30000,       // Close idle clients after 30 seconds
-  max: 5,                         // Max clients in pool
+  connectionTimeoutMillis: 15000, // 15 seconds
+  idleTimeoutMillis: 30000,
+  max: 5,
 });
 
 pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
+  console.log('✅ New database client connected');
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected database error:', err);
+  console.error('❌ Unexpected database error:', err);
 });
 
-// Test connection on startup
+// Test connection on startup with detailed error
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
-    console.error('Database connection test failed:', err.message);
+    console.error('❌ Database connection test failed:');
+    console.error('   Message:', err.message);
+    console.error('   Code:', err.code);
+    console.error('   Stack:', err.stack);
   } else {
-    console.log('Database connection test successful:', res.rows[0].now);
+    console.log('✅ Database connection test successful:', res.rows[0].now);
   }
 });
 

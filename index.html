@@ -1,0 +1,2959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuestCare Command</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Warm neutral palette — human, not AI */
+  --bg:#fafafa;
+  --bg2:#f4f4f2;
+  --bg3:#eeede9;
+  --bg-card:#ffffff;
+  --border:#e8e6e1;
+  --border2:#d4d2cc;
+  --text:#1a1a18;
+  --text2:#5c5c52;
+  --text3:#999890;
+
+  /* Accent: warm slate-blue, not harsh */
+  --accent:#3d5a80;
+  --accent-light:#e8edf5;
+  --accent-mid:#6b8cae;
+
+  /* Semantic — desaturated, human */
+  --red:#b54a4a;     --red-bg:#faf2f2;    --red-mid:#d97979;
+  --amber:#9a6c2e;   --amber-bg:#faf6ee;  --amber-mid:#c49a55;
+  --green:#3a7055;   --green-bg:#f0f7f4;  --green-mid:#5d9e81;
+
+  --sw:220px;
+  --font:'DM Sans',sans-serif;
+  --radius:8px;
+  --radius-sm:5px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.04);
+}
+
+html,body{height:100%;font-family:var(--font);font-size:12px;color:var(--text);background:var(--bg);line-height:1.5;font-weight:400;-webkit-font-smoothing:antialiased}
+
+/* ── Layout ── */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sw);min-width:var(--sw);background:var(--bg-card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;z-index:30}
+.main{flex:1;overflow-y:auto;min-width:0;background:var(--bg)}
+
+/* ── Sidebar brand ── */
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between}
+.sb-brand-name{font-size:13px;color:var(--text);letter-spacing:-.02em;line-height:1.3}
+.sb-brand-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-left:3px;margin-bottom:1px;vertical-align:middle}
+.sb-brand-sub{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.01em}
+.sb-close{display:none;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 4px;line-height:1;transition:color .15s}
+.sb-close:hover{color:var(--text)}
+
+/* ── Sidebar nav ── */
+.sb-nav{padding:8px 0;flex:1}
+.sb-label{font-size:9px;color:var(--text3);padding:12px 16px 3px;letter-spacing:.08em;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:8px;padding:5px 16px;font-size:11.5px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;border-left:2px solid transparent;transition:background .12s,color .12s;border-radius:0}
+.sb-item:hover{background:var(--bg2);color:var(--text)}
+.sb-item.active{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent)}
+.sb-item.parent-active{color:var(--text)}
+.sb-item svg{width:13px;height:13px;flex-shrink:0;opacity:.5;transition:opacity .12s}
+.sb-item.active svg,.sb-item:hover svg{opacity:.85}
+.sb-parent{justify-content:space-between}
+.sb-pl{display:flex;align-items:center;gap:8px}
+.sb-chev{width:10px;height:10px;opacity:.35;transition:transform .15s;flex-shrink:0}
+.sb-parent.open .sb-chev{transform:rotate(90deg)}
+.sb-kids{display:none}
+.sb-kids.open{display:block}
+.sb-kid{padding:4px 16px 4px 36px;font-size:11px;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;display:block;border-left:2px solid transparent;transition:background .12s,color .12s}
+.sb-kid:hover{background:var(--bg2);color:var(--text)}
+.sb-kid.active{color:var(--accent);background:var(--accent-light);border-left-color:var(--accent)}
+
+/* ── Sidebar footer ── */
+.sb-footer{border-top:1px solid var(--border);padding:12px 16px}
+.sb-user{display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);transition:background .12s}
+.sb-user:hover{background:var(--bg2)}
+.sb-ava{width:28px;height:28px;border-radius:6px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:.03em}
+.sb-uname{font-size:11px;color:var(--text);line-height:1.3}
+.sb-urole{font-size:10px;color:var(--text3)}
+
+/* ── Topbar ── */
+.topbar{height:44px;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;position:sticky;top:0;z-index:10}
+.topbar-menu{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;display:none;transition:color .12s}
+.topbar-menu:hover{color:var(--text)}
+.topbar-title{font-size:12.5px;color:var(--text);letter-spacing:-.01em}
+.topbar-sep{width:1px;height:13px;background:var(--border2)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.conn{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3)}
+.content{padding:20px 24px 48px}
+
+/* ── Stat cards ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  box-shadow:var(--shadow);
+  transition:box-shadow .15s;
+  position:relative;
+  overflow:hidden;
+}
+.stat-card:hover{box-shadow:var(--shadow-md)}
+.stat-card-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent-mid),transparent)}
+.stat-label{font-size:10px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-size:24px;color:var(--text);font-weight:300;line-height:1;letter-spacing:-.02em}
+.stat-val sup{font-size:12px;color:var(--text3);font-weight:400;margin-left:1px;vertical-align:top;margin-top:6px;display:inline-block}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:5px}
+.up{color:var(--green)}.down{color:var(--red)}
+
+/* ── Panels ── */
+.panel{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-bottom:12px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.ph{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg-card);
+}
+.pt{font-size:11px;color:var(--text2);letter-spacing:.01em}
+.pp{padding:14px 16px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+
+/* ── Tables ── */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:400px}
+thead th{
+  font-size:10px;color:var(--text3);font-weight:400;text-align:left;
+  padding:9px 14px;border-bottom:1px solid var(--border);
+  letter-spacing:.04em;text-transform:uppercase;
+  background:var(--bg);white-space:nowrap;
+}
+tbody td{font-size:11px;color:var(--text);padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--bg2)}
+.sticky-col thead th:first-child,.sticky-col tbody td:first-child{position:sticky;left:0;background:var(--bg);z-index:2;box-shadow:2px 0 4px -1px rgba(0,0,0,.05)}
+.sticky-col tbody tr:hover td:first-child{background:var(--bg2)}
+
+/* ── Pills ── */
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;border-radius:20px;letter-spacing:.01em}
+.p-red{background:var(--red-bg);color:var(--red)}
+.p-amber{background:var(--amber-bg);color:var(--amber)}
+.p-green{background:var(--green-bg);color:var(--green)}
+.p-blue{background:var(--accent-light);color:var(--accent)}
+.p-gray{background:var(--bg3);color:var(--text2)}
+.dot{width:4px;height:4px;border-radius:50%;display:inline-block}
+.d-red{background:var(--red)}.d-amber{background:var(--amber)}.d-green{background:var(--green)}
+
+/* ── Buttons ── */
+.btn{
+  font-family:var(--font);font-size:11px;color:var(--text2);
+  background:var(--bg-card);border:1px solid var(--border);
+  padding:5px 11px;border-radius:var(--radius-sm);
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+  transition:border-color .12s,color .12s,background .12s,box-shadow .12s;
+  letter-spacing:.01em;
+}
+.btn:hover{border-color:var(--border2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(61,90,128,.2)}
+.btn-primary:hover{background:#324d6e;border-color:#324d6e;box-shadow:0 2px 6px rgba(61,90,128,.3)}
+.btn-danger{background:var(--red-bg);border-color:#e8b4b4;color:var(--red)}
+.btn-danger:hover{background:#fae8e8}
+.btn-sm{font-size:10px;padding:3px 8px}
+.btn-group{display:flex;gap:5px;flex-wrap:wrap}
+
+/* ── Inputs ── */
+.input,.select{
+  font-family:var(--font);font-size:12px;color:var(--text);
+  background:var(--bg-card);border:1px solid var(--border);
+  padding:7px 10px;border-radius:var(--radius-sm);width:100%;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.input:focus,.select:focus{border-color:var(--accent-mid);box-shadow:0 0 0 3px rgba(61,90,128,.08)}
+.field-label{font-size:10px;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.form-group{margin-bottom:13px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── Upload zone ── */
+.upload-zone{
+  border:1.5px dashed var(--border2);border-radius:var(--radius);
+  padding:24px;text-align:center;cursor:pointer;display:block;
+  transition:border-color .15s,background .15s;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent-mid);background:var(--accent-light)}
+.upload-zone input[type=file]{display:none}
+.upload-icon{font-size:22px;margin-bottom:6px}
+.upload-lbl{font-size:11px;color:var(--text2)}
+.upload-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.import-result{border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;margin-top:8px;font-size:11px;color:var(--text2);background:var(--bg2)}
+.import-result.ok{border-color:#a7d4bc;background:var(--green-bg);color:var(--green)}
+.import-result.err{border-color:#e4a5a5;background:var(--red-bg);color:var(--red)}
+.import-result.info{border-color:#a5b8d4;background:var(--accent-light);color:var(--accent)}
+
+/* ── Message feed ── */
+.msg-item{display:flex;align-items:flex-start;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.msg-item:hover{background:var(--bg)}
+.msg-item:last-child{border-bottom:none}
+.msg-item.breach-row{border-left:2px solid var(--red-mid);background:#fdf8f8}
+.msg-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.msg-body{flex:1;min-width:0}
+.msg-r1{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+.msg-guest{font-size:11px;color:var(--text)}
+.msg-time{font-size:10px;color:var(--text3);white-space:nowrap}
+.msg-text{font-size:11px;color:var(--text2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:500px;line-height:1.5}
+.msg-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+
+/* ── Empty state ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 24px;text-align:center}
+.empty-icon{font-size:30px;margin-bottom:14px;opacity:.3}
+.empty-title{font-size:12px;color:var(--text2);margin-bottom:5px;letter-spacing:-.01em}
+.empty-sub{font-size:11px;color:var(--text3);max-width:300px;line-height:1.65}
+
+/* ── Agent cards ── */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;padding:14px 16px}
+.agent-card{
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:15px;background:var(--bg-card);
+  box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s;
+}
+.agent-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.agent-card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.agent-ava{
+  width:34px;height:34px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:#fff;flex-shrink:0;letter-spacing:.04em;
+}
+.agent-name{font-size:12px;color:var(--text);line-height:1.3}
+.agent-role{font-size:10px;color:var(--text3)}
+.agent-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.agent-stat{
+  background:var(--bg);border-radius:var(--radius-sm);
+  padding:7px 9px;border:1px solid var(--border);
+}
+.agent-stat-val{font-size:16px;color:var(--text);font-weight:300;line-height:1}
+.agent-stat-lbl{font-size:9px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── Status ── */
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.status-dot.on{background:var(--green)}.status-dot.off{background:var(--border2)}
+.progress-track{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:22px;right:22px;
+  background:rgba(26,26,24,.92);
+  color:#fafafa;font-size:11px;
+  padding:9px 16px;border-radius:var(--radius-sm);
+  opacity:0;transform:translateY(6px);
+  transition:opacity .2s,transform .2s;
+  pointer-events:none;z-index:9999;
+  backdrop-filter:blur(4px);
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── Modals ── */
+.modal-wrap{
+  position:fixed;inset:0;
+  background:rgba(26,26,24,.2);
+  backdrop-filter:blur(2px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;
+  animation:fadein .15s ease;
+}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal-box{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;width:420px;
+  max-width:94vw;max-height:90vh;overflow-y:auto;
+  box-shadow:var(--shadow-md);
+  animation:slideup .18s ease;
+}
+@keyframes slideup{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-box.wide{width:540px}
+.modal-title{font-size:13px;color:var(--text);margin-bottom:16px;letter-spacing:-.01em}
+.modal-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:14px}
+
+/* ── User rows ── */
+.user-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.user-row:last-child{border-bottom:none}
+.user-ava{width:28px;height:28px;border-radius:6px;background:var(--accent);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:11px;color:var(--text)}
+.user-email{font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-acts{display:flex;gap:4px;flex-shrink:0}
+
+/* ── Filter bar ── */
+.filter-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 22px;
+  background:var(--bg-card);
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;position:sticky;top:44px;z-index:9;
+}
+.filter-bar .select,.filter-bar .input{width:auto;padding:4px 8px;font-size:11px;border-radius:var(--radius-sm)}
+.filter-bar .btn{padding:4px 10px}
+.clock{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;min-width:60px;text-align:right;letter-spacing:.02em}
+
+/* ── Search ── */
+.search-wrap{position:relative;flex:1;min-width:160px;max-width:260px}
+.search-wrap .input{padding-left:27px;font-size:11px}
+.search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.35;pointer-events:none}
+
+/* ── Heatmap ── */
+.heatmap{display:grid;grid-template-columns:40px repeat(24,1fr);gap:2px;padding:14px 16px}
+.hm-cell{height:22px;border-radius:3px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)}
+.hm-label{font-size:9px;color:var(--text3);display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.hm-head{font-size:9px;color:var(--text3);text-align:center}
+
+/* ── Sentiment bar ── */
+.sentiment-bar{height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:5px;display:flex}
+.sb-pos{background:var(--green-mid)}.sb-neu{background:var(--border2)}.sb-neg{background:var(--red-mid)}
+
+/* ── Alert pulse ── */
+.alert-dot{width:6px;height:6px;background:var(--red);border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+
+/* ── Property cards ── */
+.prop-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;
+  box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s;
+}
+.prop-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.prop-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.prop-name{font-size:12px;color:var(--text);line-height:1.3}
+.prop-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.prop-score{font-size:20px;font-weight:300;color:var(--text);letter-spacing:-.02em;line-height:1}
+.stars{color:var(--amber-mid);font-size:10px;letter-spacing:1.5px}
+.prop-bar-wrap{display:flex;flex-direction:column;gap:4px}
+.prop-bar-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)}
+.prop-bar-track{flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.prop-bar-fill{height:100%;border-radius:2px;background:var(--amber-mid)}
+.prop-actions{display:flex;gap:4px;margin-top:2px}
+
+/* ── Review rows ── */
+.review-row{
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  display:flex;gap:12px;align-items:flex-start;
+  transition:background .1s;
+}
+.review-row:hover{background:var(--bg)}
+.review-row:last-child{border-bottom:none}
+.review-score-badge{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:300;flex-shrink:0;letter-spacing:-.02em;
+}
+.review-body{flex:1;min-width:0}
+.review-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+.review-guest{font-size:11px;color:var(--text)}
+.review-date{font-size:10px;color:var(--text3)}
+.review-text{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:5px}
+.review-footer{display:flex;align-items:center;gap:6px}
+.score-great{background:#edf5f1;color:var(--green)}
+.score-good{background:#faf4e6;color:var(--amber)}
+.score-bad{background:var(--red-bg);color:var(--red)}
+
+/* ── Analysis cards ── */
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.analysis-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  box-shadow:var(--shadow);
+}
+.analysis-card.attention{border-left:2px solid var(--red-mid)}
+.analysis-card.good{border-left:2px solid var(--green-mid)}
+
+/* ── Reviews toolbar ── */
+.gr-toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg)}
+.gr-search{position:relative;flex:1;min-width:140px;max-width:280px}
+.gr-search svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.35;pointer-events:none}
+.gr-search .input{padding-left:27px;font-size:11px}
+
+/* ── Rating bar ── */
+.rating-row{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text3);margin-bottom:5px}
+.rating-row .bar{flex:1;height:4px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.rating-row .fill{height:100%;background:var(--amber-mid);border-radius:3px}
+
+/* ── Step indicator ── */
+.steps{display:flex;margin-bottom:20px}
+.step{flex:1;padding:9px 14px;font-size:11px;color:var(--text3);border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px}
+.step.active{color:var(--accent);border-bottom-color:var(--accent)}
+.step.done{color:var(--green);border-bottom-color:var(--green)}
+.step-num{width:17px;height:17px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+
+/* ── Misc ── */
+.prop-tag{font-size:10px;color:var(--accent);background:var(--accent-light);padding:1px 6px;border-radius:20px;margin-left:4px}
+.text-muted{font-size:10px;color:var(--text3)}
+code.ic{font-size:10px;background:var(--bg2);padding:1px 7px;border-radius:3px;font-family:monospace;border:1px solid var(--border)}
+.chart-wrap{padding:12px 16px 10px}
+canvas{max-height:160px}
+.select-note{font-size:10px;color:var(--accent);margin-top:4px}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* ── Mobile ── */
+.mob-bar{display:none;height:44px;background:var(--bg-card);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:20}
+.mob-menu{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px}
+.mob-title{font-size:12px;color:var(--text)}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(26,26,24,.2);z-index:25;backdrop-filter:blur(1px)}
+
+@media(max-width:960px){.stats-row{grid-template-columns:repeat(2,1fr)}.two-col,.three-col{grid-template-columns:1fr}}
+@media(max-width:680px){
+  .shell{display:block;height:auto;overflow:visible}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s;width:240px !important;min-width:240px !important}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.open{display:block}
+  .sb-close{display:block}
+  .mob-bar{display:flex}
+  .topbar{display:none !important}
+  .main{height:100vh;overflow-y:auto}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .content{padding:14px 14px 48px}
+}
+@media(min-width:681px) and (max-width:920px){
+  .topbar-menu{display:flex !important}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.open{display:block}
+  .sb-close{display:block}
+}
+</style>
+</head>
+<body>
+<div class="sb-overlay" id="sbOverlay"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Admin Login Modal -->
+<div class="modal-wrap" id="adminModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">Admin access</div>
+    <div class="form-group"><label class="field-label">Password</label><input class="input" type="password" id="adminPw" placeholder="Enter password"></div>
+    <div id="pwErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
+    <div class="modal-actions">
+      <button class="btn" id="adminCancel">Cancel</button>
+      <button class="btn btn-primary" id="adminSubmit">Login</button>
+    </div>
+    <div class="text-muted" style="margin-top:10px">Default: <code class="ic">guestcare</code></div>
+  </div>
+</div>
+
+<!-- User Management Modal -->
+<div class="modal-wrap" id="userModal" style="display:none">
+  <div class="modal-box wide">
+    <div class="modal-title">User management</div>
+    <div id="userList"></div>
+    <div class="divider"></div>
+    <div id="addUserForm" style="display:none">
+      <div style="font-size:11px;color:var(--text);margin-bottom:10px">Add new user</div>
+      <div class="form-group"><label class="field-label">Full name</label><input class="input" id="nu_name" placeholder="e.g. Sara Lopez"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Username</label><input class="input" id="nu_user" placeholder="saral"></div>
+        <div class="form-group"><label class="field-label">Role</label><select class="select" id="nu_role"><option>Agent</option><option>Supervisor</option><option>Admin</option></select></div>
+      </div>
+      <div class="form-group"><label class="field-label">Email</label><input class="input" id="nu_email" placeholder="sara@harare.com"></div>
+      <div class="form-group"><label class="field-label">Password</label><input class="input" type="password" id="nu_pass" placeholder="••••••••"></div>
+      <div id="nuErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
+      <div class="modal-actions" style="margin-top:0">
+        <button class="btn" id="cancelAdd">Cancel</button>
+        <button class="btn btn-primary" id="saveAdd">Save user</button>
+      </div>
+    </div>
+    <div id="editUserForm" style="display:none">
+      <div style="font-size:11px;color:var(--text);margin-bottom:10px">Edit user</div>
+      <input type="hidden" id="eu_id">
+      <div class="form-group"><label class="field-label">Full name</label><input class="input" id="eu_name"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Username</label><input class="input" id="eu_user"></div>
+        <div class="form-group"><label class="field-label">Role</label><select class="select" id="eu_role"><option>Agent</option><option>Supervisor</option><option>Admin</option></select></div>
+      </div>
+      <div class="form-group"><label class="field-label">Email</label><input class="input" id="eu_email"></div>
+      <div class="modal-actions" style="margin-top:0">
+        <button class="btn" id="cancelEdit">Cancel</button>
+        <button class="btn btn-primary" id="saveEdit">Save changes</button>
+      </div>
+    </div>
+    <div id="showAddBtn" style="margin-top:4px"><button class="btn" id="openAdd">+ Add new user</button></div>
+    <div class="modal-actions"><button class="btn" id="closeUserModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Add / Edit Agent Modal -->
+<div class="modal-wrap" id="agentModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title" id="agentModalTitle">Add agent</div>
+    <input type="hidden" id="ag_id">
+    <div class="form-group"><label class="field-label">Full name</label><input class="input" id="ag_name" placeholder="e.g. Kudzanayi Moyo"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Role</label><select class="select" id="ag_role"><option>Guest Experience Agent</option><option>Supervisor</option><option>Team Lead</option><option>Manager</option></select></div>
+      <div class="form-group"><label class="field-label">Colour</label><select class="select" id="ag_color"><option value="#2563eb">Blue</option><option value="#16a34a">Green</option><option value="#d97706">Amber</option><option value="#dc2626">Red</option><option value="#7c3aed">Purple</option><option value="#0891b2">Cyan</option></select></div>
+    </div>
+    <div class="form-group"><label class="field-label">WhatsApp display name (exact name shown in chat exports)</label><input class="input" id="ag_waname" placeholder="e.g. Harare Kudzanayi or just Kudzanayi"></div>
+    <div class="form-group"><label class="field-label">Email</label><input class="input" id="ag_email" placeholder="kud@harare.com"></div>
+    <div id="agErr" style="font-size:10px;color:var(--red);min-height:14px"></div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelAgent">Cancel</button>
+      <button class="btn btn-primary" id="saveAgent">Save agent</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-brand">
+    <div><div class="sb-brand-name">GuestCare<span class="sb-brand-dot"></span></div><div class="sb-brand-sub">Holiday · Operations Suite</div></div>
+    <button class="sb-close" id="sbClose">✕</button>
+  </div>
+  <nav class="sb-nav">
+    <button class="sb-item" data-view="overview"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Overview</button>
+    <button class="sb-item" data-view="agents"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-2.8 2.2-5 5-5"/><circle cx="12" cy="10" r="3"/><path d="M9 16c0-1.7 1.3-3 3-3"/></svg>Agents</button>
+    <button class="sb-item" data-view="import"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M3 12h10v2H3z"/></svg>Import data</button>
+
+    <div class="sb-label">Analysis</div>
+    <button class="sb-parent sb-item" data-parent="response">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 1.5"/></svg>Response times</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-response">
+      <button class="sb-kid" data-view="r-first">First response</button>
+      <button class="sb-kid" data-view="r-avg">Avg response</button>
+      <button class="sb-kid" data-view="r-delays">Delays</button>
+      <button class="sb-kid" data-view="r-missed">Missed</button>
+      <button class="sb-kid" data-view="root-cause">Root cause</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="sat">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 9.5s.8 1.5 2.5 1.5 2.5-1.5 2.5-1.5"/><circle cx="5.5" cy="7" r=".6" fill="currentColor"/><circle cx="10.5" cy="7" r=".6" fill="currentColor"/></svg>Satisfaction</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-sat">
+      <button class="sb-kid" data-view="sat-reviews">Reviews</button>
+      <button class="sb-kid" data-view="sat-complaints">Complaints</button>
+      <button class="sb-kid" data-view="sat-nps">NPS / CSAT</button>
+      <button class="sb-kid" data-view="sat-repeat">Repeat guests</button>
+      <button class="sb-kid" data-view="sat-resolution">Resolution</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="ops">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>Operations</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-ops">
+      <button class="sb-kid" data-view="ops-closed">Tickets closed</button>
+      <button class="sb-kid" data-view="ops-active">Active issues</button>
+      <button class="sb-kid" data-view="ops-escalations">Escalations</button>
+      <button class="sb-kid" data-view="ops-maintenance">Maintenance</button>
+      <button class="sb-kid" data-view="ops-inspections">Inspections</button>
+      <button class="sb-kid" data-view="ops-deepclean">Deep cleaning</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="greviews">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.2 3.6H13l-3 2.2 1.1 3.5L8 9.2l-3.1 2.1 1.1-3.5-3-2.2h3.8z"/></svg>Guest reviews</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-greviews">
+      <button class="sb-kid" data-view="gr-properties">Properties</button>
+      <button class="sb-kid" data-view="gr-analysis">Analysis</button>
+      <button class="sb-kid" data-view="gr-reviews">Reviews</button>
+      <button class="sb-kid" data-view="gr-import">Import CSV</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="chan">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 7l4-2M6 9l4 2"/></svg>Channel intel</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-chan">
+      <button class="sb-kid" data-view="chan-airbnb">Airbnb</button>
+      <button class="sb-kid" data-view="chan-booking">Booking.com</button>
+      <button class="sb-kid" data-view="chan-direct">Direct</button>
+    </div>
+
+    <button class="sb-parent sb-item" data-parent="pro">
+      <span class="sb-pl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C8 2 3 4 3 8v3l1 1h8l1-1V8C13 4 8 2 8 2z"/><path d="M6 12v1a2 2 0 004 0v-1"/></svg>Proactive</span>
+      <svg class="sb-chev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2l4 3-4 3"/></svg>
+    </button>
+    <div class="sb-kids" id="ch-pro">
+      <button class="sb-kid" data-view="pro-prearrival">Pre-arrival</button>
+      <button class="sb-kid" data-view="pro-midstay">Mid-stay</button>
+    </div>
+
+    <div class="sb-label">System</div>
+    <button class="sb-item" data-view="heatmap"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="3" height="3" rx=".5"/><rect x="6" y="1" width="3" height="3" rx=".5"/><rect x="11" y="1" width="3" height="3" rx=".5"/><rect x="1" y="6" width="3" height="3" rx=".5"/><rect x="6" y="6" width="3" height="3" rx=".5"/><rect x="11" y="6" width="3" height="3" rx=".5"/><rect x="1" y="11" width="3" height="3" rx=".5"/><rect x="6" y="11" width="3" height="3" rx=".5"/><rect x="11" y="11" width="3" height="3" rx=".5"/></svg>Response heatmap</button>
+    <button class="sb-item" data-view="sentiment"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 9.5s.8 1.5 2.5 1.5 2.5-1.5 2.5-1.5"/><circle cx="5.5" cy="7" r=".6" fill="currentColor"/><circle cx="10.5" cy="7" r=".6" fill="currentColor"/></svg>Guest sentiment</button>
+    <button class="sb-item" data-view="integrations"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="6" height="4" rx="1"/><rect x="9" y="8" width="6" height="4" rx="1"/><path d="M7 6h2v4H7"/></svg>Integrations</button>
+    <button class="sb-item" data-view="admin"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 3h3l-2.4 1.8.9 3L8 8.2l-3 1.6.9-3L3.5 5h3z"/></svg>Admin</button>
+    <button class="sb-item" data-view="help"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6.5 6a1.5 1.5 0 013 0c0 1-1.5 1.5-1.5 2.5"/><circle cx="8" cy="11.5" r=".5" fill="currentColor"/></svg>Help</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user" id="profileBtn">
+      <div class="sb-ava">PC</div>
+      <div>
+        <div class="sb-uname">Prince Chakusa</div>
+        <div class="sb-urole">Master Admin · manage users ›</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="mob-bar">
+    <button class="mob-menu" id="mobMenu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+    <span class="mob-title" id="mobTitle">Overview</span>
+  </div>
+  <div class="topbar">
+    <button class="topbar-menu" id="topMenu"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+    <div class="topbar-title" id="topTitle">Overview</div>
+    <div class="topbar-sep"></div>
+    <span class="text-muted" style="letter-spacing:.02em">Holiday</span>
+    <div class="topbar-right">
+      <div class="conn"><span class="status-dot on"></span>WhatsApp</div>
+      <div class="conn"><span class="status-dot on"></span>Hostaway</div>
+      <div id="sbPill"><span class="pill p-gray">Supabase…</span></div>
+      <div class="clock" id="liveClock"></div>
+    </div>
+  </div>
+  <!-- Global filter bar -->
+  <div class="filter-bar" id="filterBar">
+    <select class="select" id="filterAgent" title="Filter by agent">
+      <option value="">All agents</option>
+    </select>
+    <select class="select" id="filterPeriod">
+      <option value="all">All time</option>
+      <option value="today">Today</option>
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+    </select>
+    <select class="select" id="filterChannel">
+      <option value="">All channels</option>
+      <option value="WhatsApp">WhatsApp</option>
+      <option value="Hostaway">Hostaway</option>
+    </select>
+    <div class="search-wrap">
+      <svg class="search-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input class="input" id="filterSearch" placeholder="Search guest name…" style="font-size:11px;">
+    </div>
+    <button class="btn" id="filterReset">Reset</button>
+    <span class="text-muted" id="filterCount" style="margin-left:4px;"></span>
+  </div>
+  <div class="content" id="content">Loading…</div>
+</div>
+</div>
+
+<script>
+(function(){
+
+/* ══════════════════════════════════════════
+   CONFIG & SUPABASE
+══════════════════════════════════════════ */
+/* credentials encoded — not plain text visible */
+const _c=atob,_a=['aHR0cHM6Ly90dHhpdXRteHRiemNlbGhhamRsYy5zdXBhYmFzZS5jbw==','ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmhZbUZ6WlNJc0luSmxaaUk2SW5SMGVHbDFkR3g0ZEdKNlkyVnNhR0ZxWkd4aklpd2ljbTlzWlNJNkltRnViMjRpTENKcFlYUWlPakUzTnpVNU1qQXdPRElzSW1WNEJPZ0U2akl3T1RFMk5Ea3dPREl1ZTI5cVlYWXdXakZ1Y1U4d1ppSXNJbkp2YkdVaU9pSkZkWEpwYzJGbFpDSXNJbWxoZENJNk1UYzNOVGt5TURBNGlmUS5OeTVoejZtRVhQUzhfREtkcnFzcE1ubFVNTGQtSmQ4eHVxeDZlZnBpenc'];
+const SLA = { WhatsApp: 10, Hostaway: 5, default: 10 };
+const sb  = supabase.createClient(_c(_a[0]), _c(_a[1]));
+
+/* ══════════════════════════════════════════
+   LOCAL STORE  — always fresh, no demo data
+   Bump SK version whenever a schema change needs a clean slate
+══════════════════════════════════════════ */
+const SK = 'gcc_v6';
+// Clear all previous version caches — forces clean start
+['gcc_v5','gcc_v4','gcc_v3','gcc_store_v1'].forEach(k=>{ try{localStorage.removeItem(k);}catch(e){} });
+
+function blank(){
+  return {
+    agents:[], messages:[], rootCause:[], importLog:[],
+    users:[], properties:[], reviews:[], slaConfig:null,
+    kpi:{ avg:0, breaches:0, active:0, csat:0 }
+  };
+}
+function load(){ try{ return JSON.parse(localStorage.getItem(SK)) || blank(); }catch(e){ return blank(); } }
+function saveLocal(){ try{ localStorage.setItem(SK, JSON.stringify(store)); }catch(e){} }
+let store = load();
+
+/* ══════════════════════════════════════════
+   SUPABASE HELPERS
+══════════════════════════════════════════ */
+function setPill(state){
+  const el=document.getElementById('sbPill'); if(!el) return;
+  if(state==='on')  el.innerHTML='<span class="pill p-green"><span class="dot d-green"></span>Supabase live</span>';
+  if(state==='off') el.innerHTML='<span class="pill p-amber">Supabase offline</span>';
+  if(state==='...')el.innerHTML='<span class="pill p-gray">Supabase…</span>';
+}
+
+async function sbLoad(){
+  setPill('...');
+  try{
+    const [ag,ms,rc,il,us,pr,rv] = await Promise.all([
+      sb.from('gcc_agents').select('*').order('created_at',{ascending:true}),
+      sb.from('gcc_messages').select('*').order('ts',{ascending:false}).limit(1000),
+      sb.from('gcc_root_cause').select('*').order('ts',{ascending:false}),
+      sb.from('gcc_import_log').select('*').order('created_at',{ascending:false}).limit(50),
+      sb.from('gcc_users').select('*'),
+      sb.from('gcc_properties').select('*').order('created_at',{ascending:true}),
+      sb.from('gcc_reviews').select('*').order('ts',{ascending:false}).limit(2000)
+    ]);
+
+    // Only overwrite local store when Supabase returns actual rows.
+    // If table returns empty [] we keep local data (protects against
+    // tables not yet created or data added before SQL was run).
+
+    if(ag.data && !ag.error && ag.data.length > 0){
+      // Map snake_case DB columns → camelCase store
+      store.agents = ag.data.map(r=>({
+        id:r.id, name:r.name, role:r.role||'Guest Experience Agent',
+        color:r.color||'#2563eb', waName:r.wa_name||'', email:r.email||''
+      }));
+    }
+    if(ms.data && !ms.error && ms.data.length > 0){
+      store.messages = ms.data.map(r=>({
+        ...r, ts:new Date(r.ts).getTime(), agentId:r.agent_id
+      }));
+    }
+    if(rc.data && !rc.error && rc.data.length > 0){
+      store.rootCause = rc.data.map(r=>({
+        ...r, ts:new Date(r.ts).getTime(),
+        agentId:r.agent_id, agentName:r.agent_name
+      }));
+    }
+    if(il.data && !il.error && il.data.length > 0){
+      store.importLog = il.data.map(r=>r.entry).filter(Boolean);
+    }
+    if(us.data && !us.error){
+      store.users = us.data.filter(u=>u.id!=='master');
+    }
+    if(pr.data && !pr.error && pr.data.length > 0){
+      store.properties = pr.data.map(r=>({
+        id:r.id, name:r.name, type:r.type||'Apartment',
+        location:r.location||'',
+        beds: r.beds != null ? Number(r.beds) : 0,
+        hostawayId:r.hostaway_id||'',
+        status:r.status||'Active',
+        notes:r.notes||'',
+        createdAt:new Date(r.created_at||Date.now()).getTime()
+      }));
+    }
+    if(rv.data && !rv.error && rv.data.length > 0){
+      store.reviews = rv.data.map(r=>({
+        id:r.id, propertyId:r.property_id,
+        guest:r.guest, score:r.score!=null?Number(r.score):null,
+        ts:new Date(r.ts||r.created_at).getTime(),
+        channel:r.channel, nationality:r.nationality,
+        text:r.review_text,
+        cleanliness:r.cleanliness!=null?Number(r.cleanliness):null,
+        communication:r.communication!=null?Number(r.communication):null,
+        checkin:r.checkin!=null?Number(r.checkin):null,
+        accuracy:r.accuracy!=null?Number(r.accuracy):null,
+        location:r.location!=null?Number(r.location):null,
+        value:r.value!=null?Number(r.value):null,
+        response:r.response||''
+      }));
+    }
+
+    if(store.slaConfig){ SLA.WhatsApp=store.slaConfig.WhatsApp||10; SLA.Hostaway=store.slaConfig.Hostaway||5; }
+    recalcKPI();
+    saveLocal();
+    setPill('on');
+    render(currentView);
+  }catch(e){
+    setPill('off');
+    console.warn('Supabase load error:', e.message);
+    recalcKPI();
+    render(currentView);
+  }
+}
+
+async function sbPushMessages(rows){
+  if(!rows.length) return;
+  const data = rows.map(m=>({
+    id:String(m.id), agent_id:m.agentId, channel:m.channel, guest:m.guest,
+    message:m.message, ts:new Date(m.ts).toISOString(), intent:m.intent,
+    urgency:m.urgency, responded:m.responded, rt:m.rt, breach:m.breach
+  }));
+  try{ await sb.from('gcc_messages').upsert(data,{onConflict:'id'}); }catch(e){ console.warn('push msg',e.message); }
+}
+
+async function sbPushRootCause(rows){
+  if(!rows.length) return;
+  const data = rows.map((r,i)=>({
+    id:String(r.ts)+'_'+i, agent_id:r.agentId, guest:r.guest, channel:r.channel,
+    msg:r.msg, ts:new Date(r.ts).toISOString(), agent_name:r.agentName,
+    rt:r.rt, reason:r.reason
+  }));
+  try{ await sb.from('gcc_root_cause').upsert(data,{onConflict:'id'}); }catch(e){ console.warn('push rc',e.message); }
+}
+
+async function sbUpsertKPI(){
+  try{ await sb.from('gcc_kpi').upsert({id:1,...store.kpi,updated_at:new Date().toISOString()},{onConflict:'id'}); }catch(e){}
+}
+
+async function sbUpsertAgent(a){
+  try{
+    const {error} = await sb.from('gcc_agents').upsert({
+      id:a.id, name:a.name,
+      role:a.role||'Guest Experience Agent',
+      color:a.color||'#2563eb',
+      wa_name:a.waName||null,
+      email:a.email||null
+    },{onConflict:'id'});
+    if(error) throw new Error(error.message);
+  }catch(e){ console.warn('agent push failed:', e.message); throw e; }
+}
+async function sbDeleteAgent(id){
+  try{ await sb.from('gcc_agents').delete().eq('id',id); }catch(e){}
+}
+async function sbUpsertUser(u){
+  try{
+    const {error} = await sb.from('gcc_users').upsert({
+      id:u.id, name:u.name, username:u.username,
+      email:u.email, role:u.role,
+      password_hash:u.passwordHash||null,
+      locked:u.locked||false
+    },{onConflict:'id'});
+    if(error) throw new Error(error.message);
+  }catch(e){ console.warn('user push failed:', e.message); }
+}
+async function sbDeleteUser(id){
+  try{ await sb.from('gcc_users').delete().eq('id',id); }catch(e){}
+}
+async function sbLogImport(entry){
+  try{ await sb.from('gcc_import_log').insert({entry,created_at:new Date().toISOString()}); }catch(e){}
+}
+
+/* ══════════════════════════════════════════
+   KPI — recalculate from all messages
+══════════════════════════════════════════ */
+function recalcKPI(){
+  const m = store.messages;
+  const resp = m.filter(x=>x.responded && x.rt!=null);
+  store.kpi.avg      = resp.length ? +(resp.reduce((s,x)=>s+x.rt,0)/resp.length).toFixed(1) : 0;
+  store.kpi.breaches = m.filter(x=>x.breach).length;
+  store.kpi.active   = m.filter(x=>!x.responded).length;
+}
+
+/* ══════════════════════════════════════════
+   AGENT COLOURS
+══════════════════════════════════════════ */
+const COLORS = ['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#0f766e'];
+function agentColor(id){ const a=store.agents.find(x=>x.id===id); return a&&a.color ? a.color : COLORS[0]; }
+function agentName(id){ const a=store.agents.find(x=>x.id===id); return a ? a.name : 'Unknown'; }
+function agentStats(agentId){
+  const m = store.messages.filter(x=>x.agentId===agentId);
+  const resp = m.filter(x=>x.responded&&x.rt!=null);
+  return {
+    total: m.length,
+    active: m.filter(x=>!x.responded).length,
+    breaches: m.filter(x=>x.breach).length,
+    avgRt: resp.length ? +(resp.reduce((s,x)=>s+x.rt,0)/resp.length).toFixed(1) : 0,
+    slaHit: resp.length ? Math.round(100*m.filter(x=>x.responded&&!x.breach).length/resp.length) : 0
+  };
+}
+
+/* ══════════════════════════════════════════
+   PARSERS
+══════════════════════════════════════════ */
+
+// WhatsApp TXT parser — format: [DD/MM/YYYY, HH:MM:SS] Sender: Message
+// agentWaName = the exact WhatsApp display name of the selected agent
+function parseWhatsApp(text, agentWaName, agentId, channel){
+  // multiple format patterns
+  const patterns = [
+    /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),\s*(\d{1,2}:\d{2}(?::\d{2})?)\s*(?:AM|PM)?\]\s*([^:]+):\s*(.+)$/i,
+    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s*(\d{1,2}:\d{2}(?::\d{2})?)\s*(?:AM|PM)?\s*-\s*([^:]+):\s*(.+)$/i
+  ];
+
+  const threads = {}; // keyed by guest name
+  const lines = text.split('\n');
+  let matched = 0;
+
+  lines.forEach(line => {
+    let m = null;
+    for(const p of patterns){ m = line.match(p); if(m) break; }
+    if(!m) return;
+    const [, dateStr, timeStr, rawSender, body] = m;
+    const sender = rawSender.trim().replace(/^[~\u200e]/,'').trim();
+    if(!sender || body.trim()==='<Media omitted>' || body.trim()==='This message was deleted') return;
+
+    // Parse timestamp
+    const parts = dateStr.split('/');
+    let d,mo,y;
+    if(parseInt(parts[0])>12){ [d,mo,y] = parts; } // DD/MM/YYYY
+    else { [mo,d,y] = parts; } // MM/DD/YYYY fallback
+    const fullYear = y.length===2 ? '20'+y : y;
+    const ts = new Date(`${fullYear}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}T${timeStr.includes(':')&&timeStr.split(':').length===2?timeStr+':00':timeStr}`).getTime();
+    if(isNaN(ts)) return;
+    matched++;
+
+    // Is this the agent or a guest?
+    const isAgent = agentWaName.toLowerCase().split(',').map(s=>s.trim()).some(n=>sender.toLowerCase().includes(n));
+
+    if(!isAgent){
+      // guest message
+      if(!threads[sender]) threads[sender] = { msgs:[], guestName: sender };
+      threads[sender].msgs.push({ ts, body, role:'guest' });
+    } else {
+      // agent reply — add to ALL open threads that are waiting for response
+      Object.values(threads).forEach(t => t.msgs.push({ ts, body, role:'agent' }));
+    }
+  });
+
+  if(matched===0) return { error: 'No messages matched. Check the file is a WhatsApp .txt export.' };
+
+  const result = [];
+  const slaMs = SLA[channel] * 60000;
+
+  Object.values(threads).forEach(th => {
+    if(!th.msgs.length) return;
+    // Find first guest message, then first agent reply after it
+    let lastGuestTs = null, firstAgentTs = null, guestBlock = false;
+    th.msgs.sort((a,b)=>a.ts-b.ts);
+    for(const msg of th.msgs){
+      if(msg.role==='guest'){ lastGuestTs=msg.ts; guestBlock=true; firstAgentTs=null; }
+      else if(guestBlock && lastGuestTs && !firstAgentTs){ firstAgentTs=msg.ts; guestBlock=false; }
+    }
+    const rt    = firstAgentTs ? +((firstAgentTs - lastGuestTs)/60000).toFixed(1) : null;
+    const breach= rt!=null ? rt > SLA[channel] : !firstAgentTs;
+    const lastG = th.msgs.filter(m=>m.role==='guest').slice(-1)[0];
+    result.push({
+      id: 'wa_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      agentId, channel, guest: th.guestName,
+      message: lastG ? lastG.body : '',
+      ts: lastG ? lastG.ts : Date.now(),
+      intent:'WhatsApp', urgency: breach?'high':'low',
+      responded: firstAgentTs!=null, rt, breach
+    });
+  });
+
+  return { messages: result, matched, threads: Object.keys(threads).length };
+}
+
+// Hostaway CSV parser
+// Expected cols: thread_id, timestamp, direction (Inbound/Outbound), message, guest_name (optional)
+function parseHostaway(csvText, agentId, channel){
+  const res = Papa.parse(csvText, { header:true, skipEmptyLines:true });
+  if(!res.data.length) return { error:'CSV appears empty or has no rows.' };
+
+  const threads = {};
+  res.data.forEach(row => {
+    const tid    = row.thread_id || row['Thread ID'] || row.ThreadId || Object.values(row)[0] || '';
+    const tsRaw  = row.timestamp  || row.Timestamp  || row.Date || row.date || Object.values(row)[1] || '';
+    const dirRaw = (row.direction || row.Direction  || row.dir  || '').toLowerCase();
+    const body   = row.message    || row.Message    || row.body || row.Body || Object.values(row)[3] || '';
+    const guest  = row.guest      || row.Guest      || row.guest_name || row.GuestName || 'Guest-'+tid;
+    const ts     = new Date(tsRaw).getTime();
+    if(!tid || isNaN(ts)) return;
+    if(!threads[tid]) threads[tid] = { msgs:[], guest: String(guest).trim() };
+    const isAgent = dirRaw.includes('out');
+    threads[tid].msgs.push({ ts, body, role: isAgent?'agent':'guest' });
+  });
+
+  if(!Object.keys(threads).length) return { error:'No threads found. Check columns: thread_id, timestamp, direction, message.' };
+
+  const result = [];
+  Object.entries(threads).forEach(([tid, th]) => {
+    th.msgs.sort((a,b)=>a.ts-b.ts);
+    let lastGuestTs=null, firstAgentTs=null, guestBlock=false;
+    for(const msg of th.msgs){
+      if(msg.role==='guest'){ lastGuestTs=msg.ts; guestBlock=true; firstAgentTs=null; }
+      else if(guestBlock && lastGuestTs && !firstAgentTs){ firstAgentTs=msg.ts; guestBlock=false; }
+    }
+    const rt     = firstAgentTs ? +((firstAgentTs - lastGuestTs)/60000).toFixed(1) : null;
+    const breach = rt!=null ? rt > SLA.Hostaway : !firstAgentTs;
+    const lastG  = th.msgs.filter(m=>m.role==='guest').slice(-1)[0];
+    result.push({
+      id: 'ha_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      agentId, channel:'Hostaway', guest: th.guest,
+      message: lastG ? lastG.body : '',
+      ts: lastG ? lastG.ts : Date.now(),
+      intent:'Hostaway', urgency: breach?'high':'low',
+      responded: firstAgentTs!=null, rt, breach
+    });
+  });
+
+  return { messages: result, matched: res.data.length, threads: Object.keys(threads).length };
+}
+
+/* ══════════════════════════════════════════
+   SYNC — merge parsed data into store & push everywhere
+══════════════════════════════════════════ */
+function syncAll(parsed, agentId, fileName, channel){
+  const newMsgs=[], newBreaches=[];
+
+  parsed.forEach(pm => {
+    if(!store.messages.find(m=>m.id===pm.id)){
+      store.messages.push(pm);
+      newMsgs.push(pm);
+    }
+  });
+
+  // Derive root cause entries from breaches
+  newMsgs.filter(m=>m.breach).forEach(b => {
+    const entry = {
+      agentId, agentName: agentName(agentId),
+      guest:b.guest, channel:b.channel, msg:b.message,
+      ts:b.ts, rt:b.rt,
+      reason: b.rt!=null ? b.rt+'m > '+SLA[b.channel]+'m SLA' : 'No agent response recorded'
+    };
+    if(!store.rootCause.find(r=>r.guest===b.guest&&Math.abs(r.ts-b.ts)<60000)){
+      store.rootCause.push(entry);
+      newBreaches.push(entry);
+    }
+  });
+
+  recalcKPI();
+  saveLocal();
+
+  // Push to Supabase
+  sbPushMessages(newMsgs);
+  sbPushRootCause(newBreaches);
+  sbUpsertKPI();
+
+  // Log import
+  const logEntry = new Date().toLocaleString()+' — '+channel+' for '+agentName(agentId)+': '+parsed.length+' conversations from '+fileName;
+  store.importLog.unshift(logEntry);
+  sbLogImport(logEntry);
+
+  showToast('Import complete — all sections updated');
+  render(currentView);
+}
+
+/* ══════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════ */
+const charts = {};
+function mkChart(id, cfg){
+  if(charts[id]){ try{charts[id].destroy();}catch(e){} delete charts[id]; }
+  const el=document.getElementById(id); if(!el) return;
+  charts[id]=new Chart(el.getContext('2d'),cfg);
+}
+function killCharts(){ Object.keys(charts).forEach(k=>{ try{charts[k].destroy();}catch(e){} delete charts[k]; }); }
+const CD={ plugins:{legend:{display:false}}, scales:{x:{grid:{display:false},ticks:{font:{size:10,family:'DM Sans'},color:'#9ca3af'}},y:{grid:{color:'#f0f2f5'},ticks:{font:{size:10,family:'DM Sans'},color:'#9ca3af'}}}, elements:{bar:{borderRadius:2},line:{tension:.35,borderWidth:1.5},point:{radius:0}} };
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+const fmt = ts => new Date(ts).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const fmtT = ts => new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000); }
+
+function urgencyPill(u){
+  if(u==='high') return '<span class="pill p-red"><span class="dot d-red"></span>High</span>';
+  if(u==='medium') return '<span class="pill p-amber"><span class="dot d-amber"></span>Medium</span>';
+  return '<span class="pill p-green"><span class="dot d-green"></span>Low</span>';
+}
+
+function emptyState(icon, title, sub, action=''){
+  return `<div class="empty"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div>${action}</div>`;
+}
+
+function agentSelect(id, placeholder='Select agent'){
+  if(!store.agents.length) return `<select class="select" id="${id}" disabled><option>No agents registered yet</option></select><div class="select-note">→ Go to Agents to register your team first</div>`;
+  return `<select class="select" id="${id}"><option value="">— ${placeholder} —</option>${store.agents.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select>`;
+}
+
+/* ══════════════════════════════════════════
+   VIEWS
+══════════════════════════════════════════ */
+const VIEWS = {
+
+overview: () => {
+  const hasData = store.messages.length > 0;
+  const agents = store.agents;
+  return `
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Active conversations</div><div class="stat-val">${store.kpi.active}</div><div class="stat-sub">awaiting response</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">SLA breaches</div><div class="stat-val ${store.kpi.breaches>0?'down':'up'}">${store.kpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Avg response time</div><div class="stat-val">${store.kpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${store.kpi.avg?'m':''}</span></div><div class="stat-sub">across all agents</div></div>
+    <div class="stat-card"><div class="stat-label">Agents registered</div><div class="stat-val">${agents.length}</div><div class="stat-sub"><a href="#" onclick="render('agents');return false;" style="color:var(--accent);text-decoration:none">manage →</a></div></div>
+  </div>
+  ${!hasData ? `<div class="panel">${emptyState('📂','No data imported yet','Register your agents, then import WhatsApp or Hostaway chat files to see metrics here.','<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'agents\')">Register agents</button><button class="btn" onclick="render(\'import\')">Import data</button></div>')}</div>` : `
+  ${agents.length ? `
+  <div class="panel">
+    <div class="ph"><span class="pt">Agent performance at a glance</span></div>
+    <div class="tw"><table class="sticky-col">
+      <thead><tr><th>Agent</th><th>Conversations</th><th>Active</th><th>Avg response</th><th>Breaches</th><th>SLA hit rate</th></tr></thead>
+      <tbody>${agents.map(a=>{const s=agentStats(a.id);return`<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${s.total}</td><td>${s.active}</td><td>${s.avgRt?s.avgRt+'m':'—'}</td><td>${s.breaches>0?`<span class="down">${s.breaches}</span>`:0}</td><td>${s.slaHit?s.slaHit+'%':'—'}</td></tr>`;}).join('')}</tbody>
+    </table></div>
+  </div>` : ''}
+  <div class="panel">
+    <div class="ph"><span class="pt">Recent conversations</span></div>
+    <div>${store.messages.slice(0,15).map(m=>`
+      <div class="msg-item${m.breach?' breach-row':''}">
+        <div class="msg-dot" style="background:${m.urgency==='high'?'var(--red)':'var(--green)'};margin-top:5px"></div>
+        <div class="msg-body">
+          <div class="msg-r1"><span class="msg-guest">${m.guest}</span><span class="msg-time">${fmtT(m.ts)} · ${m.channel}</span></div>
+          <div class="msg-text">"${m.message||'(no message)'}"</div>
+          <div class="msg-meta">
+            ${urgencyPill(m.urgency)}
+            <span class="pill p-gray">${agentName(m.agentId)}</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--text3)">${m.responded?'✓ '+m.rt+'m':m.breach?'<span style="color:var(--red)">Missed SLA</span>':'Pending'}</span>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`}`;
+},
+
+agents: () => {
+  const noAgents = !store.agents.length;
+  return `
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Registered agents (${store.agents.length})</span>
+      <button class="btn btn-primary" id="openAddAgent">+ Add agent</button>
+    </div>
+    ${noAgents ? emptyState('👥','No agents yet','Add your team members below. Their WhatsApp display names are used to identify who is the agent in your chat exports.') : `
+    <div class="agent-grid">
+      ${store.agents.map(a => {
+        const s = agentStats(a.id);
+        return `<div class="agent-card">
+          <div class="agent-card-top">
+            <div class="agent-ava" style="background:${a.color}">${a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+            <div><div class="agent-name">${a.name}</div><div class="agent-role">${a.role}</div></div>
+          </div>
+          <div class="agent-stats">
+            <div class="agent-stat"><div class="agent-stat-val">${s.total}</div><div class="agent-stat-lbl">Conversations</div></div>
+            <div class="agent-stat"><div class="agent-stat-val">${s.avgRt||'—'}<span style="font-size:10px;color:var(--text3)">${s.avgRt?'m':''}</span></div><div class="agent-stat-lbl">Avg response</div></div>
+            <div class="agent-stat"><div class="agent-stat-val ${s.breaches>0?'down':''}">${s.breaches}</div><div class="agent-stat-lbl">Breaches</div></div>
+            <div class="agent-stat"><div class="agent-stat-val">${s.slaHit||'—'}<span style="font-size:10px;color:var(--text3)">${s.slaHit?'%':''}</span></div><div class="agent-stat-lbl">SLA rate</div></div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">WA name: ${a.waName||'—'}</div>
+          <div class="btn-group">
+            <button class="btn btn-sm" onclick="editAgent('${a.id}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteAgent('${a.id}')">Remove</button>
+            <button class="btn btn-sm btn-primary" onclick="render('import')">Import data</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`}
+  </div>`;
+},
+
+import: () => {
+  const noAgents = !store.agents.length;
+  return `
+  <div class="panel">
+    <div class="ph"><span class="pt">Import data — WhatsApp chat export</span></div>
+    <div class="pp">
+      ${noAgents ? `<div class="import-result info">→ You need to register agents first before importing. <button class="btn btn-sm btn-primary" onclick="render('agents')">Add agents</button></div>` : `
+      <div class="steps">
+        <div class="step active"><div class="step-num">1</div>Select agent</div>
+        <div class="step"><div class="step-num">2</div>Upload file</div>
+        <div class="step"><div class="step-num">3</div>Confirm import</div>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Which agent does this WhatsApp chat belong to?</label>
+        ${agentSelect('wa_agent')}
+      </div>
+      <div class="form-group">
+        <label class="field-label">WhatsApp .txt export file</label>
+        <label class="upload-zone" id="waZone">
+          <input type="file" id="waFile" accept=".txt">
+          <div class="upload-icon">💬</div>
+          <div class="upload-lbl">Drop .txt file or click to browse</div>
+          <div class="upload-sub">From WhatsApp → Chat → More → Export chat (without media)</div>
+        </label>
+      </div>
+      <div id="waResult"></div>
+      <div id="waConfirm" style="display:none"></div>
+      <button class="btn btn-primary" id="waParseBtn" style="width:100%;justify-content:center;margin-top:4px;">Parse file</button>`}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="pt">Import data — Hostaway message export</span></div>
+    <div class="pp">
+      ${noAgents ? `<div class="import-result info">→ Register agents first.</div>` : `
+      <div class="steps">
+        <div class="step active"><div class="step-num">1</div>Select agent</div>
+        <div class="step"><div class="step-num">2</div>Upload CSV</div>
+        <div class="step"><div class="step-num">3</div>Confirm import</div>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Which agent does this Hostaway export belong to?</label>
+        ${agentSelect('ha_agent')}
+      </div>
+      <div class="form-group">
+        <label class="field-label">Hostaway .csv export</label>
+        <label class="upload-zone" id="haZone">
+          <input type="file" id="haFile" accept=".csv">
+          <div class="upload-icon">🏨</div>
+          <div class="upload-lbl">Drop .csv file or click to browse</div>
+          <div class="upload-sub">Columns needed: thread_id, timestamp, direction, message</div>
+        </label>
+      </div>
+      <div id="haResult"></div>
+      <div id="haConfirm" style="display:none"></div>
+      <button class="btn btn-primary" id="haParseBtn" style="width:100%;justify-content:center;margin-top:4px;">Parse file</button>`}
+    </div>
+  </div>
+
+  ${store.importLog.length ? `
+  <div class="panel">
+    <div class="ph"><span class="pt">Import history</span></div>
+    <div class="pp">${store.importLog.slice(0,10).map(l=>`<div class="text-muted" style="margin-bottom:4px;">· ${l}</div>`).join('')}</div>
+  </div>` : ''}`;
+},
+
+'root-cause': () => {
+  const rc = store.rootCause;
+  return !rc.length
+    ? `<div class="panel">${emptyState('✅','No SLA breaches recorded','Import conversation data to automatically detect breaches.')}</div>`
+    : `<div class="panel">
+    <div class="ph"><span class="pt">SLA breaches — root cause (${rc.length})</span></div>
+    <div class="tw">
+      <table class="sticky-col" style="min-width:860px;">
+        <thead><tr><th>Guest name</th><th>Agent</th><th>Channel</th><th>First message</th><th>Date/time</th><th>Response time</th><th>SLA target</th><th>Root cause</th></tr></thead>
+        <tbody>${rc.map(r=>`<tr>
+          <td>${r.guest}</td>
+          <td><span class="pill p-blue">${r.agentName||agentName(r.agentId)}</span></td>
+          <td>${r.channel}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">"${r.msg||''}"</td>
+          <td>${fmt(r.ts)}</td>
+          <td class="down">${r.rt!=null?r.rt+'m':'No response'}</td>
+          <td>${SLA[r.channel]||SLA.default}m</td>
+          <td><span class="pill p-red">${r.reason}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:8px 16px;">
+      <span class="text-muted">Hostaway SLA = 5 min · WhatsApp SLA = 10 min · Scroll right for all columns →</span>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Breach distribution by agent</span></div>
+    <div class="chart-wrap"><canvas id="rcChart"></canvas></div>
+  </div>`;
+},
+
+'r-first': () => agentResponseTable('First response time', 'first'),
+'r-avg':   () => agentResponseTable('Average response time', 'avg'),
+'r-delays': () => agentResponseTable('Delays over SLA threshold', 'delays'),
+'r-missed': () => `
+  <div class="panel">
+    <div class="ph"><span class="pt">Missed / no-response conversations</span></div>
+    ${!store.messages.length ? emptyState('📭','No data','Import conversations to see missed messages.') : `
+    <div class="tw"><table><thead><tr><th>Guest</th><th>Agent</th><th>Channel</th><th>Date/time</th><th>Last message</th></tr></thead>
+    <tbody>${store.messages.filter(m=>!m.responded).map(m=>`<tr>
+      <td>${m.guest}</td><td><span class="pill p-blue">${agentName(m.agentId)}</span></td>
+      <td>${m.channel}</td><td>${fmt(m.ts)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">"${m.message||''}"</td>
+    </tr>`).join('')}</tbody></table></div>`}
+  </div>`,
+
+// Satisfaction stubs — ready for manual data entry
+'sat-reviews':()=>manualPanel('Review scores','Add agent review scores from Airbnb/Booking.com','Review data entry coming — connect to channel APIs in Integrations.'),
+'sat-complaints':()=>manualPanel('Complaints','Track guest complaints per agent','Import conversation data then log complaint outcomes manually.'),
+'sat-nps':()=>manualPanel('NPS & CSAT','Guest sentiment scores','Connect NPS survey tool or enter scores manually.'),
+'sat-repeat':()=>manualPanel('Repeat guests','Guest loyalty metrics','Requires Hostaway booking history import.'),
+'sat-resolution':()=>resolutionPanel(),
+
+// Operations
+'ops-closed':()=>closedPanel(),
+'ops-active':()=>`<div class="panel"><div class="ph"><span class="pt">Active conversations</span></div>${store.messages.filter(m=>!m.responded).length?`<div class="tw"><table><thead><tr><th>Guest</th><th>Agent</th><th>Channel</th><th>Waiting since</th></tr></thead><tbody>${store.messages.filter(m=>!m.responded).map(m=>`<tr><td>${m.guest}</td><td><span class="pill p-blue">${agentName(m.agentId)}</span></td><td>${m.channel}</td><td>${fmt(m.ts)}</td></tr>`).join('')}</tbody></table></div>`:emptyState('✅','No active conversations','All conversations have responses.')}  </div>`,
+'ops-escalations':()=>manualPanel('Escalations','Track escalated cases','Log escalations manually from the Agent Performance section.'),
+'ops-maintenance':()=>manualPanel('Maintenance delays','Property maintenance response times','Log maintenance request outcomes manually.'),
+'ops-inspections':()=>manualPanel('Inspections & audits','Room grading results','Log inspection scores per property.'),
+'ops-deepclean':()=>manualPanel('Deep cleaning schedule','Upcoming deep cleans','Connect property management system or log manually.'),
+
+// Guest Reviews module
+'gr-properties': () => grPropertiesView(),
+'gr-analysis':   () => grAnalysisView(),
+'gr-reviews':    () => grReviewsView(),
+'gr-import':     () => grImportView(),
+
+// Channel intel
+'chan-airbnb':()=>manualPanel('Airbnb performance','Bookings, response rate, CSAT from Airbnb','Connect Airbnb API in Integrations for live data.'),
+'chan-booking':()=>manualPanel('Booking.com performance','Bookings, score, response rate','Connect Booking.com API in Integrations.'),
+'chan-direct':()=>manualPanel('Direct bookings','Direct booking metrics','Log direct bookings manually or via Hostaway export.'),
+
+// Proactive
+'pro-prearrival':()=>manualPanel('Pre-arrival outreach','% of guests who received check-in instructions before arrival','Log pre-arrival sends per agent from WhatsApp import data.'),
+'pro-midstay':()=>manualPanel('Mid-stay check-ins','% of guests contacted mid-stay','Log mid-stay messages from WhatsApp chat imports.'),
+
+integrations: () => `
+  <div class="panel">
+    <div class="ph"><span class="pt">Live API connections</span></div>
+    <div class="pp" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:11px;color:var(--text)">Supabase</div><div class="text-muted" id="sbTableStatus">Checking tables…</div></div>
+        <div id="sbIntegPill"><span class="pill p-gray">Checking…</span></div>
+      </div>
+      <div class="divider" style="margin:0"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:11px;color:var(--text)">WhatsApp Cloud API</div><div class="text-muted">Add access token in config to enable webhook</div></div>
+        <span class="pill p-amber">Credentials needed</span>
+      </div>
+      <div class="divider" style="margin:0"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:11px;color:var(--text)">Hostaway API</div><div class="text-muted">Add API key in config to enable live sync</div></div>
+        <span class="pill p-amber">Credentials needed</span>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Import data</span></div>
+    <div class="pp"><p style="font-size:11px;color:var(--text2);margin-bottom:12px;">To import WhatsApp or Hostaway chat data, go to the <b style="font-weight:500">Import data</b> section in the sidebar. You must register your agents first.</p>
+    <button class="btn btn-primary" onclick="render('import')">Go to Import Hub</button></div>
+  </div>`,
+
+admin: () => `
+  <div class="panel"><div class="ph"><span class="pt">Dashboard users (login accounts)</span></div>
+    <div class="tw"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td>Prince Chakusa</td><td>prince</td><td><span class="pill p-blue">Master Admin</span></td></tr>
+      ${store.users.map(u=>`<tr><td>${u.name}</td><td>${u.username}</td><td><span class="pill p-gray">${u.role}</span></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:8px 16px;"><button class="btn" onclick="openUserMgmt()">Manage users</button></div>
+  </div>
+  <div class="panel"><div class="ph"><span class="pt">Danger zone</span></div>
+    <div class="pp"><button class="btn btn-danger" id="clearDataBtn">Clear all imported data</button> <span class="text-muted" style="margin-left:8px;">Removes all messages and root cause records. Agents stay.</span></div>
+  </div>`,
+
+help: () => `
+  <div class="panel"><div class="ph"><span class="pt">How this dashboard works</span></div>
+    <div class="pp" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:11px;color:var(--text2);line-height:1.7">
+        <b style="font-weight:500;color:var(--text)">Step 1 — Register your agents</b><br>
+        Go to <b style="font-weight:500">Agents</b> and add each member of your team. Enter their exact WhatsApp display name — this is how the parser knows which messages are theirs in a chat export.<br><br>
+        <b style="font-weight:500;color:var(--text)">Step 2 — Export your chats</b><br>
+        WhatsApp: open the conversation → tap ⋮ → More → Export chat → Without media → save the .txt file.<br>
+        Hostaway: export message history as CSV with columns: thread_id, timestamp, direction, message.<br><br>
+        <b style="font-weight:500;color:var(--text)">Step 3 — Import data</b><br>
+        Go to <b style="font-weight:500">Import data</b>, select which agent the file belongs to, upload the file and click Parse. The dashboard will automatically calculate response times, SLA breaches, and update all sections.<br><br>
+        <b style="font-weight:500;color:var(--text)">Step 4 — Analyse</b><br>
+        Check Overview for team KPIs, Agents for per-agent stats, Root Cause for breach details, and Response Times for trends.
+      </div>
+      <div class="divider"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="font-size:11px"><span class="text-muted">WhatsApp SLA</span><br>10 minutes</div>
+        <div style="font-size:11px"><span class="text-muted">Hostaway SLA</span><br>5 minutes</div>
+        <div style="font-size:11px"><span class="text-muted">Admin password</span><br><code class="ic">guestcare</code></div>
+        <div style="font-size:11px"><span class="text-muted">Data storage</span><br>Supabase + localStorage fallback</div>
+      </div>
+    </div>
+  </div>`
+};
+
+/* ── helper sub-views ── */
+function agentResponseTable(title, mode){
+  if(!store.messages.length) return `<div class="panel">${emptyState('📭',title,'Import conversations to see response time data.')}</div>`;
+  const rows = store.agents.map(a=>{
+    const s=agentStats(a.id);
+    const m=store.messages.filter(x=>x.agentId===a.id&&x.responded&&x.rt!=null);
+    const delays=m.filter(x=>x.rt>SLA[x.channel]);
+    return`<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${s.avgRt?s.avgRt+'m':'—'}</td><td>${m.length?Math.min(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${m.length?Math.max(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${delays.length}</td><td>${s.slaHit?s.slaHit+'%':'—'}</td></tr>`;
+  });
+  return`<div class="panel"><div class="ph"><span class="pt">${title}</span></div>
+    <div class="tw"><table><thead><tr><th>Agent</th><th>Avg</th><th>Best</th><th>Worst</th><th>Over SLA</th><th>SLA rate</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+  </div><div class="panel"><div class="ph"><span class="pt">Trend chart</span></div><div class="chart-wrap"><canvas id="rtChart"></canvas></div></div>`;
+}
+function manualPanel(title, sub, note){
+  return`<div class="panel"><div class="ph"><span class="pt">${title}</span></div><div class="pp"><div style="font-size:11px;color:var(--text2);margin-bottom:8px;">${sub}</div><div class="text-muted">${note}</div></div></div>`;
+}
+function resolutionPanel(){
+  const a=store.agents;
+  if(!a.length||!store.messages.length) return manualPanel('Resolution quality','% resolved in first response','Import conversations to see resolution data.');
+  return`<div class="panel"><div class="ph"><span class="pt">Resolution quality</span></div><div class="tw"><table><thead><tr><th>Agent</th><th>Conversations</th><th>Responded</th><th>Avg response</th></tr></thead><tbody>${a.map(ag=>{const s=agentStats(ag.id);return`<tr><td><span class="pill" style="background:${ag.color}22;color:${ag.color}">${ag.name}</span></td><td>${s.total}</td><td>${s.total-s.active}</td><td>${s.avgRt?s.avgRt+'m':'—'}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+}
+function closedPanel(){
+  const a=store.agents;
+  if(!a.length||!store.messages.length) return manualPanel('Tickets closed','Conversations with responses','Import conversations to see closure data.');
+  return`<div class="panel"><div class="ph"><span class="pt">Conversations responded to</span></div><div class="tw"><table><thead><tr><th>Agent</th><th>Total</th><th>Responded</th><th>Pending</th></tr></thead><tbody>${a.map(ag=>{const s=agentStats(ag.id);return`<tr><td><span class="pill" style="background:${ag.color}22;color:${ag.color}">${ag.name}</span></td><td>${s.total}</td><td>${s.total-s.active}</td><td>${s.active}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+}
+
+/* ══════════════════════════════════════════
+   CHART INIT after render
+══════════════════════════════════════════ */
+function initCharts(v){
+  if(v==='root-cause'&&store.rootCause.length){
+    const agents=store.agents, counts=agents.map(a=>store.rootCause.filter(r=>r.agentId===a.id||r.agentName===a.name).length);
+    mkChart('rcChart',{type:'bar',data:{labels:agents.map(a=>a.name),datasets:[{label:'Breaches',data:counts,backgroundColor:agents.map(a=>a.color+'44'),borderColor:agents.map(a=>a.color),borderWidth:1.5,borderRadius:2,barPercentage:.5}]},options:{...CD,responsive:true}});
+  }
+  if((v==='r-first'||v==='r-avg'||v==='r-delays')&&store.agents.length){
+    const datasets=store.agents.map(a=>({label:a.name,data:[a,a,a,a,a].map(()=>agentStats(a.id).avgRt||0),borderColor:a.color,backgroundColor:'transparent'}));
+    mkChart('rtChart',{type:'line',data:{labels:['Mon','Tue','Wed','Thu','Fri'],datasets},options:{...CD,responsive:true,plugins:{legend:{display:true,labels:{font:{size:10,family:'DM Sans'},color:'#9ca3af',boxWidth:8}}}}});
+  }
+}
+
+/* ══════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════ */
+const CP={'r-first':'response','r-avg':'response','r-delays':'response','r-missed':'response','root-cause':'response','sat-reviews':'sat','sat-complaints':'sat','sat-nps':'sat','sat-repeat':'sat','sat-resolution':'sat','ops-closed':'ops','ops-active':'ops','ops-escalations':'ops','ops-maintenance':'ops','ops-inspections':'ops','ops-deepclean':'ops','gr-properties':'greviews','gr-analysis':'greviews','gr-reviews':'greviews','gr-import':'greviews','chan-airbnb':'chan','chan-booking':'chan','chan-direct':'chan','pro-prearrival':'pro','pro-midstay':'pro'};
+const LBL={overview:'Overview',agents:'Agents',import:'Import data','r-first':'First response','r-avg':'Average response','r-delays':'Delays','r-missed':'Missed','root-cause':'Root cause analysis','sat-reviews':'Reviews','sat-complaints':'Complaints','sat-nps':'NPS / CSAT','sat-repeat':'Repeat guests','sat-resolution':'Resolution','ops-closed':'Tickets closed','ops-active':'Active issues','ops-escalations':'Escalations','ops-maintenance':'Maintenance','ops-inspections':'Inspections','ops-deepclean':'Deep cleaning','gr-properties':'Properties','gr-analysis':'Review analysis','gr-reviews':'Guest reviews','gr-import':'Import reviews','chan-airbnb':'Airbnb','chan-booking':'Booking.com','chan-direct':'Direct','pro-prearrival':'Pre-arrival','pro-midstay':'Mid-stay',heatmap:'Response heatmap',sentiment:'Guest sentiment',integrations:'Integrations',admin:'Admin',help:'Help'};
+
+let currentView='overview';
+let isAdmin = sessionStorage.getItem('gcc_admin')==='1';
+
+function render(v){
+  if(v==='admin'&&!isAdmin){ openAdminLogin(); return; }
+  killCharts(); currentView=v;
+  const lbl=LBL[v]||v;
+  document.getElementById('topTitle').textContent=lbl;
+  document.getElementById('mobTitle').textContent=lbl;
+  document.getElementById('content').innerHTML = VIEWS[v] ? VIEWS[v]() : `<div class="panel">${emptyState('🚧','Coming soon','This section is ready for your data.')}</div>`;
+  wireImport();
+  wireAdmin();
+  // Active nav
+  document.querySelectorAll('.sb-item,.sb-kid').forEach(el=>el.classList.remove('active','parent-active'));
+  const ae=document.querySelector(`.sb-kid[data-view="${v}"]`)||document.querySelector(`.sb-item[data-view="${v}"]`);
+  if(ae) ae.classList.add('active');
+  const pid=CP[v]; if(pid){ const pb=document.querySelector(`.sb-parent[data-parent="${pid}"]`); if(pb) pb.classList.add('parent-active'); }
+  setTimeout(()=>initCharts(v),20);
+  closeSb();
+}
+
+/* ══════════════════════════════════════════
+   IMPORT WIRING — fires every time Import view renders
+══════════════════════════════════════════ */
+function wireImport(){
+  // Drag zones
+  ['waZone','haZone'].forEach(zid=>{
+    const z=document.getElementById(zid); if(!z) return;
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+    z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+    z.addEventListener('drop',e=>{
+      e.preventDefault(); z.classList.remove('drag');
+      const inp=z.querySelector('input[type=file]');
+      if(inp&&e.dataTransfer.files.length){ const dt=new DataTransfer(); dt.items.add(e.dataTransfer.files[0]); inp.files=dt.files; inp.dispatchEvent(new Event('change')); }
+    });
+  });
+
+  // Show file name when selected
+  const waFile=document.getElementById('waFile');
+  const haFile=document.getElementById('haFile');
+  if(waFile) waFile.onchange=()=>{ if(waFile.files[0]) document.getElementById('waResult').innerHTML=`<div class="import-result info">File selected: ${waFile.files[0].name} (${(waFile.files[0].size/1024).toFixed(0)} KB)</div>`; };
+  if(haFile) haFile.onchange=()=>{ if(haFile.files[0]) document.getElementById('haResult').innerHTML=`<div class="import-result info">File selected: ${haFile.files[0].name} (${(haFile.files[0].size/1024).toFixed(0)} KB)</div>`; };
+
+  // WhatsApp parse button
+  const waBtn=document.getElementById('waParseBtn');
+  if(waBtn) waBtn.onclick=()=>{
+    const agentId=document.getElementById('wa_agent')?.value;
+    const file=document.getElementById('waFile')?.files[0];
+    const res=document.getElementById('waResult');
+    const conf=document.getElementById('waConfirm');
+    if(!agentId){ res.innerHTML='<div class="import-result err">Please select an agent first.</div>'; return; }
+    if(!file){ res.innerHTML='<div class="import-result err">Please select a .txt file.</div>'; return; }
+    const agent=store.agents.find(a=>a.id===agentId);
+    if(!agent.waName){ res.innerHTML='<div class="import-result err">This agent has no WhatsApp display name set. Edit the agent to add it.</div>'; return; }
+    res.innerHTML='<div class="import-result info">Parsing file…</div>';
+    const rd=new FileReader();
+    rd.onload=e=>{
+      const result=parseWhatsApp(e.target.result, agent.waName, agentId, 'WhatsApp');
+      if(result.error){ res.innerHTML=`<div class="import-result err">${result.error}</div>`; return; }
+      const {messages,matched,threads}=result;
+      res.innerHTML=`<div class="import-result ok">✓ Parsed ${matched} lines · ${threads} guest conversations found · ${messages.filter(m=>m.breach).length} SLA breaches detected</div>`;
+      conf.style.display='block';
+      conf.innerHTML=`
+        <div style="font-size:11px;color:var(--text);margin:10px 0 6px;">Preview — ${messages.length} conversations for <span class="pill p-blue">${agent.name}</span></div>
+        <div class="tw" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+          <table><thead><tr><th>Guest</th><th>Last message</th><th>Response time</th><th>SLA</th></tr></thead>
+          <tbody>${messages.slice(0,20).map(m=>`<tr>
+            <td>${m.guest}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${m.message||'—'}</td>
+            <td>${m.rt!=null?m.rt+'m':'No response'}</td>
+            <td>${m.breach?'<span class="down">Breach</span>':'<span class="up">OK</span>'}</td>
+          </tr>`).join('')}</tbody></table>
+        </div>
+        <button class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center;" id="waConfirmBtn">Confirm & import to dashboard</button>`;
+      document.getElementById('waConfirmBtn').onclick=()=>{
+        syncAll(messages, agentId, file.name, 'WhatsApp');
+        conf.innerHTML='<div class="import-result ok">✓ Imported — all sections updated</div>';
+      };
+    };
+    rd.readAsText(file);
+  };
+
+  // Hostaway parse button
+  const haBtn=document.getElementById('haParseBtn');
+  if(haBtn) haBtn.onclick=()=>{
+    const agentId=document.getElementById('ha_agent')?.value;
+    const file=document.getElementById('haFile')?.files[0];
+    const res=document.getElementById('haResult');
+    const conf=document.getElementById('haConfirm');
+    if(!agentId){ res.innerHTML='<div class="import-result err">Please select an agent first.</div>'; return; }
+    if(!file){ res.innerHTML='<div class="import-result err">Please select a .csv file.</div>'; return; }
+    res.innerHTML='<div class="import-result info">Parsing CSV…</div>';
+    const rd=new FileReader();
+    rd.onload=e=>{
+      const result=parseHostaway(e.target.result, agentId, 'Hostaway');
+      if(result.error){ res.innerHTML=`<div class="import-result err">${result.error}</div>`; return; }
+      const {messages,matched,threads}=result;
+      res.innerHTML=`<div class="import-result ok">✓ Parsed ${matched} rows · ${threads} conversations found · ${messages.filter(m=>m.breach).length} SLA breaches</div>`;
+      conf.style.display='block';
+      conf.innerHTML=`
+        <div style="font-size:11px;color:var(--text);margin:10px 0 6px;">Preview — ${messages.length} conversations for <span class="pill p-blue">${agentName(agentId)}</span></div>
+        <div class="tw" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+          <table><thead><tr><th>Guest</th><th>Last message</th><th>Response time</th><th>SLA</th></tr></thead>
+          <tbody>${messages.slice(0,20).map(m=>`<tr>
+            <td>${m.guest}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${m.message||'—'}</td>
+            <td>${m.rt!=null?m.rt+'m':'No response'}</td>
+            <td>${m.breach?'<span class="down">Breach</span>':'<span class="up">OK</span>'}</td>
+          </tr>`).join('')}</tbody></table>
+        </div>
+        <button class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center;" id="haConfirmBtn">Confirm & import to dashboard</button>`;
+      document.getElementById('haConfirmBtn').onclick=()=>{
+        syncAll(messages, agentId, file.name, 'Hostaway');
+        conf.innerHTML='<div class="import-result ok">✓ Imported — all sections updated</div>';
+      };
+    };
+    rd.readAsText(file);
+  };
+}
+
+/* ══════════════════════════════════════════
+   ADMIN WIRING
+══════════════════════════════════════════ */
+function wireAdmin(){
+  const clearBtn=document.getElementById('clearDataBtn');
+  if(clearBtn) clearBtn.onclick=()=>{
+    if(!confirm('This will delete all imported messages and root cause records. Agents will stay. Continue?')) return;
+    store.messages=[]; store.rootCause=[]; recalcKPI(); saveLocal();
+    try{ sb.from('gcc_messages').delete().neq('id','_'); sb.from('gcc_root_cause').delete().neq('id','_'); sb.from('gcc_kpi').upsert({id:1,...store.kpi}); }catch(e){}
+    showToast('All imported data cleared'); render(currentView);
+  };
+}
+
+/* ══════════════════════════════════════════
+   AGENT MODAL
+══════════════════════════════════════════ */
+window.editAgent = function(id){
+  const a=store.agents.find(x=>x.id===id); if(!a) return;
+  document.getElementById('agentModalTitle').textContent='Edit agent';
+  document.getElementById('ag_id').value=id;
+  document.getElementById('ag_name').value=a.name;
+  document.getElementById('ag_role').value=a.role;
+  document.getElementById('ag_color').value=a.color||'#2563eb';
+  document.getElementById('ag_waname').value=a.waName||'';
+  document.getElementById('ag_email').value=a.email||'';
+  document.getElementById('agentModal').style.display='flex';
+};
+window.deleteAgent = async function(id){
+  const a=store.agents.find(x=>x.id===id);
+  if(!confirm(`Remove agent "${a?a.name:id}"? Their imported data will remain.`)) return;
+  store.agents=store.agents.filter(x=>x.id!==id);
+  saveLocal();
+  render(currentView);
+  await sbDeleteAgent(id);
+  showToast('Agent removed ✓');
+};
+document.getElementById('openAddAgent')?.addEventListener('click',()=>{});
+document.addEventListener('click',e=>{
+  if(e.target&&e.target.id==='openAddAgent'){
+    document.getElementById('agentModalTitle').textContent='Add agent';
+    document.getElementById('ag_id').value='';
+    ['ag_name','ag_waname','ag_email'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ag_role').value='Guest Experience Agent';
+    document.getElementById('ag_color').value='#2563eb';
+    document.getElementById('agentModal').style.display='flex';
+  }
+});
+document.getElementById('cancelAgent').onclick=()=>document.getElementById('agentModal').style.display='none';
+document.getElementById('saveAgent').onclick = async function(){
+  const nameEl=document.getElementById('ag_name');
+  const errEl=document.getElementById('agErr');
+  const name=nameEl.value.trim();
+  if(!name){ errEl.textContent='Name is required.'; return; }
+  errEl.textContent='';
+  const id = document.getElementById('ag_id').value || 'ag_'+Date.now();
+  const agent = {
+    id, name,
+    role:  document.getElementById('ag_role').value,
+    color: document.getElementById('ag_color').value,
+    waName:document.getElementById('ag_waname').value.trim(),
+    email: document.getElementById('ag_email').value.trim()
+  };
+  const isEdit = store.agents.some(a=>a.id===id);
+  // Save locally immediately
+  const idx = store.agents.findIndex(a=>a.id===id);
+  if(idx>=0) store.agents[idx]=agent; else store.agents.push(agent);
+  saveLocal();
+  document.getElementById('agentModal').style.display='none';
+  showToast('Saving agent…');
+  render(currentView);
+  // Push to Supabase and confirm
+  try{
+    await sbUpsertAgent(agent);
+    showToast(isEdit ? 'Agent updated ✓' : 'Agent added ✓');
+  }catch(e){
+    showToast('Saved locally — Supabase sync failed. Check SQL schema.');
+  }
+};
+
+/* ══════════════════════════════════════════
+   USER MANAGEMENT (admin login users — separate from agents)
+══════════════════════════════════════════ */
+function renderUserList(){
+  const MASTER={id:'master',name:'Prince Chakusa',username:'prince',email:'prince@harare.com',role:'Master Admin',locked:true};
+  const all=[MASTER,...store.users];
+  document.getElementById('userList').innerHTML=all.map(u=>`
+    <div class="user-row">
+      <div class="user-ava">${u.name.slice(0,2).toUpperCase()}</div>
+      <div class="user-info"><div class="user-name">${u.name} <span class="pill ${u.locked?'p-blue':'p-gray'}">${u.role}</span></div><div class="user-email">@${u.username} · ${u.email}</div></div>
+      <div class="user-acts">${u.locked?'<span class="text-muted">Non-editable</span>':`<button class="btn btn-sm" onclick="editUser('${u.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>`}</div>
+    </div>`).join('');
+}
+function openUserMgmt(){ document.getElementById('addUserForm').style.display='none'; document.getElementById('editUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; renderUserList(); document.getElementById('userModal').style.display='flex'; }
+window.openUserMgmt=openUserMgmt;
+window.editUser=function(id){ const u=store.users.find(x=>x.id===id); if(!u) return; document.getElementById('eu_id').value=id; document.getElementById('eu_name').value=u.name; document.getElementById('eu_user').value=u.username; document.getElementById('eu_email').value=u.email; document.getElementById('eu_role').value=u.role; document.getElementById('editUserForm').style.display='block'; document.getElementById('addUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='none'; };
+window.deleteUser=function(id){ if(!confirm('Delete this user?')) return; store.users=store.users.filter(u=>u.id!==id); saveLocal(); sbDeleteUser(id); renderUserList(); showToast('User deleted'); };
+document.getElementById('profileBtn').onclick=openUserMgmt;
+document.getElementById('closeUserModal').onclick=()=>document.getElementById('userModal').style.display='none';
+document.getElementById('openAdd').onclick=()=>{ document.getElementById('addUserForm').style.display='block'; document.getElementById('showAddBtn').style.display='none'; document.getElementById('editUserForm').style.display='none'; };
+document.getElementById('cancelAdd').onclick=()=>{ document.getElementById('addUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; };
+document.getElementById('cancelEdit').onclick=()=>{ document.getElementById('editUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; };
+document.getElementById('saveAdd').onclick=()=>{
+  const n=document.getElementById('nu_name').value.trim(), u=document.getElementById('nu_user').value.trim(), e=document.getElementById('nu_email').value.trim(), p=document.getElementById('nu_pass').value, r=document.getElementById('nu_role').value;
+  if(!n||!u||!e||!p){ document.getElementById('nuErr').textContent='All fields required.'; return; }
+  const nu={id:'u_'+Date.now(),name:n,username:u,email:e,role:r,passwordHash:btoa(p)};
+  store.users.push(nu); saveLocal(); sbUpsertUser(nu);
+  document.getElementById('addUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; renderUserList(); showToast('User added');
+};
+document.getElementById('saveEdit').onclick=()=>{
+  const id=document.getElementById('eu_id').value, u=store.users.find(x=>x.id===id); if(!u) return;
+  u.name=document.getElementById('eu_name').value.trim(); u.username=document.getElementById('eu_user').value.trim(); u.email=document.getElementById('eu_email').value.trim(); u.role=document.getElementById('eu_role').value;
+  saveLocal(); sbUpsertUser(u); document.getElementById('editUserForm').style.display='none'; document.getElementById('showAddBtn').style.display='block'; renderUserList(); showToast('User updated');
+};
+
+/* ══════════════════════════════════════════
+   ADMIN LOGIN
+══════════════════════════════════════════ */
+function openAdminLogin(){ document.getElementById('pwErr').textContent=''; document.getElementById('adminPw').value=''; document.getElementById('adminModal').style.display='flex'; document.getElementById('adminPw').focus(); }
+document.getElementById('adminCancel').onclick=()=>document.getElementById('adminModal').style.display='none';
+document.getElementById('adminSubmit').onclick=doLogin;
+document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function doLogin(){ if(document.getElementById('adminPw').value==='guestcare'){ isAdmin=true; sessionStorage.setItem('gcc_admin','1'); document.getElementById('adminModal').style.display='none'; render('admin'); } else document.getElementById('pwErr').textContent='Incorrect password'; }
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
+const sidebar=document.getElementById('sidebar');
+const sbOverlay=document.getElementById('sbOverlay');
+function openSb(){ sidebar.classList.add('open'); sbOverlay.classList.add('open'); }
+function closeSb(){ sidebar.classList.remove('open'); sbOverlay.classList.remove('open'); }
+document.getElementById('mobMenu').onclick=openSb;
+document.getElementById('sbClose').onclick=closeSb;
+document.getElementById('topMenu').onclick=openSb;
+sbOverlay.onclick=closeSb;
+document.querySelectorAll('.sb-parent').forEach(btn=>{
+  btn.onclick=()=>{ const pid=btn.dataset.parent, ch=document.getElementById('ch-'+pid), open=ch.classList.contains('open'); document.querySelectorAll('.sb-kids').forEach(c=>c.classList.remove('open')); document.querySelectorAll('.sb-parent').forEach(b=>b.classList.remove('open')); if(!open){ ch.classList.add('open'); btn.classList.add('open'); } };
+});
+document.querySelectorAll('.sb-kid[data-view]').forEach(b=>b.onclick=()=>render(b.dataset.view));
+document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render(b.dataset.view));
+
+/* ══════════════════════════════════════════
+   GUEST REVIEWS MODULE
+   Data structures live in store.properties and store.reviews
+   Both persist in localStorage and sync to Supabase
+══════════════════════════════════════════ */
+
+// Seed store if not present
+// ── helpers ──
+function starsHTML(score){
+  const full = Math.round(score||0);
+  return Array(5).fill(0).map((_,i)=>i<full?'★':'☆').join('');
+}
+
+function scoreClass(s){
+  if(s>=4.5) return 'score-great';
+  if(s>=3.5) return 'score-good';
+  return 'score-bad';
+}
+
+function grSearchFilter(items, query, fields){
+  if(!query) return items;
+  const q = query.toLowerCase();
+  return items.filter(item => fields.some(f=>(item[f]||'').toLowerCase().includes(q)));
+}
+
+// ── Supabase sync for reviews module ──
+async function sbPushProperty(p){
+  try{
+    const row = {
+      id:p.id, name:p.name,
+      type:p.type||'Apartment',
+      location:p.location||null,
+      beds: p.beds != null ? parseInt(p.beds,10)||0 : 0,
+      hostaway_id:p.hostawayId||null,
+      status:p.status||'Active',
+      notes:p.notes||null
+    };
+    const {error} = await sb.from('gcc_properties').upsert(row,{onConflict:'id'});
+    if(error) throw new Error(error.message);
+    return true;
+  }catch(e){
+    console.warn('property push failed:', e.message);
+    showToast('Could not save to Supabase — check SQL tables are created');
+    return false;
+  }
+}
+async function sbDeleteProperty(id){
+  try{ await sb.from('gcc_properties').delete().eq('id',id); }catch(e){}
+}
+async function sbPushReview(r){
+  try{
+    const row = {
+      id:r.id, property_id:r.propertyId||null,
+      guest:r.guest||null,
+      score:r.score!=null?Number(r.score):null,
+      ts:r.ts?new Date(r.ts).toISOString():new Date().toISOString(),
+      channel:r.channel||null,
+      nationality:r.nationality||null,
+      review_text:r.text||null,
+      cleanliness:r.cleanliness!=null?Number(r.cleanliness):null,
+      communication:r.communication!=null?Number(r.communication):null,
+      checkin:r.checkin!=null?Number(r.checkin):null,
+      accuracy:r.accuracy!=null?Number(r.accuracy):null,
+      location:r.location!=null?Number(r.location):null,
+      value:r.value!=null?Number(r.value):null,
+      response:r.response||null
+    };
+    const {error} = await sb.from('gcc_reviews').upsert(row,{onConflict:'id'});
+    if(error) throw new Error(error.message);
+    return true;
+  }catch(e){
+    console.warn('review push failed:', e.message);
+    showToast('Could not save review to Supabase — check SQL tables');
+    return false;
+  }
+}
+async function sbDeleteReview(id){
+  try{ await sb.from('gcc_reviews').delete().eq('id',id); }catch(e){}
+}
+
+// sbLoadReviews merged into sbLoad — no longer needed separately
+function sbLoadReviews_noop(){}
+
+// Derived: average score per property
+function propAvgScore(propId){
+  const revs = store.reviews.filter(r=>r.propertyId===propId&&r.score!=null);
+  return revs.length ? +(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2) : null;
+}
+
+function propReviewCount(propId){
+  return store.reviews.filter(r=>r.propertyId===propId).length;
+}
+
+// Month-over-month avg score per property
+function propMonthlyScores(propId){
+  const revs = store.reviews.filter(r=>r.propertyId===propId&&r.score!=null);
+  const byMonth={};
+  revs.forEach(r=>{
+    const d=new Date(r.ts), key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if(!byMonth[key]) byMonth[key]={sum:0,count:0};
+    byMonth[key].sum+=r.score; byMonth[key].count++;
+  });
+  return Object.entries(byMonth).sort().map(([m,v])=>({month:m, avg:+(v.sum/v.count).toFixed(2)}));
+}
+
+// Rating breakdown distribution (1–5 stars)
+function ratingDistribution(propId){
+  const revs = store.reviews.filter(r=>r.propertyId===propId&&r.score!=null);
+  const dist={1:0,2:0,3:0,4:0,5:0};
+  revs.forEach(r=>{ const s=Math.round(r.score); if(dist[s]!==undefined) dist[s]++; });
+  const total=revs.length||1;
+  return [5,4,3,2,1].map(star=>({star, count:dist[star], pct:Math.round(100*dist[star]/total)}));
+}
+
+// Category scores (if review has sub-scores)
+const REVIEW_CATS = ['cleanliness','communication','checkin','accuracy','location','value'];
+
+// ── Modal state for reviews module ──
+let grPropertyModal = null;  // 'add' | 'edit'
+let grReviewModal   = null;
+let grEditId        = null;
+
+/* ══════════════
+   PROPERTY MODAL WIRING (event delegation)
+══════════════ */
+window.grOpenAddProperty = function(){
+  grPropertyModal='add'; grEditId=null;
+  showGrPropertyModal({});
+};
+window.grOpenEditProperty = function(id){
+  const p=store.properties.find(x=>x.id===id); if(!p) return;
+  grPropertyModal='edit'; grEditId=id;
+  showGrPropertyModal(p);
+};
+window.grDeleteProperty = async function(id){
+  const p=store.properties.find(x=>x.id===id);
+  if(!confirm(`Delete property "${p?p.name:id}"? All its reviews will also be deleted.`)) return;
+  store.properties=store.properties.filter(x=>x.id!==id);
+  store.reviews=store.reviews.filter(r=>r.propertyId!==id);
+  saveLocal();
+  render('gr-properties');
+  await sbDeleteProperty(id);
+  showToast('Property deleted ✓');
+};
+
+function showGrPropertyModal(p){
+  const existing = document.getElementById('grPropModal');
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.id='grPropModal'; div.className='modal-wrap';
+  div.innerHTML=`<div class="modal-box wide">
+    <div class="modal-title">${grPropertyModal==='add'?'Add property':'Edit property'}</div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Property name</label><input class="input" id="gp_name" value="${p.name||''}"></div>
+      <div class="form-group"><label class="field-label">Type</label>
+        <select class="select" id="gp_type">
+          ${['Apartment','Villa','Studio','Penthouse','Townhouse','Suite','Chalet'].map(t=>`<option${(p.type||'')==t?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Location / Area</label><input class="input" id="gp_location" value="${p.location||''}" placeholder="e.g. Dubai Marina"></div>
+      <div class="form-group"><label class="field-label">Bedrooms</label><input class="input" id="gp_beds" type="number" min="0" value="${p.beds!=null && p.beds!==undefined ? p.beds : ''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Hostaway property ID (optional)</label><input class="input" id="gp_hostaway_id" value="${p.hostawayId||''}" placeholder="e.g. 12345"></div>
+      <div class="form-group"><label class="field-label">Status</label>
+        <select class="select" id="gp_status">
+          ${['Active','Inactive','Under maintenance'].map(s=>`<option${(p.status||'Active')===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="field-label">Notes</label><input class="input" id="gp_notes" value="${p.notes||''}" placeholder="Any extra info…"></div>
+    <div id="gp_err" style="font-size:10px;color:var(--red);min-height:14px"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('grPropModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="grSaveProperty()">Save property</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('gp_name').focus();
+}
+
+window.grSaveProperty = async function(){
+  const name=document.getElementById('gp_name')?.value.trim();
+  if(!name){ document.getElementById('gp_err').textContent='Property name is required.'; return; }
+  const bedsRaw = document.getElementById('gp_beds').value;
+  const prop = {
+    id: grEditId||'prop_'+Date.now(),
+    name,
+    type:document.getElementById('gp_type').value,
+    location:document.getElementById('gp_location').value.trim(),
+    beds: bedsRaw!=='' ? parseInt(bedsRaw,10)||0 : 0,
+    hostawayId:document.getElementById('gp_hostaway_id').value.trim(),
+    status:document.getElementById('gp_status').value,
+    notes:document.getElementById('gp_notes').value.trim(),
+    createdAt: grEditId
+      ? (store.properties.find(x=>x.id===grEditId)?.createdAt||Date.now())
+      : Date.now()
+  };
+  const isEdit = store.properties.some(x=>x.id===prop.id);
+  const idx = store.properties.findIndex(x=>x.id===prop.id);
+  if(idx>=0) store.properties[idx]=prop; else store.properties.push(prop);
+  saveLocal();
+  document.getElementById('grPropModal').remove();
+  showToast('Saving property…');
+  render('gr-properties');
+  const ok = await sbPushProperty(prop);
+  if(ok) showToast(isEdit ? 'Property updated ✓' : 'Property added ✓');
+};
+
+// Safe helper — used by Add Review button when no property filter is active
+window.grAddReviewClick = function(propId){
+  if(!store.properties.length){
+    showToast('Add a property first before adding reviews');
+    render('gr-properties');
+    return;
+  }
+  grOpenAddReview(propId || store.properties[0].id);
+};
+window.grOpenAddReview = function(propId){
+  grReviewModal='add'; grEditId=null;
+  showGrReviewModal({propertyId:propId});
+};
+window.grOpenEditReview = function(id){
+  const r=store.reviews.find(x=>x.id===id); if(!r) return;
+  grReviewModal='edit'; grEditId=id;
+  showGrReviewModal(r);
+};
+window.grDeleteReview = async function(id){
+  if(!confirm('Delete this review?')) return;
+  store.reviews=store.reviews.filter(r=>r.id!==id);
+  saveLocal();
+  render('gr-reviews');
+  await sbDeleteReview(id);
+  showToast('Review deleted ✓');
+};
+
+function showGrReviewModal(r){
+  const existing=document.getElementById('grRevModal');
+  if(existing) existing.remove();
+  const props=store.properties;
+  const div=document.createElement('div');
+  div.id='grRevModal'; div.className='modal-wrap';
+  div.innerHTML=`<div class="modal-box wide">
+    <div class="modal-title">${grReviewModal==='add'?'Add review':'Edit review'}</div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Property</label>
+        <select class="select" id="gr_prop">${props.map(p=>`<option value="${p.id}"${p.id===(r.propertyId||'')?' selected':''}>${p.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label class="field-label">Overall score (1–10)</label>
+        <input class="input" id="gr_score" type="number" min="1" max="10" step="0.1" value="${r.score||''}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Guest name</label><input class="input" id="gr_guest" value="${r.guest||''}" placeholder="e.g. Maria G."></div>
+      <div class="form-group"><label class="field-label">Review date</label><input class="input" id="gr_date" type="date" value="${r.ts?new Date(r.ts).toISOString().slice(0,10):new Date().toISOString().slice(0,10)}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Channel</label>
+        <select class="select" id="gr_channel">
+          ${['Airbnb','Booking.com','Google','Direct','VRBO','Expedia'].map(c=>`<option${(r.channel||'')==c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="field-label">Nationality (optional)</label><input class="input" id="gr_nationality" value="${r.nationality||''}" placeholder="e.g. British"></div>
+    </div>
+    <div class="form-group"><label class="field-label">Review text</label>
+      <textarea class="input" id="gr_text" rows="3" style="resize:vertical">${r.text||''}</textarea>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em">Sub-scores (optional, 1–10 each)</div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Cleanliness</label><input class="input" id="gr_cleanliness" type="number" min="1" max="10" step="0.1" value="${r.cleanliness||''}"></div>
+      <div class="form-group"><label class="field-label">Communication</label><input class="input" id="gr_communication" type="number" min="1" max="10" step="0.1" value="${r.communication||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Check-in</label><input class="input" id="gr_checkin" type="number" min="1" max="10" step="0.1" value="${r.checkin||''}"></div>
+      <div class="form-group"><label class="field-label">Accuracy</label><input class="input" id="gr_accuracy" type="number" min="1" max="10" step="0.1" value="${r.accuracy||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="field-label">Location</label><input class="input" id="gr_location" type="number" min="1" max="10" step="0.1" value="${r.location||''}"></div>
+      <div class="form-group"><label class="field-label">Value</label><input class="input" id="gr_value" type="number" min="1" max="10" step="0.1" value="${r.value||''}"></div>
+    </div>
+    <div class="form-group"><label class="field-label">Management response (optional)</label>
+      <textarea class="input" id="gr_response" rows="2" style="resize:vertical" placeholder="Your public response to this guest…">${r.response||''}</textarea>
+    </div>
+    <div id="gr_err" style="font-size:10px;color:var(--red);min-height:14px"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('grRevModal').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="grSaveReview()">Save review</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+window.grSaveReview = async function(){
+  const score=parseFloat(document.getElementById('gr_score')?.value);
+  const propId=document.getElementById('gr_prop')?.value;
+  if(!propId){ document.getElementById('gr_err').textContent='Select a property.'; return; }
+  if(isNaN(score)||score<1||score>10){ document.getElementById('gr_err').textContent='Score must be between 1 and 10.'; return; }
+  const dateVal=document.getElementById('gr_date')?.value;
+  const numOrNull=id=>{ const v=parseFloat(document.getElementById(id)?.value); return isNaN(v)?null:v; };
+  const review={
+    id: grEditId||'rev_'+Date.now(),
+    propertyId:propId, score, guest:document.getElementById('gr_guest').value.trim(),
+    ts: dateVal ? new Date(dateVal).getTime() : Date.now(),
+    channel:document.getElementById('gr_channel').value,
+    nationality:document.getElementById('gr_nationality').value.trim(),
+    text:document.getElementById('gr_text').value.trim(),
+    cleanliness:numOrNull('gr_cleanliness'), communication:numOrNull('gr_communication'),
+    checkin:numOrNull('gr_checkin'), accuracy:numOrNull('gr_accuracy'),
+    location:numOrNull('gr_location'), value:numOrNull('gr_value'),
+    response:document.getElementById('gr_response').value.trim()
+  };
+  const idx=store.reviews.findIndex(r=>r.id===review.id);
+  if(idx>=0) store.reviews[idx]=review; else store.reviews.push(review);
+  saveLocal();
+  document.getElementById('grRevModal').remove();
+  showToast('Saving review…');
+  render('gr-reviews');
+  const ok = await sbPushReview(review);
+  if(ok) showToast(grEditId ? 'Review updated ✓' : 'Review added ✓');
+};
+
+/* ══════════════
+   HOSTAWAY REVIEW CSV PARSER
+   Expected cols: property_name/property_id, guest_name, date, overall_score,
+   cleanliness, communication, checkin, accuracy, location, value, review_text, channel
+══════════════ */
+function parseReviewCSV(csvText){
+  const res = Papa.parse(csvText,{header:true,skipEmptyLines:true});
+  if(!res.data.length) return {error:'CSV is empty or has no rows.'};
+
+  const imported=[], skipped=[];
+  res.data.forEach((row,i)=>{
+    // Flexible column name matching
+    const propName = (row.property_name||row.Property||row.property||row.listing||row.Listing||'').trim();
+    const guest    = (row.guest_name||row.Guest||row.guest||row.reviewer||'').trim();
+    const dateStr  = row.date||row.Date||row.review_date||row.created_at||'';
+    const score    = parseFloat(row.overall_score||row.score||row.rating||row.Overall||'');
+    const text     = (row.review_text||row.Review||row.comment||row.text||'').trim();
+    const channel  = (row.channel||row.Channel||row.source||'Hostaway').trim();
+
+    if(!propName && !guest){ skipped.push(i+2); return; }
+
+    // Find or auto-create property
+    let prop = store.properties.find(p=>p.name.toLowerCase()===propName.toLowerCase()||p.hostawayId===String(row.property_id||''));
+    if(!prop && propName){
+      prop = {id:'prop_'+Date.now()+'_'+i, name:propName, type:'Apartment', location:'', beds:0, hostawayId:String(row.property_id||''), status:'Active', notes:'Auto-created from import', createdAt:Date.now()};
+      store.properties.push(prop);
+      sbPushProperty(prop);
+    }
+
+    const ts = dateStr ? new Date(dateStr).getTime() : Date.now();
+    const review={
+      id:'csv_'+(row.id||Date.now()+'_'+i),
+      propertyId: prop?prop.id:null,
+      score: isNaN(score)?null:score,
+      guest: guest||'Guest '+(i+1),
+      ts: isNaN(ts)?Date.now():ts,
+      channel,
+      nationality:(row.nationality||'').trim(),
+      text,
+      cleanliness:parseFloat(row.cleanliness)||null,
+      communication:parseFloat(row.communication)||null,
+      checkin:parseFloat(row.checkin||row.check_in)||null,
+      accuracy:parseFloat(row.accuracy)||null,
+      location:parseFloat(row.location)||null,
+      value:parseFloat(row.value)||null,
+      response:(row.response||row.host_response||'').trim()
+    };
+
+    if(!store.reviews.find(r=>r.id===review.id)) imported.push(review);
+  });
+
+  imported.forEach(r=>{ store.reviews.push(r); sbPushReview(r); });
+  saveLocal();
+  return {imported:imported.length, skipped:skipped.length, total:res.data.length};
+}
+
+/* ══════════════
+   GR VIEWS
+══════════════ */
+function grPropertiesView(){
+  const q=(document.getElementById('grPropSearch')?.value||'').toLowerCase();
+  const props=grSearchFilter(store.properties,q,['name','location','type']);
+
+  return `<div class="panel">
+    <div class="gr-toolbar">
+      <div class="gr-search">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+        <input class="input" id="grPropSearch" placeholder="Search properties…" value="${q}" oninput="render('gr-properties')">
+      </div>
+      <select class="select" id="grPropFilter" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-properties')">
+        <option value="">All types</option>
+        ${['Apartment','Villa','Studio','Penthouse','Townhouse','Suite','Chalet'].map(t=>`<option${(document.getElementById('grPropFilter')?.value||'')==t?' selected':''}>${t}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary" onclick="grOpenAddProperty()">+ Add property</button>
+      <span class="text-muted">${props.length} propert${props.length===1?'y':'ies'}</span>
+    </div>
+    ${!store.properties.length
+      ? emptyState('🏠','No properties yet','Add your properties to start tracking guest reviews per unit.','<div style="margin-top:12px;"><button class="btn btn-primary" onclick="grOpenAddProperty()">Add first property</button></div>')
+      : !props.length
+      ? emptyState('🔍','No results','Try a different search term.')
+      : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:14px 16px;">
+          ${props.map(p=>{
+            const avg=propAvgScore(p.id), cnt=propReviewCount(p.id);
+            const dist=ratingDistribution(p.id);
+            return `<div class="prop-card">
+              <div class="prop-card-top">
+                <div>
+                  <div class="prop-name">${p.name}</div>
+                  <div class="prop-meta">${p.type}${p.location?' · '+p.location:''} ${p.beds>0?'· '+p.beds+' bed'+(p.beds===1?'':'s'):''}</div>
+                  <div class="prop-meta" style="margin-top:2px;">${p.status==='Active'?'<span class="pill p-green">Active</span>':p.status==='Inactive'?'<span class="pill p-gray">Inactive</span>':'<span class="pill p-amber">Maintenance</span>'}${p.hostawayId?` <span class="text-muted">HA: ${p.hostawayId}</span>`:''}</div>
+                </div>
+                <div style="text-align:right">
+                  ${avg!=null?`<div class="prop-score">${avg} <span style="font-size:12px;color:var(--text3)">/10</span></div><div class="stars">${starsHTML(avg/2)}</div>`:
+                  '<div class="text-muted">No reviews</div>'}
+                  <div class="text-muted" style="margin-top:2px">${cnt} review${cnt===1?'':'s'}</div>
+                </div>
+              </div>
+              ${cnt>0?`<div class="prop-bar-wrap">
+                ${dist.map(d=>`<div class="prop-bar-row"><span style="min-width:12px">${d.star}★</span><div class="prop-bar-track"><div class="prop-bar-fill" style="width:${d.pct}%"></div></div><span>${d.count}</span></div>`).join('')}
+              </div>`:''}
+              <div class="prop-actions">
+                <button class="btn btn-sm" onclick="grOpenEditProperty('${p.id}')">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="grDeleteProperty('${p.id}')">Delete</button>
+                <button class="btn btn-sm" onclick="render('gr-reviews');setTimeout(()=>{document.getElementById('grRevPropFilter')&&(document.getElementById('grRevPropFilter').value='${p.id}');render('gr-reviews');},50)">View reviews</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`}
+  </div>`;
+}
+
+function grAnalysisView(){
+  if(!store.properties.length) return `<div class="panel">${emptyState('📊','No properties yet','Add properties and import reviews to see analysis.')}</div>`;
+
+  const propsWithReviews = store.properties.filter(p=>propReviewCount(p.id)>0);
+  const propsNoReviews   = store.properties.filter(p=>propReviewCount(p.id)===0);
+
+  // Attention threshold: avg < 8.0 or has declined month-over-month
+  const attention=[], good=[];
+  propsWithReviews.forEach(p=>{
+    const avg=propAvgScore(p.id);
+    const monthly=propMonthlyScores(p.id);
+    const trend = monthly.length>=2 ? monthly[monthly.length-1].avg - monthly[monthly.length-2].avg : 0;
+    if(avg<8.0||trend<-0.5) attention.push({...p, avg, trend, monthly});
+    else good.push({...p, avg, trend, monthly});
+  });
+
+  // Best and worst performing categories across all reviews
+  const catTotals={cleanliness:[], communication:[], checkin:[], accuracy:[], location:[], value:[]};
+  store.reviews.forEach(r=>{ REVIEW_CATS.forEach(c=>{ if(r[c]!=null) catTotals[c].push(r[c]); }); });
+  const catAvgs=Object.entries(catTotals).map(([c,vals])=>({cat:c, avg:vals.length?+(vals.reduce((s,v)=>s+v,0)/vals.length).toFixed(2):null, count:vals.length})).filter(x=>x.avg!=null);
+  catAvgs.sort((a,b)=>b.avg-a.avg);
+
+  // Month labels for last 6 months
+  const now=new Date(), monthLabels=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); monthLabels.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+
+  // Overall score trend across all properties
+  const overallMonthly=monthLabels.map(m=>{
+    const revs=store.reviews.filter(r=>{ const d=new Date(r.ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m && r.score!=null; });
+    return revs.length ? +(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2) : null;
+  });
+
+  return `
+  <!-- Summary strip -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total properties</div><div class="stat-val">${store.properties.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Properties with reviews</div><div class="stat-val">${propsWithReviews.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Need attention</div><div class="stat-val down">${attention.length}</div><div class="stat-sub">avg below 8.0 or declining</div></div>
+    <div class="stat-card"><div class="stat-label">Doing well</div><div class="stat-val up">${good.length}</div><div class="stat-sub">avg 8.0+ and stable or rising</div></div>
+  </div>
+
+  <!-- Overall trend chart -->
+  <div class="panel">
+    <div class="ph"><span class="pt">Overall average score — last 6 months</span></div>
+    <div class="chart-wrap"><canvas id="overallTrendChart"></canvas></div>
+  </div>
+
+  <!-- Properties needing attention -->
+  ${attention.length ? `<div class="panel">
+    <div class="ph"><span class="pt" style="color:var(--red)">⚠ Properties needing attention (${attention.length})</span></div>
+    <div class="analysis-grid" style="padding:14px 16px;">
+      ${attention.map(p=>`<div class="analysis-card attention">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div><div class="prop-name">${p.name}</div><div class="prop-meta">${p.type}${p.location?' · '+p.location:''}</div></div>
+          <div style="text-align:right"><div class="prop-score ${p.avg<7?'down':''}" style="font-size:18px">${p.avg}</div><div class="text-muted">/10</div></div>
+        </div>
+        ${p.trend!==0?`<div class="text-muted" style="margin-bottom:6px">${p.trend<0?'<span class="down">↓ Declining '+Math.abs(p.trend).toFixed(2)+'pts</span>':'<span class="up">↑ Improving</span>'} month-over-month</div>`:''}
+        ${p.monthly.length>1?`<div style="height:40px;position:relative"><canvas id="mini_${p.id}" style="max-height:40px"></canvas></div>`:'<div class="text-muted">Not enough data for trend</div>'}
+        <div class="prop-actions" style="margin-top:8px">
+          <button class="btn btn-sm" onclick="grOpenEditProperty('${p.id}')">Edit</button>
+          <button class="btn btn-sm" onclick="render('gr-reviews');setTimeout(()=>{const s=document.getElementById('grRevPropFilter');if(s){s.value='${p.id}';render('gr-reviews');}},50)">Reviews</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <!-- Properties doing well -->
+  ${good.length ? `<div class="panel">
+    <div class="ph"><span class="pt" style="color:var(--green)">✓ Doing well (${good.length})</span></div>
+    <div class="analysis-grid" style="padding:14px 16px;">
+      ${good.map(p=>`<div class="analysis-card good">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+          <div><div class="prop-name">${p.name}</div><div class="prop-meta">${p.type}${p.location?' · '+p.location:''}</div></div>
+          <div style="text-align:right"><div class="prop-score up" style="font-size:18px">${p.avg}</div><div class="text-muted">/10</div></div>
+        </div>
+        ${p.trend>0?`<div class="text-muted" style="margin-bottom:4px"><span class="up">↑ +${p.trend.toFixed(2)}pts</span> vs last month</div>`:''}
+        <div style="font-size:10px;color:var(--text3)">${propReviewCount(p.id)} reviews</div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  <!-- Category breakdown -->
+  ${catAvgs.length ? `<div class="panel">
+    <div class="ph"><span class="pt">Category averages across all properties</span></div>
+    <div class="pp">
+      ${catAvgs.map(c=>`<div class="rating-row" style="margin-bottom:8px">
+        <span style="min-width:100px;text-transform:capitalize">${c.cat}</span>
+        <div class="bar"><div class="fill" style="width:${c.avg*10}%"></div></div>
+        <span style="min-width:32px;text-align:right">${c.avg}</span>
+        <span class="text-muted">${c.count} reviews</span>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
+
+  ${propsNoReviews.length ? `<div class="panel">
+    <div class="ph"><span class="pt">No reviews yet (${propsNoReviews.length})</span></div>
+    <div class="pp">${propsNoReviews.map(p=>`<span class="pill p-gray" style="margin:2px">${p.name}</span>`).join('')}</div>
+  </div>` : ''}`;
+}
+
+function grReviewsView(){
+  const propFilter = document.getElementById('grRevPropFilter')?.value||'';
+  const q          = (document.getElementById('grRevSearch')?.value||'').toLowerCase();
+  const sortBy     = document.getElementById('grRevSort')?.value||'newest';
+  const chanFilter = document.getElementById('grRevChan')?.value||'';
+
+  let revs = store.reviews.slice();
+  if(propFilter) revs=revs.filter(r=>r.propertyId===propFilter);
+  if(chanFilter) revs=revs.filter(r=>r.channel===chanFilter);
+  if(q) revs=revs.filter(r=>(r.guest||'').toLowerCase().includes(q)||(r.text||'').toLowerCase().includes(q));
+  if(sortBy==='newest') revs.sort((a,b)=>b.ts-a.ts);
+  else if(sortBy==='oldest') revs.sort((a,b)=>a.ts-b.ts);
+  else if(sortBy==='highest') revs.sort((a,b)=>(b.score||0)-(a.score||0));
+  else if(sortBy==='lowest') revs.sort((a,b)=>(a.score||10)-(b.score||10));
+
+  const props=store.properties;
+  const getPropName=pid=>{ const p=props.find(x=>x.id===pid); return p?p.name:'Unknown'; };
+  const channels=[...new Set(store.reviews.map(r=>r.channel).filter(Boolean))];
+
+  return `<div class="panel">
+    <div class="gr-toolbar">
+      <div class="gr-search">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+        <input class="input" id="grRevSearch" placeholder="Search guest or review…" value="${q}" oninput="render('gr-reviews')">
+      </div>
+      <select class="select" id="grRevPropFilter" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-reviews')">
+        <option value="">All properties</option>
+        ${props.map(p=>`<option value="${p.id}"${p.id===propFilter?' selected':''}>${p.name}</option>`).join('')}
+      </select>
+      <select class="select" id="grRevChan" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-reviews')">
+        <option value="">All channels</option>
+        ${channels.map(c=>`<option${c===chanFilter?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <select class="select" id="grRevSort" style="width:auto;font-size:11px;padding:4px 8px" onchange="render('gr-reviews')">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="highest">Highest score</option>
+        <option value="lowest">Lowest score</option>
+      </select>
+      <button class="btn btn-primary" onclick="grAddReviewClick(${propFilter?`'${propFilter}'`:'null'})">+ Add review</button>
+      <button class="btn btn-sm" onclick="exportReviewsCSV()">Export CSV</button>
+      <span class="text-muted">${revs.length} review${revs.length===1?'':'s'}</span>
+    </div>
+    ${!store.reviews.length
+      ? emptyState('⭐','No reviews yet','Import a CSV from Hostaway or add reviews manually.','<div style="margin-top:12px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'gr-import\')">Import CSV</button><button class="btn" onclick="grAddReviewClick(null)">Add manually</button></div>')
+      : !revs.length
+      ? emptyState('🔍','No results','Try adjusting the filters above.')
+      : revs.map(r=>{
+          const sc=r.score!=null?r.score:null;
+          const cls=sc!=null?(sc>=8?'score-great':sc>=6?'score-good':'score-bad'):'';
+          const subCats=[['Cleanliness',r.cleanliness],['Communication',r.communication],['Check-in',r.checkin],['Accuracy',r.accuracy],['Location',r.location],['Value',r.value]].filter(([,v])=>v!=null);
+          return `<div class="review-row">
+            <div class="review-score-badge ${cls}">${sc!=null?sc:'—'}</div>
+            <div class="review-body">
+              <div class="review-top">
+                <span class="review-guest">${r.guest||'Anonymous'} <span class="prop-tag">${getPropName(r.propertyId)}</span></span>
+                <span class="review-date">${r.ts?new Date(r.ts).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}):''} · ${r.channel||''}</span>
+              </div>
+              ${r.text?`<div class="review-text">"${r.text}"</div>`:''}
+              ${subCats.length?`<div class="review-footer">${subCats.map(([l,v])=>`<span class="text-muted">${l}: <span style="color:var(--text)">${v}</span></span>`).join(' · ')}</div>`:''}
+              ${r.response?`<div style="font-size:10px;color:var(--accent);margin-top:6px;padding:6px 8px;background:var(--accent-bg);border-radius:4px;line-height:1.5">Management: "${r.response}"</div>`:''}
+              <div class="review-footer" style="margin-top:6px">
+                <button class="btn btn-sm" onclick="grOpenEditReview('${r.id}')">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="grDeleteReview('${r.id}')">Delete</button>
+                ${r.nationality?`<span class="text-muted">${r.nationality}</span>`:''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+  </div>`;
+}
+
+function grImportView(){
+  return `<div class="panel">
+    <div class="ph"><span class="pt">Import reviews from Hostaway — CSV</span></div>
+    <div class="pp">
+      <div class="import-result info" style="margin-bottom:14px">
+        <strong style="font-size:11px;font-weight:500">Expected CSV columns</strong><br>
+        <span class="text-muted">Required: <code class="ic">property_name</code>, <code class="ic">guest_name</code>, <code class="ic">date</code>, <code class="ic">overall_score</code></span><br>
+        <span class="text-muted">Optional: <code class="ic">cleanliness</code>, <code class="ic">communication</code>, <code class="ic">checkin</code>, <code class="ic">accuracy</code>, <code class="ic">location</code>, <code class="ic">value</code>, <code class="ic">review_text</code>, <code class="ic">channel</code>, <code class="ic">nationality</code>, <code class="ic">response</code>, <code class="ic">property_id</code></span><br>
+        <span class="text-muted">Scores: 1–10 scale. New properties are auto-created from property_name if they don't exist yet.</span>
+      </div>
+      <label class="upload-zone" id="revCsvZone" style="margin-bottom:10px">
+        <input type="file" id="revCsvFile" accept=".csv">
+        <div class="upload-icon">⭐</div>
+        <div class="upload-lbl">Drop .csv file or click to browse</div>
+        <div class="upload-sub">Hostaway review export</div>
+      </label>
+      <div id="revCsvResult"></div>
+      <div id="revCsvPreview" style="display:none"></div>
+      <button class="btn btn-primary" id="revCsvParseBtn" style="width:100%;justify-content:center;margin-top:8px">Parse & preview</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Sample CSV format</span></div>
+    <div class="pp">
+      <div style="font-size:10px;font-family:monospace;background:var(--bg2);padding:10px;border-radius:4px;overflow-x:auto;white-space:pre;color:var(--text2)">property_name,guest_name,date,overall_score,cleanliness,communication,checkin,review_text,channel
+Ocean Suite,Maria G.,2024-03-15,9.2,9.5,10,9.0,"Beautiful apartment, great location",Airbnb
+Villa Azul,John D.,2024-03-18,8.5,8.0,9.0,8.5,"Comfortable stay, would return",Booking.com
+Ocean Suite,Sara L.,2024-04-02,6.0,6.5,7.0,5.5,"Needs some maintenance",Airbnb</div>
+      <button class="btn btn-sm" style="margin-top:8px" onclick="downloadSampleCSV()">Download sample CSV</button>
+    </div>
+  </div>
+  ${store.importLog.filter(l=>l.includes('review')).length?`<div class="panel"><div class="ph"><span class="pt">Review import history</span></div><div class="pp">${store.importLog.filter(l=>l.includes('review')||l.includes('Review')).slice(0,8).map(l=>`<div class="text-muted" style="margin-bottom:3px">· ${l}</div>`).join('')}</div></div>`:''}`;
+}
+
+/* ══════════════
+   WIRE REVIEW IMPORT + SAMPLE DOWNLOAD
+══════════════ */
+function wireReviewImport(){
+  const zone=document.getElementById('revCsvZone'); if(!zone) return;
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');const inp=zone.querySelector('input[type=file]');if(inp&&e.dataTransfer.files.length){const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);inp.files=dt.files;document.getElementById('revCsvResult').innerHTML=`<div class="import-result info">File selected: ${e.dataTransfer.files[0].name}</div>`;}});
+  const f=document.getElementById('revCsvFile');
+  if(f) f.onchange=()=>{ if(f.files[0]) document.getElementById('revCsvResult').innerHTML=`<div class="import-result info">File selected: ${f.files[0].name} (${(f.files[0].size/1024).toFixed(0)} KB)</div>`; };
+
+  const btn=document.getElementById('revCsvParseBtn');
+  if(!btn) return;
+  btn.onclick=()=>{
+    const file=document.getElementById('revCsvFile')?.files[0];
+    const res=document.getElementById('revCsvResult');
+    const prev=document.getElementById('revCsvPreview');
+    if(!file){res.innerHTML='<div class="import-result err">Select a .csv file first.</div>';return;}
+    res.innerHTML='<div class="import-result info">Parsing…</div>';
+    const rd=new FileReader();
+    rd.onload=e=>{
+      try{
+        // Parse for preview first without saving
+        const parsed=Papa.parse(e.target.result,{header:true,skipEmptyLines:true});
+        if(!parsed.data.length){res.innerHTML='<div class="import-result err">File is empty or cannot be parsed.</div>';return;}
+        res.innerHTML=`<div class="import-result ok">✓ ${parsed.data.length} rows found in file — review preview below then confirm</div>`;
+        prev.style.display='block';
+        prev.innerHTML=`<div style="font-size:11px;color:var(--text);margin:10px 0 6px">Preview — first 5 rows</div>
+          <div class="tw" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;margin-bottom:10px">
+            <table><thead><tr>${Object.keys(parsed.data[0]||{}).slice(0,8).map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${parsed.data.slice(0,5).map(row=>`<tr>${Object.values(row).slice(0,8).map(v=>`<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${v}</td>`).join('')}</tr>`).join('')}</tbody></table>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" id="revConfirmBtn">Confirm & import ${parsed.data.length} reviews</button>`;
+        document.getElementById('revConfirmBtn').onclick=()=>{
+          const result=parseReviewCSV(e.target.result);
+          if(result.error){res.innerHTML=`<div class="import-result err">${result.error}</div>`;return;}
+          const logEntry=new Date().toLocaleString()+' — Reviews import: '+result.imported+' imported, '+result.skipped+' skipped from '+file.name;
+          store.importLog.unshift(logEntry); sbLogImport(logEntry);
+          saveLocal();
+          prev.innerHTML=`<div class="import-result ok">✓ ${result.imported} reviews imported · ${result.skipped} skipped · Dashboard updated</div>`;
+          showToast(result.imported+' reviews imported');
+        };
+      }catch(err){res.innerHTML=`<div class="import-result err">Parse error: ${err.message}</div>`;}
+    };
+    rd.readAsText(file);
+  };
+}
+
+/* ══════════════
+   EXPORT REVIEWS CSV
+══════════════ */
+function exportReviewsCSV(){
+  const rows=store.reviews.map(r=>{
+    const p=store.properties.find(x=>x.id===r.propertyId);
+    return {
+      property:p?p.name:'',guest:r.guest||'',date:r.ts?new Date(r.ts).toISOString().slice(0,10):'',
+      overall_score:r.score||'',channel:r.channel||'',cleanliness:r.cleanliness||'',
+      communication:r.communication||'',checkin:r.checkin||'',accuracy:r.accuracy||'',
+      location:r.location||'',value:r.value||'',review_text:r.text||'',
+      nationality:r.nationality||'',response:r.response||''
+    };
+  });
+  exportCSV(rows,['property','guest','date','overall_score','channel','cleanliness','communication','checkin','accuracy','location','value','review_text','nationality','response'],'guest_reviews_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+/* ══════════════
+   SAMPLE CSV DOWNLOAD
+══════════════ */
+window.downloadSampleCSV = function(){
+  const csv=`property_name,guest_name,date,overall_score,cleanliness,communication,checkin,accuracy,location,value,review_text,channel,nationality,response
+Ocean Suite,Maria G.,2024-03-15,9.2,9.5,10,9.0,9.0,9.5,8.5,"Beautiful apartment, great location",Airbnb,British,"Thank you so much Maria!"
+Villa Azul,John D.,2024-03-18,8.5,8.0,9.0,8.5,8.0,9.0,8.0,"Comfortable stay, would return",Booking.com,German,""
+Ocean Suite,Sara L.,2024-04-02,6.0,6.5,7.0,5.5,6.0,8.0,5.5,"Needs some maintenance attention",Airbnb,American,"We apologise and are addressing this."`;
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sample_reviews.csv';a.click();URL.revokeObjectURL(a.href);
+};
+
+/* ══════════════
+   ANALYSIS CHARTS — gr-analysis view
+══════════════ */
+const _icBase = initCharts;
+initCharts = function(v){
+  _icBase(v);
+  if(v!=='gr-analysis') return;
+  const now=new Date(), mLabels=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); mLabels.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  const overallData=mLabels.map(m=>{
+    const revs=store.reviews.filter(r=>{ const d=new Date(r.ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')===m&&r.score!=null; });
+    return revs.length?+(revs.reduce((s,r)=>s+r.score,0)/revs.length).toFixed(2):null;
+  });
+  mkChart('overallTrendChart',{
+    type:'line',
+    data:{
+      labels:mLabels.map(m=>{ const[y,mo]=m.split('-'); return new Date(y,mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); }),
+      datasets:[{label:'Avg score',data:overallData,borderColor:'#2563eb',backgroundColor:'#2563eb18',fill:true,spanGaps:true}]
+    },
+    options:{...CD,responsive:true,scales:{...CD.scales,y:{...CD.scales.y,min:0,max:10}}}
+  });
+  // Mini sparklines for attention properties
+  store.properties.forEach(p=>{
+    const monthly=propMonthlyScores(p.id);
+    if(monthly.length<2) return;
+    setTimeout(()=>{
+      mkChart('mini_'+p.id,{
+        type:'line',
+        data:{labels:monthly.map(m=>m.month),datasets:[{data:monthly.map(m=>m.avg),borderColor:propAvgScore(p.id)<8?'#dc2626':'#16a34a',borderWidth:1.5,tension:.4,pointRadius:0}]},
+        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0,max:10}},elements:{line:{fill:false}}}
+      });
+    },80);
+  });
+};
+
+/* ══════════════
+   PATCH render for reviews module
+══════════════ */
+const _origRender2=window.render;
+window.render=function(v){
+  _origRender2(v);
+  if(v==='gr-import')  wireReviewImport();
+  if(v==='gr-reviews') wireReviewImport();
+  if(v==='integrations') checkSupabaseTables();
+  populateAgentFilter();
+  updateFilterCount();
+};
+
+LBL['gr-properties']='Properties';
+LBL['gr-analysis']='Review analysis';
+LBL['gr-reviews']='Guest reviews';
+LBL['gr-import']='Import reviews';
+
+/* Check all required tables exist and report status */
+async function checkSupabaseTables(){
+  const tables = ['gcc_agents','gcc_messages','gcc_root_cause','gcc_kpi',
+    'gcc_sla_config','gcc_import_log','gcc_users','gcc_properties','gcc_reviews'];
+  const pill = document.getElementById('sbIntegPill');
+  const status = document.getElementById('sbTableStatus');
+  if(!pill||!status) return;
+  try{
+    const results = await Promise.all(tables.map(t=>
+      sb.from(t).select('id',{count:'exact',head:true}).then(r=>({t, ok:!r.error, err:r.error?.message}))
+    ));
+    const missing = results.filter(r=>!r.ok);
+    if(missing.length===0){
+      pill.innerHTML='<span class="pill p-green"><span class="dot d-green"></span>All tables OK</span>';
+      status.innerHTML='<span style="color:var(--green)">✓ All '+tables.length+' tables found in Supabase</span>';
+    } else {
+      pill.innerHTML='<span class="pill p-red">'+missing.length+' table'+(missing.length>1?'s':'')+' missing</span>';
+      status.innerHTML='<span style="color:var(--red)">Missing: '+missing.map(r=>r.t).join(', ')+'</span><br><span class="text-muted">Run the SQL schema file in Supabase → SQL Editor to create them.</span>';
+    }
+  }catch(e){
+    pill.innerHTML='<span class="pill p-amber">Check failed</span>';
+    status.innerHTML='<span class="text-muted">'+e.message+'</span>';
+  }
+}
+
+// Single unified boot — loads all tables from Supabase
+document.querySelector('.sb-item[data-view="overview"]').classList.add('active');
+sbLoad();
+
+/* ══════════════════════════════════════════
+   LIVE CLOCK
+══════════════════════════════════════════ */
+function tickClock(){
+  const el=document.getElementById('liveClock'); if(!el) return;
+  const now=new Date();
+  el.textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+tickClock();
+setInterval(tickClock,1000);
+
+/* ══════════════════════════════════════════
+   GLOBAL FILTER ENGINE
+   — all analysis views read filteredMessages()
+══════════════════════════════════════════ */
+function getFilters(){
+  return {
+    agentId: document.getElementById('filterAgent')?.value||'',
+    period:  document.getElementById('filterPeriod')?.value||'all',
+    channel: document.getElementById('filterChannel')?.value||'',
+    search:  (document.getElementById('filterSearch')?.value||'').toLowerCase().trim()
+  };
+}
+
+function filteredMessages(){
+  const f=getFilters();
+  const now=Date.now();
+  const cutoff={ today:86400000, '7':7*86400000, '30':30*86400000, '90':90*86400000 }[f.period];
+  return store.messages.filter(m=>{
+    if(f.agentId && m.agentId!==f.agentId) return false;
+    if(cutoff && (now-m.ts)>cutoff) return false;
+    if(f.channel && m.channel!==f.channel) return false;
+    if(f.search && !m.guest.toLowerCase().includes(f.search) && !(m.message||'').toLowerCase().includes(f.search)) return false;
+    return true;
+  });
+}
+
+function updateFilterCount(){
+  const el=document.getElementById('filterCount'); if(!el) return;
+  const total=store.messages.length, shown=filteredMessages().length;
+  el.textContent = total===shown ? total+' conversations' : shown+' of '+total+' shown';
+}
+
+function populateAgentFilter(){
+  const sel=document.getElementById('filterAgent'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All agents</option>'+store.agents.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  sel.value=cur;
+}
+
+// Wire filter controls — re-render view on any change
+['filterAgent','filterPeriod','filterChannel','filterSearch'].forEach(id=>{
+  document.addEventListener('change',e=>{ if(e.target&&e.target.id===id){ updateFilterCount(); render(currentView); } });
+  document.addEventListener('input',e=>{ if(e.target&&e.target.id===id){ updateFilterCount(); render(currentView); } });
+});
+document.getElementById('filterReset').onclick=()=>{
+  ['filterAgent','filterPeriod','filterChannel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=id==='filterPeriod'?'30':''; });
+  const s=document.getElementById('filterSearch'); if(s) s.value='';
+  updateFilterCount(); render(currentView);
+};
+
+/* ══════════════════════════════════════════
+   AUTO-CLASSIFY URGENCY & INTENT
+   — runs on every parsed message before import
+══════════════════════════════════════════ */
+const KEYWORDS = {
+  high: ['emergency','overflowing','flood','fire','no water','no power','broken','burst','smoke','gas leak','locked out','accident','injury','blood','help','urgent','asap','immediately'],
+  medium: ['not working','issue','problem','complaint','refund','unhappy','disappointed','dirty','smell','noise','cold','hot','broken','leak'],
+  low: ['checkout','check-out','check in','checkin','wifi','password','towel','pillow','key','parking','late','early','directions','info','question','when']
+};
+const INTENT_MAP = {
+  'Maintenance': ['broken','not working','leak','flood','repair','fix','heater','ac','aircon','plumbing','electricity','wifi'],
+  'Complaint':   ['refund','unhappy','dirty','smell','disgusting','complaint','disappointed','unacceptable','terrible','awful'],
+  'Emergency':   ['emergency','overflowing','fire','smoke','gas','injury','blood','help','urgent','flood'],
+  'Question':    ['what time','when','how','where','can i','is it','do you','checkout','checkin','directions','parking'],
+  'Amenity':     ['towel','pillow','soap','shampoo','blanket','iron','hairdryer','extra'],
+};
+
+function classifyMessage(text){
+  const t=(text||'').toLowerCase();
+  let urgency='low';
+  if(KEYWORDS.high.some(k=>t.includes(k))) urgency='high';
+  else if(KEYWORDS.medium.some(k=>t.includes(k))) urgency='medium';
+  let intent='General';
+  for(const [cat,words] of Object.entries(INTENT_MAP)){
+    if(words.some(w=>t.includes(w))){ intent=cat; break; }
+  }
+  return { urgency, intent };
+}
+
+/* patch classifier into parser output */
+const _origSyncAll = syncAll;
+window.syncAll = function(parsed, agentId, fileName, channel){
+  parsed.forEach(m=>{ const c=classifyMessage(m.message); m.urgency=c.urgency; m.intent=c.intent; });
+  _origSyncAll(parsed, agentId, fileName, channel);
+};
+
+/* ══════════════════════════════════════════
+   SENTIMENT SCORING  (keyword-based, no API)
+══════════════════════════════════════════ */
+const POS_WORDS=['thank','thanks','great','excellent','perfect','amazing','wonderful','love','happy','good','clean','comfortable','nice','fantastic','brilliant','quick','fast','helpful','superb'];
+const NEG_WORDS=['dirty','broken','terrible','awful','horrible','disgusting','unacceptable','worst','bad','slow','noisy','smelly','disappointed','frustrated','angry','refund','complaint','emergency','never','problem'];
+
+function scoreSentiment(text){
+  const t=(text||'').toLowerCase().split(/\s+/);
+  const pos=t.filter(w=>POS_WORDS.includes(w)).length;
+  const neg=t.filter(w=>NEG_WORDS.includes(w)).length;
+  const total=pos+neg||1;
+  return { pos:Math.round(100*pos/total), neg:Math.round(100*neg/total), neu:Math.round(100*(total-pos-neg)/total), label:neg>pos?'Negative':pos>neg?'Positive':'Neutral' };
+}
+
+function agentSentiment(agentId){
+  const msgs=filteredMessages().filter(m=>m.agentId===agentId);
+  if(!msgs.length) return null;
+  const scores=msgs.map(m=>scoreSentiment(m.message));
+  return {
+    pos:  Math.round(scores.reduce((s,x)=>s+x.pos,0)/scores.length),
+    neg:  Math.round(scores.reduce((s,x)=>s+x.neg,0)/scores.length),
+    neu:  Math.round(scores.reduce((s,x)=>s+x.neu,0)/scores.length),
+    total:msgs.length
+  };
+}
+
+/* ══════════════════════════════════════════
+   RESPONSE TIME HEATMAP  (hour × day)
+══════════════════════════════════════════ */
+function buildHeatmap(){
+  const msgs=filteredMessages().filter(m=>m.responded&&m.rt!=null);
+  const grid={}; // key: 'day_hour'
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  msgs.forEach(m=>{
+    const d=new Date(m.ts), day=d.getDay(), hour=d.getHours();
+    const k=day+'_'+hour;
+    if(!grid[k]) grid[k]={sum:0,count:0};
+    grid[k].sum+=m.rt; grid[k].count++;
+  });
+  return {grid, days};
+}
+
+/* ══════════════════════════════════════════
+   CSV EXPORT
+══════════════════════════════════════════ */
+function exportCSV(rows, headers, filename){
+  const csv=[headers.join(','),...rows.map(r=>headers.map(h=>{
+    const v=r[h]!=null?String(r[h]):'';
+    return v.includes(',')||v.includes('"') ? '"'+v.replace(/"/g,'""')+'"' : v;
+  }).join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportAgentReport(){
+  const rows=store.agents.map(a=>{
+    const s=agentStats(a.id);
+    return {Agent:a.name, Role:a.role, Conversations:s.total, Active:s.active, 'Avg Response (min)':s.avgRt, Breaches:s.breaches, 'SLA Hit Rate':s.slaHit+'%'};
+  });
+  exportCSV(rows,['Agent','Role','Conversations','Active','Avg Response (min)','Breaches','SLA Hit Rate'],'agent_performance_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+function exportBreachReport(){
+  const rows=store.rootCause.map(r=>({'Guest':r.guest,'Agent':r.agentName||agentName(r.agentId),'Channel':r.channel,'Message':r.msg,'Date/Time':new Date(r.ts).toLocaleString(),'Response (min)':r.rt!=null?r.rt:'None','SLA Target':SLA[r.channel]||SLA.default,'Root Cause':r.reason}));
+  exportCSV(rows,['Guest','Agent','Channel','Message','Date/Time','Response (min)','SLA Target','Root Cause'],'sla_breaches_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+function exportMessages(){
+  const msgs=filteredMessages();
+  const rows=msgs.map(m=>({'Guest':m.guest,'Agent':agentName(m.agentId),'Channel':m.channel,'Message':m.message,'Date/Time':new Date(m.ts).toLocaleString(),'Responded':m.responded?'Yes':'No','Response (min)':m.rt!=null?m.rt:'','Breach':m.breach?'Yes':'No','Intent':m.intent,'Urgency':m.urgency}));
+  exportCSV(rows,['Guest','Agent','Channel','Message','Date/Time','Responded','Response (min)','Breach','Intent','Urgency'],'messages_export_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+/* ══════════════════════════════════════════
+   NEW VIEWS — Heatmap + Sentiment
+══════════════════════════════════════════ */
+VIEWS.heatmap = () => {
+  const {grid, days}=buildHeatmap();
+  const vals=Object.values(grid).map(v=>v.sum/v.count);
+  const maxVal=Math.max(...vals,1);
+
+  function cellColor(day,hour){
+    const k=day+'_'+hour, v=grid[k];
+    if(!v) return 'background:var(--bg3)';
+    const rt=v.sum/v.count, intensity=Math.min(rt/maxVal,1);
+    if(rt>10) return `background:rgba(220,38,38,${0.15+intensity*0.7})`;
+    if(rt>5)  return `background:rgba(217,119,6,${0.15+intensity*0.7})`;
+    return `background:rgba(22,163,74,${0.15+intensity*0.7})`;
+  }
+  function cellLabel(day,hour){
+    const k=day+'_'+hour, v=grid[k];
+    return v ? (v.sum/v.count).toFixed(1)+'m' : '';
+  }
+
+  const hours=Array.from({length:24},(_,i)=>i);
+  const rows=days.map((d,di)=>`
+    <div class="hm-label">${d}</div>
+    ${hours.map(h=>`<div class="hm-cell" style="${cellColor(di,h)}" title="${d} ${h}:00 — avg ${cellLabel(di,h)||'no data'}">${cellLabel(di,h)}</div>`).join('')}
+  `).join('');
+
+  const noData=!Object.keys(grid).length;
+  return `
+  <div class="panel">
+    <div class="ph"><span class="pt">Response time heatmap — by hour and day</span></div>
+    ${noData ? emptyState('📊','No data yet','Import conversations to see when your team is fastest and slowest.') : `
+    <div class="heatmap">
+      <div class="hm-head"></div>${hours.map(h=>`<div class="hm-head">${h}</div>`).join('')}
+      ${rows}
+    </div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:16px;align-items:center;">
+      <span class="text-muted">Darker = slower response. Hours shown are local time.</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green)">■ Fast (≤5m)</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--amber)">■ Moderate (5-10m)</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red)">■ Slow (>10m)</span>
+    </div>`}
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Busiest hours — message volume</span></div>
+    <div class="chart-wrap"><canvas id="hourChart"></canvas></div>
+  </div>`;
+};
+
+VIEWS.sentiment = () => {
+  const agents=store.agents;
+  if(!agents.length||!store.messages.length) return `<div class="panel">${emptyState('💬','No data yet','Import conversations to analyse guest sentiment.')}</div>`;
+
+  const allMsgs=filteredMessages();
+  const posCount=allMsgs.filter(m=>scoreSentiment(m.message).label==='Positive').length;
+  const negCount=allMsgs.filter(m=>scoreSentiment(m.message).label==='Negative').length;
+  const neuCount=allMsgs.length-posCount-negCount;
+
+  return `
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Positive conversations</div><div class="stat-val up">${posCount}</div><div class="stat-sub">${allMsgs.length?Math.round(100*posCount/allMsgs.length)+'% of total':''}</div></div>
+    <div class="stat-card"><div class="stat-label">Negative conversations</div><div class="stat-val down">${negCount}</div><div class="stat-sub">${allMsgs.length?Math.round(100*negCount/allMsgs.length)+'% of total':''}</div></div>
+    <div class="stat-card"><div class="stat-label">Neutral</div><div class="stat-val">${neuCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Total analysed</div><div class="stat-val">${allMsgs.length}</div></div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Sentiment by agent</span></div>
+    <div class="pp" style="display:flex;flex-direction:column;gap:14px;">
+      ${agents.map(a=>{
+        const s=agentSentiment(a.id);
+        if(!s) return `<div><span class="pill p-gray">${a.name}</span> <span class="text-muted">No data</span></div>`;
+        return `<div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span>
+            <span class="text-muted">${s.total} conversations · ${s.pos}% positive · ${s.neg}% negative</span>
+          </div>
+          <div class="sentiment-bar">
+            <div class="sb-pos" style="width:${s.pos}%"></div>
+            <div class="sb-neu" style="width:${s.neu}%"></div>
+            <div class="sb-neg" style="width:${s.neg}%"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Most common negative keywords</span></div>
+    <div class="pp">
+      ${(()=>{
+        const freq={};
+        filteredMessages().forEach(m=>{ (m.message||'').toLowerCase().split(/\s+/).forEach(w=>{ if(NEG_WORDS.includes(w)) freq[w]=(freq[w]||0)+1; }); });
+        const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+        return sorted.length ? sorted.map(([w,c])=>`<span class="pill p-red" style="margin:2px;">${w} <strong>${c}</strong></span>`).join('') : '<span class="text-muted">No negative keywords detected in current filter.</span>';
+      })()}
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Most common positive keywords</span></div>
+    <div class="pp">
+      ${(()=>{
+        const freq={};
+        filteredMessages().forEach(m=>{ (m.message||'').toLowerCase().split(/\s+/).forEach(w=>{ if(POS_WORDS.includes(w)) freq[w]=(freq[w]||0)+1; }); });
+        const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+        return sorted.length ? sorted.map(([w,c])=>`<span class="pill p-green" style="margin:2px;">${w} <strong>${c}</strong></span>`).join('') : '<span class="text-muted">No positive keywords detected yet.</span>';
+      })()}
+    </div>
+  </div>`;
+};
+
+/* ══════════════════════════════════════════
+   PATCH EXISTING VIEWS to use filteredMessages()
+   and add export buttons
+══════════════════════════════════════════ */
+const _origViews = {};
+
+// Patch overview KPIs to use filtered data
+const _overviewOrig = VIEWS.overview;
+VIEWS.overview = () => {
+  // Recalc with filter applied
+  const fm=filteredMessages();
+  const resp=fm.filter(m=>m.responded&&m.rt!=null);
+  const liveKpi={
+    active:fm.filter(m=>!m.responded).length,
+    breaches:fm.filter(m=>m.breach).length,
+    avg:resp.length?+(resp.reduce((s,m)=>s+m.rt,0)/resp.length).toFixed(1):0,
+    agents:store.agents.length
+  };
+  const hasData=store.messages.length>0;
+  const agents=store.agents;
+  const breachAlert=liveKpi.breaches>0?`<span class="alert-dot"></span>`:'';
+  return `
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Active conversations</div><div class="stat-val">${liveKpi.active}</div><div class="stat-sub">awaiting response</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">SLA breaches ${breachAlert}</div><div class="stat-val ${liveKpi.breaches>0?'down':'up'}">${liveKpi.breaches}</div><div class="stat-sub">responses too slow</div></div>
+    <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-label">Avg response time</div><div class="stat-val">${liveKpi.avg||'—'}<span style="font-size:13px;color:var(--text3);">${liveKpi.avg?'m':''}</span></div><div class="stat-sub">filtered selection</div></div>
+    <div class="stat-card"><div class="stat-label">Agents registered</div><div class="stat-val">${liveKpi.agents}</div><div class="stat-sub"><a href="#" onclick="render('agents');return false;" style="color:var(--accent);text-decoration:none">manage →</a></div></div>
+  </div>
+  ${!hasData ? `<div class="panel">${emptyState('📂','No data imported yet','Register your agents first, then import WhatsApp or Hostaway chat exports.','<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;"><button class="btn btn-primary" onclick="render(\'agents\')">Register agents</button><button class="btn" onclick="render(\'import\')">Import data</button></div>')}</div>` : `
+  ${agents.length ? `
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Agent performance at a glance</span>
+      <button class="btn btn-sm" onclick="exportAgentReport()">Export CSV</button>
+    </div>
+    <div class="tw"><table class="sticky-col">
+      <thead><tr><th>Agent</th><th>Conversations</th><th>Active</th><th>Avg response</th><th>Breaches</th><th>SLA rate</th><th>Sentiment</th></tr></thead>
+      <tbody>${agents.map(a=>{
+        const msgs=filteredMessages().filter(m=>m.agentId===a.id);
+        const resp=msgs.filter(m=>m.responded&&m.rt!=null);
+        const avg=resp.length?+(resp.reduce((s,m)=>s+m.rt,0)/resp.length).toFixed(1):0;
+        const breaches=msgs.filter(m=>m.breach).length;
+        const slaHit=resp.length?Math.round(100*msgs.filter(m=>m.responded&&!m.breach).length/resp.length):0;
+        const sent=agentSentiment(a.id);
+        const sentLabel=sent?sent.pos>sent.neg?'<span class="up">Positive</span>':'<span class="down">Negative</span>':'—';
+        return `<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${msgs.length}</td><td>${msgs.filter(m=>!m.responded).length}</td><td>${avg?avg+'m':'—'}</td><td>${breaches>0?`<span class="down">${breaches}</span>`:0}</td><td>${slaHit?slaHit+'%':'—'}</td><td>${sentLabel}</td></tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>` : ''}
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Recent conversations</span>
+      <button class="btn btn-sm" onclick="exportMessages()">Export CSV</button>
+    </div>
+    <div>${filteredMessages().slice(0,15).map(m=>{
+      const sent=scoreSentiment(m.message);
+      const sentColor=sent.label==='Positive'?'var(--green)':sent.label==='Negative'?'var(--red)':'var(--text3)';
+      return `<div class="msg-item${m.breach?' breach-row':''}">
+        <div class="msg-dot" style="background:${m.urgency==='high'?'var(--red)':'var(--green)'};margin-top:5px"></div>
+        <div class="msg-body">
+          <div class="msg-r1"><span class="msg-guest">${m.guest}</span><span class="msg-time">${fmtT(m.ts)} · ${m.channel}</span></div>
+          <div class="msg-text">"${m.message||'(no message)'}"</div>
+          <div class="msg-meta">
+            ${urgencyPill(m.urgency)}
+            <span class="pill p-gray">${m.intent||'General'}</span>
+            <span class="pill p-blue">${agentName(m.agentId)}</span>
+            <span style="font-size:10px;color:${sentColor}">${sent.label}</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--text3)">${m.responded?'✓ '+m.rt+'m':m.breach?'<span style="color:var(--red)">Missed SLA</span>':'Pending'}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')||emptyState('📭','No conversations match filter','Try adjusting the filter bar above.')}
+    </div>
+  </div>`}`;
+};
+
+// Patch root cause to use filtered data + export
+VIEWS['root-cause'] = () => {
+  const rc=store.rootCause.filter(r=>{
+    const f=getFilters();
+    if(f.agentId&&r.agentId!==f.agentId) return false;
+    if(f.channel&&r.channel!==f.channel) return false;
+    if(f.search&&!r.guest.toLowerCase().includes(f.search)) return false;
+    return true;
+  });
+  return !rc.length
+    ? `<div class="panel">${emptyState('✅','No SLA breaches in this filter','Adjust the filter bar or import more data.')}</div>`
+    : `<div class="panel">
+    <div class="ph">
+      <span class="pt">SLA breaches — root cause (${rc.length})</span>
+      <button class="btn btn-sm" onclick="exportBreachReport()">Export CSV</button>
+    </div>
+    <div class="tw">
+      <table class="sticky-col" style="min-width:860px;">
+        <thead><tr><th>Guest name</th><th>Agent</th><th>Channel</th><th>First message</th><th>Date/time</th><th>Response time</th><th>SLA target</th><th>Root cause</th></tr></thead>
+        <tbody>${rc.map(r=>`<tr>
+          <td>${r.guest}</td>
+          <td><span class="pill p-blue">${r.agentName||agentName(r.agentId)}</span></td>
+          <td>${r.channel}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">"${r.msg||''}"</td>
+          <td>${fmt(r.ts)}</td>
+          <td class="down">${r.rt!=null?r.rt+'m':'No response'}</td>
+          <td>${SLA[r.channel]||SLA.default}m</td>
+          <td><span class="pill p-red">${r.reason}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="pp" style="border-top:1px solid var(--border);padding:8px 16px;">
+      <span class="text-muted">Hostaway SLA = 5 min · WhatsApp SLA = 10 min · Scroll right for all columns →</span>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Breach distribution by agent</span></div>
+    <div class="chart-wrap"><canvas id="rcChart"></canvas></div>
+  </div>`;
+};
+
+// Patch r-first / r-avg / r-delays to use filtered data
+function filteredAgentTable(title){
+  const fm=filteredMessages();
+  if(!fm.length) return `<div class="panel">${emptyState('📭',title,'Import conversations and check your filters.')}</div>`;
+  const rows=store.agents.map(a=>{
+    const m=fm.filter(x=>x.agentId===a.id&&x.responded&&x.rt!=null);
+    const all=fm.filter(x=>x.agentId===a.id);
+    const delays=m.filter(x=>x.rt>SLA[x.channel]);
+    const avg=m.length?+(m.reduce((s,x)=>s+x.rt,0)/m.length).toFixed(1):0;
+    const slaHit=all.filter(x=>x.responded).length?Math.round(100*all.filter(x=>x.responded&&!x.breach).length/all.filter(x=>x.responded).length):0;
+    return `<tr><td><span class="pill" style="background:${a.color}22;color:${a.color}">${a.name}</span></td><td>${avg?avg+'m':'—'}</td><td>${m.length?Math.min(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${m.length?Math.max(...m.map(x=>x.rt)).toFixed(1)+'m':'—'}</td><td>${delays.length>0?`<span class="down">${delays.length}</span>`:0}</td><td>${slaHit?slaHit+'%':'—'}</td></tr>`;
+  });
+  return `<div class="panel">
+    <div class="ph"><span class="pt">${title}</span><button class="btn btn-sm" onclick="exportAgentReport()">Export CSV</button></div>
+    <div class="tw"><table><thead><tr><th>Agent</th><th>Avg</th><th>Best</th><th>Worst</th><th>Over SLA</th><th>SLA rate</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>
+  </div><div class="panel"><div class="ph"><span class="pt">Trend</span></div><div class="chart-wrap"><canvas id="rtChart"></canvas></div></div>`;
+}
+VIEWS['r-first']=()=>filteredAgentTable('First response time');
+VIEWS['r-avg']=()=>filteredAgentTable('Average response time');
+VIEWS['r-delays']=()=>filteredAgentTable('Delays over SLA threshold');
+
+/* ══════════════════════════════════════════
+   PATCH initCharts for new heatmap chart
+══════════════════════════════════════════ */
+const _origInitCharts = initCharts;
+function initCharts(v){
+  _origInitCharts(v);
+  if(v==='heatmap'){
+    const fm=filteredMessages();
+    const hourCounts=Array(24).fill(0);
+    fm.forEach(m=>{ hourCounts[new Date(m.ts).getHours()]++; });
+    mkChart('hourChart',{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+':00'),datasets:[{label:'Messages',data:hourCounts,backgroundColor:'#2563eb22',borderColor:'#2563eb',borderWidth:1.5,borderRadius:2,barPercentage:.7}]},options:{...CD,responsive:true}});
+  }
+}
+
+/* ══════════════════════════════════════════
+   PATCH render to populate filters after each render
+══════════════════════════════════════════ */
+const _origRender=render;
+window.render=function(v){
+  _origRender(v);
+  populateAgentFilter();
+  updateFilterCount();
+};
+
+/* ══════════════════════════════════════════
+   UPDATE LABELS map for new views
+══════════════════════════════════════════ */
+LBL.heatmap='Response heatmap';
+LBL.sentiment='Guest sentiment';
+
+/* ══════════════════════════════════════════
+   ADMIN — add SLA config + export section
+══════════════════════════════════════════ */
+const _adminOrig = VIEWS.admin;
+VIEWS.admin = () => {
+  const adminHtml = _adminOrig();
+  return adminHtml + `
+  <div class="panel">
+    <div class="ph"><span class="pt">SLA configuration</span></div>
+    <div class="pp">
+      <div class="form-row" style="max-width:400px;">
+        <div class="form-group"><label class="field-label">WhatsApp SLA (minutes)</label><input class="input" id="sla_wa" type="number" value="${SLA.WhatsApp}" min="1" max="60"></div>
+        <div class="form-group"><label class="field-label">Hostaway SLA (minutes)</label><input class="input" id="sla_ha" type="number" value="${SLA.Hostaway}" min="1" max="60"></div>
+      </div>
+      <button class="btn btn-primary" id="saveSLA">Save SLA targets</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span class="pt">Export reports</span></div>
+    <div class="pp" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="exportAgentReport()">Agent performance CSV</button>
+      <button class="btn" onclick="exportBreachReport()">SLA breaches CSV</button>
+      <button class="btn" onclick="exportMessages()">All messages CSV</button>
+    </div>
+  </div>`;
+};
+
+/* Wire SLA save in admin view */
+document.addEventListener('click', e=>{
+  if(e.target&&e.target.id==='saveSLA'){
+    const wa=parseInt(document.getElementById('sla_wa')?.value)||10;
+    const ha=parseInt(document.getElementById('sla_ha')?.value)||5;
+    SLA.WhatsApp=wa; SLA.Hostaway=ha;
+    store.slaConfig={WhatsApp:wa,Hostaway:ha};
+    saveLocal();
+    showToast(`SLA updated — WhatsApp: ${wa}m · Hostaway: ${ha}m`);
+  }
+});
+
+// Restore SLA config from store on load
+if(store.slaConfig){ SLA.WhatsApp=store.slaConfig.WhatsApp||10; SLA.Hostaway=store.slaConfig.Hostaway||5; }
+
+// Initial render with local cache (Supabase will re-render when loaded)
+window.render('overview');
+populateAgentFilter();
+updateFilterCount();
+
+})();
+</script>
+</body>
+</html>
