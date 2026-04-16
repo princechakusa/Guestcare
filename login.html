@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GuestCare - Sign In</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #fafafa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      width: 360px;
+      border: 1px solid #e8e6e1;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 500;
+      color: #1a1a18;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      color: #5c5c52;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d4d2cc;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus {
+      border-color: #3d5a80;
+      box-shadow: 0 0 0 3px rgba(61,90,128,0.08);
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #3d5a80;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover {
+      background: #324d6e;
+    }
+    button:disabled {
+      background: #a0a0a0;
+      cursor: not-allowed;
+    }
+    .error {
+      color: #b54a4a;
+      font-size: 12px;
+      margin-top: 8px;
+      min-height: 20px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Sign in to GuestCare</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com" autocomplete="email" autofocus>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button id="loginBtn">Sign In</button>
+    <div id="errorMsg" class="error"></div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    const btn = document.getElementById('loginBtn');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const errorEl = document.getElementById('errorMsg');
+
+    async function handleLogin() {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      
+      if (!email || !password) {
+        errorEl.textContent = 'Please enter both email and password.';
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.innerHTML = 'Signing in... <span class="spinner"></span>';
+      errorEl.textContent = '';
+      
+      try {
+        await AuthService.login(email, password);
+        // Login successful – redirect to dashboard
+        window.location.href = 'index.html';
+      } catch (error) {
+        errorEl.textContent = error.message || 'Invalid email or password.';
+        console.error('Login error:', error);
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In';
+      }
+    }
+
+    btn.addEventListener('click', handleLogin);
+    
+    // Allow Enter key to submit
+    passwordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+    emailInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  </script>
+</body>
+</html>
