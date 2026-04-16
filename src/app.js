@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const authRoutes = require('./routes/authRoutes');
+const agentRoutes = require('./routes/agentRoutes');  // <-- ADD THIS LINE
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/agents', agentRoutes);  // <-- ADD THIS LINE
 
 app.get('/', (req, res) => {
   res.send('Guest Experience Tracker API is running...');
