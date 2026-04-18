@@ -2,7 +2,6 @@
 // GUESTCARE DASHBOARD - CUSTOM BACKEND VERSION (COMPLETE)
 // ==================================================
 
-// Updated: Dark mode, user management, integrations, admin, help
 (function(){
 if (!AuthService.isAuthenticated()) {
   window.location.href = 'login.html';
@@ -52,7 +51,6 @@ if (savedTheme === '1') applyTheme(true);
 else if (savedTheme === '0') applyTheme(false);
 else applyTheme(darkModeMedia.matches);
 
-// Add theme toggle to topbar
 function addThemeToggle() {
   const topbarRight = document.querySelector('.topbar-right');
   if (!topbarRight) return;
@@ -83,7 +81,6 @@ let store = blank();
 function loadLocal() { try { const saved = localStorage.getItem(SK); if (saved) store = JSON.parse(saved); } catch(e) {} }
 function saveLocal() { localStorage.setItem(SK, JSON.stringify(store)); }
 
-// Sync from backend
 async function syncFromBackend() {
   const pill = document.getElementById('sbPill');
   if (pill) pill.innerHTML = '<span class="pill p-gray">Syncing...</span>';
@@ -462,7 +459,6 @@ const VIEWS = {
       <p><b>Version</b> 2.0.0</p>
     </div></div>`;
   },
-
   'gr-properties': () => {
     const q = (document.getElementById('grPropSearch')?.value || '').toLowerCase();
     const props = store.properties.filter(p => !q || p.name.toLowerCase().includes(q) || (p.location||'').toLowerCase().includes(q));
@@ -485,7 +481,6 @@ const VIEWS = {
         </div>`}
     </div>`;
   },
-
   'gr-reviews': () => {
     const propFilter = document.getElementById('grRevPropFilter')?.value || '';
     const q = (document.getElementById('grRevSearch')?.value || '').toLowerCase();
@@ -514,7 +509,6 @@ const VIEWS = {
         }).join('')}
     </div>`;
   },
-
   'gr-analysis': () => {
     if (!store.properties.length) return `<div class="panel">${emptyState('No properties','Add properties to see analysis.')}</div>`;
     const propsWithReviews = store.properties.filter(p => propReviewCount(p.id) > 0);
@@ -530,7 +524,6 @@ const VIEWS = {
     <div class="panel"><div class="ph"><span class="pt">Overall trend</span></div><div class="chart-wrap"><canvas id="overallTrendChart"></canvas></div></div>
     ${attention.length ? `<div class="panel"><div class="ph"><span class="pt" style="color:var(--red)">Needs attention</span></div><div class="analysis-grid">${attention.map(p => `<div class="analysis-card attention"><div><b>${p.name}</b></div><div>Avg: ${p.avg} /10</div></div>`).join('')}</div></div>` : ''}`;
   },
-
   'gr-import': () => {
     return `<div class="panel"><div class="ph"><span class="pt">Import reviews CSV</span></div><div class="pp">
       <label class="upload-zone" id="revCsvZone"><input type="file" id="revCsvFile" accept=".csv"><div class="upload-icon">CSV</div><div class="upload-lbl">Drop CSV or click</div></label>
@@ -618,7 +611,7 @@ function updateUIForUser() {
   const roleEl = document.getElementById('userDisplayRole');
   const sbPill = document.getElementById('sbPill');
   if (user && user.name) {
-    if (avatarEl) avatarEl.textContent = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    if (avatarEl) avatarEl.textContent = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     if (nameEl) nameEl.textContent = user.name;
     if (roleEl) roleEl.textContent = user.role === 'manager' || user.role === 'Manager' ? 'Manager' : (user.role || 'Agent');
     if (sbPill) sbPill.innerHTML = '<span class="pill p-green">Logged in</span>';
@@ -629,15 +622,14 @@ function updateUIForUser() {
     if (sbPill) sbPill.innerHTML = '<span class="pill p-gray">Not logged in</span>';
   }
 }
-function showLoginModal() { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('loginEmail').focus(); }
-function hideLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
+function showLoginModal(){ document.getElementById('loginModal').style.display = 'flex'; document.getElementById('loginEmail').focus(); }
+function hideLoginModal(){ document.getElementById('loginModal').style.display = 'none'; }
 
 // ---------- USER MANAGEMENT (Full CRUD) ----------
 function openUserMgmt() {
   const modal = document.getElementById('userModal');
   const currentUserData = AuthService.getUser();
   const users = store.users || [];
-  // Build list with current user at top, using actual role from AuthService
   const allUsers = [
     currentUserData,
     ...users.filter(u => u.id !== currentUserData.id)
@@ -728,6 +720,10 @@ document.getElementById('saveEdit')?.addEventListener('click', async () => {
   u.username = document.getElementById('eu_user').value.trim();
   u.email = document.getElementById('eu_email').value.trim();
   u.role = document.getElementById('eu_role').value;
+  const newPass = document.getElementById('eu_pass')?.value;
+  if (newPass && newPass.trim() !== '') {
+    u.passwordHash = btoa(newPass);
+  }
   saveLocal();
   if (AuthService.isAuthenticated()) {
     try { await ApiService.updateUser(id, u); } catch(e) {}
@@ -822,6 +818,7 @@ window.grOpenEditReview = grOpenEditReview;
 window.grDeleteReview = grDeleteReview;
 window.grAddReviewClick = grAddReviewClick;
 window.applyTheme = applyTheme;
+window.openUserMgmt = openUserMgmt;
 
 // Initialize
 loadLocal();
