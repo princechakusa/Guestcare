@@ -612,11 +612,7 @@ document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render
 // Auth UI
 let currentUser = null;
 function updateUIForUser() {
-  let user = AuthService.getUser();
-  // Override display name and role for demo account
-  if (user && user.email === 'agent@test.com') {
-    user = { ...user, name: 'Prince Chakusa', role: 'Manager' };
-  }
+  const user = AuthService.getUser();
   const avatarEl = document.getElementById('userAvatar');
   const nameEl = document.getElementById('userDisplayName');
   const roleEl = document.getElementById('userDisplayRole');
@@ -641,16 +637,16 @@ function openUserMgmt() {
   const modal = document.getElementById('userModal');
   const currentUserData = AuthService.getUser();
   const users = store.users || [];
-  // Ensure current user is at top with Manager role
+  // Build list with current user at top, using actual role from AuthService
   const allUsers = [
-    { ...currentUserData, role: 'Manager' }, // Force display as Manager
+    currentUserData,
     ...users.filter(u => u.id !== currentUserData.id)
   ];
   const html = allUsers.map(u => `
     <div class="user-row">
       <div class="user-ava">${u.name.slice(0,2).toUpperCase()}</div>
       <div class="user-info">
-        <div class="user-name">${u.name} <span class="pill ${u.role==='Manager'||u.role==='admin'?'p-red':'p-gray'}">${u.role}</span></div>
+        <div class="user-name">${u.name} <span class="pill ${u.role==='Manager'||u.role==='manager'?'p-red':'p-gray'}">${u.role}</span></div>
         <div class="user-email">${u.email}</div>
       </div>
       <div class="user-acts">
