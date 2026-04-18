@@ -1,12 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');   // Added path module
+
 const authRoutes = require('./routes/authRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 const propertyRoutes = require('./routes/propertyRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const messageRoutes = require('./routes/messageRoutes');
-const rootCauseRoutes = require('./routes/rootCauseRoutes');  // <-- ADD THIS LINE
+const rootCauseRoutes = require('./routes/rootCauseRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -16,18 +18,26 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(morgan('dev'));
 
+// Serve static files from the project root (login.html, auth.js, api.js, app.js, etc.)
+app.use(express.static(path.join(__dirname, '..')));
+// Explicitly serve css and js folders
+app.use('/css', express.static(path.join(__dirname, '..', 'css')));
+app.use('/js', express.static(path.join(__dirname, '..', 'js')));
+
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/root-cause', rootCauseRoutes);  // <-- ADD THIS LINE
+app.use('/api/root-cause', rootCauseRoutes);
 
+// Root path redirects to login page
 app.get('/', (req, res) => {
-  res.send('Guest Experience Tracker API is running...');
+  res.redirect('/login.html');
 });
 
-// Temporary Debug Endpoint
+// Temporary debug endpoint
 app.get('/api/debug/db', async (req, res) => {
   const { query } = require('./config/db');
   try {
@@ -43,7 +53,7 @@ app.get('/api/debug/db', async (req, res) => {
   }
 });
 
-// Error handler must be last!
+// Error handler must be last
 app.use(errorHandler);
 
 module.exports = app;
