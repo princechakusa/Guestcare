@@ -8,6 +8,8 @@
     return;
   }
 
+let currentView = 'overview';
+  
   // ── CONFIG ──────────────────────────────────────
   const SK  = 'gcc_local_v9';
   const SLA = { WhatsApp: 10, Hostaway: 5, default: 10 };
