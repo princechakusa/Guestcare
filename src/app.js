@@ -3,7 +3,8 @@ const cors = require('cors');
 const morgan = require('morgan');
 const authRoutes = require('./routes/authRoutes');
 const agentRoutes = require('./routes/agentRoutes');
-const propertyRoutes = require('./routes/propertyRoutes');  // <-- ADD THIS LINE
+const propertyRoutes = require('./routes/propertyRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');  // <-- ADD THIS LINE
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -15,7 +16,8 @@ app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/agents', agentRoutes);
-app.use('/api/properties', propertyRoutes);  // <-- ADD THIS LINE
+app.use('/api/properties', propertyRoutes);
+app.use('/api/reviews', reviewRoutes);  // <-- ADD THIS LINE
 
 app.get('/', (req, res) => {
   res.send('Guest Experience Tracker API is running...');
