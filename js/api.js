@@ -1,5 +1,9 @@
 // api.js
+// Data service for GuestCare backend API
+// Depends on AuthService from auth.js
+
 const ApiService = {
+  // ---------- Agents ----------
   async getAgents() {
     const res = await AuthService.fetchWithAuth('/agents');
     return res.json();
@@ -22,7 +26,9 @@ const ApiService = {
   },
 
   async deleteAgent(id) {
-    await AuthService.fetchWithAuth(`/agents/${id}`, { method: 'DELETE' });
+    await AuthService.fetchWithAuth(`/agents/${id}`, {
+      method: 'DELETE'
+    });
   },
 
   async syncAgent(agent) {
@@ -34,6 +40,7 @@ const ApiService = {
     }
   },
 
+  // ---------- Properties ----------
   async getProperties() {
     const res = await AuthService.fetchWithAuth('/properties');
     return res.json();
@@ -56,7 +63,9 @@ const ApiService = {
   },
 
   async deleteProperty(id) {
-    await AuthService.fetchWithAuth(`/properties/${id}`, { method: 'DELETE' });
+    await AuthService.fetchWithAuth(`/properties/${id}`, {
+      method: 'DELETE'
+    });
   },
 
   async syncProperty(property) {
@@ -68,6 +77,7 @@ const ApiService = {
     }
   },
 
+  // ---------- Reviews ----------
   async getReviews() {
     const res = await AuthService.fetchWithAuth('/reviews');
     return res.json();
@@ -90,7 +100,9 @@ const ApiService = {
   },
 
   async deleteReview(id) {
-    await AuthService.fetchWithAuth(`/reviews/${id}`, { method: 'DELETE' });
+    await AuthService.fetchWithAuth(`/reviews/${id}`, {
+      method: 'DELETE'
+    });
   },
 
   async syncReview(review) {
@@ -102,6 +114,7 @@ const ApiService = {
     }
   },
 
+  // ---------- Messages ----------
   async getMessages() {
     const res = await AuthService.fetchWithAuth('/messages');
     return res.json();
@@ -119,6 +132,7 @@ const ApiService = {
     return this.createMessage(message);
   },
 
+  // ---------- Root Causes ----------
   async getRootCauses() {
     const res = await AuthService.fetchWithAuth('/root-cause');
     return res.json();
@@ -132,6 +146,7 @@ const ApiService = {
     return res.json();
   },
 
+  // ---------- Sync Helpers ----------
   async pullAllData() {
     try {
       const [agents, messages, rootCauses, properties, reviews] = await Promise.all([
