@@ -2,12 +2,15 @@
 // GUESTCARE DASHBOARD — FULLY FIXED (app.js)
 // ==================================================
 (function () {
+let currentView = 'overview';
 
   if (!AuthService.isAuthenticated()) {
     window.location.href = 'login.html';
     return;
   }
 
+
+  
   // ── CONFIG ──────────────────────────────────────
   const SK  = 'gcc_local_v9';
   const SLA = { WhatsApp: 10, Hostaway: 5, default: 10 };

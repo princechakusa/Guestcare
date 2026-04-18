@@ -2,13 +2,14 @@
 // GUESTCARE DASHBOARD — FULLY FIXED (app.js)
 // ==================================================
 (function () {
+let currentView = 'overview';
 
   if (!AuthService.isAuthenticated()) {
     window.location.href = 'login.html';
     return;
   }
 
-let currentView = 'overview';
+
   
   // ── CONFIG ──────────────────────────────────────
   const SK  = 'gcc_local_v9';
