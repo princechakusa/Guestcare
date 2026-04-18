@@ -5,7 +5,8 @@ const authRoutes = require('./routes/authRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 const propertyRoutes = require('./routes/propertyRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const messageRoutes = require('./routes/messageRoutes');  // <-- ADD THIS LINE
+const messageRoutes = require('./routes/messageRoutes');
+const rootCauseRoutes = require('./routes/rootCauseRoutes');  // <-- ADD THIS LINE
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -19,7 +20,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api/messages', messageRoutes);  // <-- ADD THIS LINE
+app.use('/api/messages', messageRoutes);
+app.use('/api/root-cause', rootCauseRoutes);  // <-- ADD THIS LINE
 
 app.get('/', (req, res) => {
   res.send('Guest Experience Tracker API is running...');
