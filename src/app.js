@@ -53,6 +53,19 @@ app.get('/api/debug/db', async (req, res) => {
   }
 });
 
+// DEBUG: List root directory contents
+app.get('/api/debug/files', (req, res) => {
+  const fs = require('fs');
+  const rootPath = path.join(__dirname, '..');
+  fs.readdir(rootPath, (err, files) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ rootPath, files });
+    }
+  });
+});
+
 // Error handler must be last
 app.use(errorHandler);
 
