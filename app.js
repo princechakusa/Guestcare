@@ -612,15 +612,19 @@ document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render
 // Auth UI
 let currentUser = null;
 function updateUIForUser() {
-  const user = AuthService.getUser();
+  let user = AuthService.getUser();
+  // Override display name and role for demo account
+  if (user && user.email === 'agent@test.com') {
+    user = { ...user, name: 'Prince Chakusa', role: 'Manager' };
+  }
   const avatarEl = document.getElementById('userAvatar');
   const nameEl = document.getElementById('userDisplayName');
   const roleEl = document.getElementById('userDisplayRole');
   const sbPill = document.getElementById('sbPill');
   if (user && user.name) {
-    if (avatarEl) avatarEl.textContent = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    if (avatarEl) avatarEl.textContent = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     if (nameEl) nameEl.textContent = user.name;
-    if (roleEl) roleEl.textContent = user.role === 'manager' ? 'Manager' : (user.role || 'Agent');
+    if (roleEl) roleEl.textContent = user.role === 'manager' || user.role === 'Manager' ? 'Manager' : (user.role || 'Agent');
     if (sbPill) sbPill.innerHTML = '<span class="pill p-green">Logged in</span>';
   } else {
     if (avatarEl) avatarEl.textContent = 'GC';
@@ -629,8 +633,8 @@ function updateUIForUser() {
     if (sbPill) sbPill.innerHTML = '<span class="pill p-gray">Not logged in</span>';
   }
 }
-function showLoginModal(){ document.getElementById('loginModal').style.display = 'flex'; document.getElementById('loginEmail').focus(); }
-function hideLoginModal(){ document.getElementById('loginModal').style.display = 'none'; }
+function showLoginModal() { document.getElementById('loginModal').style.display = 'flex'; document.getElementById('loginEmail').focus(); }
+function hideLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
 
 // ---------- USER MANAGEMENT (Full CRUD) ----------
 function openUserMgmt() {
