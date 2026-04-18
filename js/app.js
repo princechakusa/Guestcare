@@ -8,13 +8,71 @@ if (!AuthService.isAuthenticated()) {
   return;
 }
 
-const SK = 'gcc_local_v6';
+const SK = 'gcc_local_v7';
 const SLA = { WhatsApp: 10, Hostaway: 5, default: 10 };
+
+// ---------- Dark Mode ----------
+const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+function applyTheme(isDark) {
+  const root = document.documentElement;
+  if (isDark) {
+    root.style.setProperty('--bg', '#1a1a1a');
+    root.style.setProperty('--bg2', '#2d2d2d');
+    root.style.setProperty('--bg3', '#3a3a3a');
+    root.style.setProperty('--bg-card', '#262626');
+    root.style.setProperty('--border', '#404040');
+    root.style.setProperty('--border2', '#555555');
+    root.style.setProperty('--text', '#e0e0e0');
+    root.style.setProperty('--text2', '#b0b0b0');
+    root.style.setProperty('--text3', '#808080');
+    root.style.setProperty('--accent', '#5a8ab5');
+    root.style.setProperty('--accent-light', '#2a3a4a');
+    root.style.setProperty('--shadow', '0 1px 3px rgba(255,255,255,0.05)');
+    root.style.setProperty('--shadow-md', '0 4px 12px rgba(255,255,255,0.05)');
+  } else {
+    root.style.setProperty('--bg', '#fafafa');
+    root.style.setProperty('--bg2', '#f4f4f2');
+    root.style.setProperty('--bg3', '#eeede9');
+    root.style.setProperty('--bg-card', '#ffffff');
+    root.style.setProperty('--border', '#e8e6e1');
+    root.style.setProperty('--border2', '#d4d2cc');
+    root.style.setProperty('--text', '#1a1a18');
+    root.style.setProperty('--text2', '#5c5c52');
+    root.style.setProperty('--text3', '#999890');
+    root.style.setProperty('--accent', '#3d5a80');
+    root.style.setProperty('--accent-light', '#e8edf5');
+    root.style.setProperty('--shadow', '0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)');
+    root.style.setProperty('--shadow-md', '0 4px 12px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.04)');
+  }
+  localStorage.setItem('gcc_dark_mode', isDark ? '1' : '0');
+}
+const savedTheme = localStorage.getItem('gcc_dark_mode');
+if (savedTheme === '1') applyTheme(true);
+else if (savedTheme === '0') applyTheme(false);
+else applyTheme(darkModeMedia.matches);
+
+// Add theme toggle to topbar
+function addThemeToggle() {
+  const topbarRight = document.querySelector('.topbar-right');
+  if (!topbarRight) return;
+  if (document.getElementById('themeToggle')) return;
+  const btn = document.createElement('button');
+  btn.id = 'themeToggle';
+  btn.className = 'btn';
+  btn.style.marginLeft = '8px';
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/></svg>';
+  btn.title = 'Toggle dark mode';
+  btn.onclick = () => {
+    const isDark = localStorage.getItem('gcc_dark_mode') !== '1';
+    applyTheme(isDark);
+  };
+  topbarRight.appendChild(btn);
+}
 
 function blank() {
   return {
     agents: [], messages: [], rootCause: [], importLog: [],
-    properties: [], reviews: [],
+    properties: [], reviews: [], users: [],
     kpi: { avg: 0, breaches: 0, active: 0 }
   };
 }
@@ -35,6 +93,7 @@ async function syncFromBackend() {
     if (data.rootCauses) store.rootCause = data.rootCauses;
     if (data.properties) store.properties = data.properties;
     if (data.reviews) store.reviews = data.reviews;
+    if (data.users) store.users = data.users;
     recalcKPI();
     saveLocal();
     if (pill) pill.innerHTML = '<span class="pill p-green">Live</span>';
@@ -44,6 +103,7 @@ async function syncFromBackend() {
     if (pill) pill.innerHTML = '<span class="pill p-amber">Offline</span>';
   }
   render(currentView);
+  addThemeToggle();
 }
 
 function recalcKPI() {
@@ -369,9 +429,38 @@ const VIEWS = {
     const rc = store.rootCause;
     return !rc.length ? `<div class="panel">${emptyState('No breaches','Import data to see SLA breaches.')}</div>` : `<div class="panel"><div class="ph"><span class="pt">SLA breaches (${rc.length})</span></div><div class="tw"><table><thead><tr><th>Guest</th><th>Agent</th><th>Channel</th><th>Response time</th><th>Reason</th></tr></thead><tbody>${rc.map(r=>`<tr><td>${r.guest}</td><td>${r.agentName}</td><td>${r.channel}</td><td>${r.rt!=null?r.rt+'m':'No response'}</td><td>${r.reason}</td></tr>`).join('')}</tbody></table></div></div>`;
   },
-  integrations: () => `<div class="panel"><div class="ph">Integrations</div><div class="pp">Backend API connected.</div></div>`,
-  admin: () => `<div class="panel"><div class="ph">Admin</div><div class="pp"><button class="btn btn-danger" id="clearDataBtn">Clear all data</button></div></div>`,
-  help: () => `<div class="panel"><div class="ph">Help</div><div class="pp">GuestCare Dashboard v2.0</div></div>`,
+  integrations: () => {
+    const endpoints = [
+      { name: 'Agents', count: store.agents.length },
+      { name: 'Properties', count: store.properties.length },
+      { name: 'Reviews', count: store.reviews.length },
+      { name: 'Messages', count: store.messages.length },
+      { name: 'Root Cause', count: store.rootCause.length }
+    ];
+    const status = endpoints.map(ep => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);"><span>${ep.name}</span><span class="pill p-green">${ep.count} items</span></div>`).join('');
+    return `<div class="panel"><div class="ph"><span class="pt">API Integrations</span></div><div class="pp">
+      <div><b>Backend:</b> https://guestcare.onrender.com/api</div>
+      <div style="margin-top:12px;">${status}</div>
+      <div style="margin-top:12px;"><span class="pill p-green">Connected</span></div>
+    </div></div>`;
+  },
+  admin: () => {
+    return `<div class="panel"><div class="ph"><span class="pt">System Administration</span></div><div class="pp">
+      <button class="btn btn-primary" onclick="openUserMgmt()">Manage Users</button>
+      <button class="btn btn-danger" id="clearDataBtn" style="margin-left:8px;">Clear All Data</button>
+      <hr class="divider">
+      <div><b>Dark Mode</b></div>
+      <button class="btn" onclick="applyTheme(localStorage.getItem('gcc_dark_mode')!=='1')">Toggle Dark/Light</button>
+    </div></div>`;
+  },
+  help: () => {
+    return `<div class="panel"><div class="ph"><span class="pt">Help & Support</span></div><div class="pp">
+      <p><b>Keyboard Shortcuts</b><br> <kbd>Ctrl</kbd>+<kbd>K</kbd> – Command palette (coming soon)<br> <kbd>Esc</kbd> – Close modals</p>
+      <p><b>Data Storage</b><br> Backend: PostgreSQL on Render<br> Local cache: localStorage</p>
+      <p><b>Support</b><br> Email: support@guestcare.com</p>
+      <p><b>Version</b> 2.0.0</p>
+    </div></div>`;
+  },
 
   'gr-properties': () => {
     const q = (document.getElementById('grPropSearch')?.value || '').toLowerCase();
@@ -522,36 +611,168 @@ document.querySelectorAll('.sb-item[data-view]').forEach(b=>b.onclick=()=>render
 // Auth UI
 let currentUser = null;
 function updateUIForUser() {
-  const user = currentUser || AuthService.getUser();
-  const avatarEl = document.getElementById('userAvatar'); const nameEl = document.getElementById('userDisplayName'); const roleEl = document.getElementById('userDisplayRole'); const sbPill = document.getElementById('sbPill');
+  const user = AuthService.getUser();
+  const avatarEl = document.getElementById('userAvatar');
+  const nameEl = document.getElementById('userDisplayName');
+  const roleEl = document.getElementById('userDisplayRole');
+  const sbPill = document.getElementById('sbPill');
   if (user && user.name) {
     if (avatarEl) avatarEl.textContent = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     if (nameEl) nameEl.textContent = user.name;
-    if (roleEl) roleEl.textContent = user.role === 'manager' ? 'Manager' : 'Agent';
+    if (roleEl) roleEl.textContent = user.role === 'manager' ? 'Manager' : (user.role || 'Agent');
     if (sbPill) sbPill.innerHTML = '<span class="pill p-green">Logged in</span>';
   } else {
-    if (avatarEl) avatarEl.textContent = 'GC'; if (nameEl) nameEl.textContent = 'Guest'; if (roleEl) roleEl.textContent = 'Click to sign in'; if (sbPill) sbPill.innerHTML = '<span class="pill p-gray">Not logged in</span>';
+    if (avatarEl) avatarEl.textContent = 'GC';
+    if (nameEl) nameEl.textContent = 'Guest';
+    if (roleEl) roleEl.textContent = 'Click to sign in';
+    if (sbPill) sbPill.innerHTML = '<span class="pill p-gray">Not logged in</span>';
   }
 }
 function showLoginModal(){ document.getElementById('loginModal').style.display = 'flex'; document.getElementById('loginEmail').focus(); }
 function hideLoginModal(){ document.getElementById('loginModal').style.display = 'none'; }
 
-// Profile & modals
-document.getElementById('profileBtn').addEventListener('click', ()=>{
-  if(AuthService.isAuthenticated()){ currentUser = AuthService.getUser(); updateUIForUser(); openUserMgmt(); } else { showLoginModal(); }
-});
-function openUserMgmt(){
-  const modal = document.getElementById('userModal'); const user = AuthService.getUser();
-  if(user) document.getElementById('userList').innerHTML = `<div class="user-row"><div class="user-ava">${user.name.slice(0,2).toUpperCase()}</div><div class="user-info"><div class="user-name">${user.name}</div><div class="user-email">${user.email}</div></div></div>`;
+// ---------- USER MANAGEMENT (Full CRUD) ----------
+function openUserMgmt() {
+  const modal = document.getElementById('userModal');
+  const currentUserData = AuthService.getUser();
+  const users = store.users || [];
+  // Ensure current user is at top with Manager role
+  const allUsers = [
+    { ...currentUserData, role: 'Manager' }, // Force display as Manager
+    ...users.filter(u => u.id !== currentUserData.id)
+  ];
+  const html = allUsers.map(u => `
+    <div class="user-row">
+      <div class="user-ava">${u.name.slice(0,2).toUpperCase()}</div>
+      <div class="user-info">
+        <div class="user-name">${u.name} <span class="pill ${u.role==='Manager'||u.role==='admin'?'p-red':'p-gray'}">${u.role}</span></div>
+        <div class="user-email">${u.email}</div>
+      </div>
+      <div class="user-acts">
+        ${u.id !== currentUserData.id ? `<button class="btn btn-sm" onclick="editUser('${u.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>` : '<span class="text-muted">You</span>'}
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('userList').innerHTML = html;
+  document.getElementById('addUserForm').style.display = 'none';
+  document.getElementById('editUserForm').style.display = 'none';
+  document.getElementById('showAddBtn').style.display = 'block';
   modal.style.display = 'flex';
 }
+
+window.editUser = function(id) {
+  const u = store.users.find(x => x.id == id);
+  if (!u) return;
+  document.getElementById('eu_id').value = u.id;
+  document.getElementById('eu_name').value = u.name;
+  document.getElementById('eu_user').value = u.username;
+  document.getElementById('eu_email').value = u.email;
+  document.getElementById('eu_role').value = u.role;
+  document.getElementById('editUserForm').style.display = 'block';
+  document.getElementById('addUserForm').style.display = 'none';
+  document.getElementById('showAddBtn').style.display = 'none';
+};
+
+window.deleteUser = async function(id) {
+  if (!confirm('Delete this user?')) return;
+  store.users = store.users.filter(u => u.id != id);
+  saveLocal();
+  if (AuthService.isAuthenticated()) {
+    try { await ApiService.deleteUser(id); } catch(e) {}
+  }
+  openUserMgmt();
+  showToast('User deleted');
+};
+
+// Attach user modal event listeners
+document.getElementById('openAdd')?.addEventListener('click', () => {
+  document.getElementById('addUserForm').style.display = 'block';
+  document.getElementById('showAddBtn').style.display = 'none';
+  document.getElementById('editUserForm').style.display = 'none';
+});
+document.getElementById('cancelAdd')?.addEventListener('click', () => {
+  document.getElementById('addUserForm').style.display = 'none';
+  document.getElementById('showAddBtn').style.display = 'block';
+});
+document.getElementById('cancelEdit')?.addEventListener('click', () => {
+  document.getElementById('editUserForm').style.display = 'none';
+  document.getElementById('showAddBtn').style.display = 'block';
+});
+document.getElementById('saveAdd')?.addEventListener('click', async () => {
+  const name = document.getElementById('nu_name').value.trim();
+  const username = document.getElementById('nu_user').value.trim();
+  const email = document.getElementById('nu_email').value.trim();
+  const password = document.getElementById('nu_pass').value;
+  const role = document.getElementById('nu_role').value;
+  if (!name || !username || !email || !password) {
+    document.getElementById('nuErr').textContent = 'All fields required.';
+    return;
+  }
+  const newUser = { id: 'u_'+Date.now(), name, username, email, role, passwordHash: btoa(password) };
+  store.users.push(newUser);
+  saveLocal();
+  if (AuthService.isAuthenticated()) {
+    try { await ApiService.createUser(newUser); } catch(e) {}
+  }
+  document.getElementById('addUserForm').style.display = 'none';
+  document.getElementById('showAddBtn').style.display = 'block';
+  openUserMgmt();
+  showToast('User added');
+});
+document.getElementById('saveEdit')?.addEventListener('click', async () => {
+  const id = document.getElementById('eu_id').value;
+  const u = store.users.find(x => x.id == id);
+  if (!u) return;
+  u.name = document.getElementById('eu_name').value.trim();
+  u.username = document.getElementById('eu_user').value.trim();
+  u.email = document.getElementById('eu_email').value.trim();
+  u.role = document.getElementById('eu_role').value;
+  saveLocal();
+  if (AuthService.isAuthenticated()) {
+    try { await ApiService.updateUser(id, u); } catch(e) {}
+  }
+  document.getElementById('editUserForm').style.display = 'none';
+  document.getElementById('showAddBtn').style.display = 'block';
+  openUserMgmt();
+  showToast('User updated');
+});
+
+// Profile & modals wiring
+document.getElementById('profileBtn').addEventListener('click', ()=>{
+  if(AuthService.isAuthenticated()){
+    currentUser = AuthService.getUser();
+    updateUIForUser();
+    openUserMgmt();
+  } else {
+    showLoginModal();
+  }
+});
 document.getElementById('closeUserModal').addEventListener('click', ()=> document.getElementById('userModal').style.display = 'none');
-document.getElementById('logoutBtn').addEventListener('click', ()=>{ AuthService.logout(); currentUser = null; updateUIForUser(); document.getElementById('userModal').style.display = 'none'; showToast('Logged out'); });
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  AuthService.logout();
+  currentUser = null;
+  updateUIForUser();
+  document.getElementById('userModal').style.display = 'none';
+  showToast('Logged out');
+});
 document.getElementById('loginCancel').addEventListener('click', hideLoginModal);
 document.getElementById('loginSubmit').addEventListener('click', async ()=>{
-  const email = document.getElementById('loginEmail').value.trim(); const password = document.getElementById('loginPassword').value; const errEl = document.getElementById('loginError');
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
   if(!email || !password){ errEl.textContent = 'Email and password required.'; return; }
-  try{ errEl.textContent = ''; await AuthService.login(email, password); hideLoginModal(); currentUser = AuthService.getUser(); updateUIForUser(); await syncFromBackend(); render(currentView); showToast(`Welcome, ${currentUser.name}`); } catch(error){ errEl.textContent = error.message; }
+  try{
+    errEl.textContent = '';
+    await AuthService.login(email, password);
+    hideLoginModal();
+    currentUser = AuthService.getUser();
+    updateUIForUser();
+    await syncFromBackend();
+    render(currentView);
+    showToast(`Welcome, ${currentUser.name}`);
+  } catch(error){
+    errEl.textContent = error.message;
+  }
 });
 document.addEventListener('click', e=>{ if(e.target && e.target.id==='openAddAgent'){ document.getElementById('agentModal').style.display='flex'; } });
 document.getElementById('cancelAgent').onclick=()=>document.getElementById('agentModal').style.display='none';
@@ -563,14 +784,60 @@ document.getElementById('saveAgent').onclick=async ()=>{
   saveLocal(); document.getElementById('agentModal').style.display='none'; render('agents');
   if(AuthService.isAuthenticated()){ try{ await ApiService.syncAgent(agent); showToast('Agent synced to server'); }catch(e){ showToast('Saved locally'); } }
 };
-window.editAgent = function(id){ const a=store.agents.find(x=>x.id===id); if(!a) return; document.getElementById('agentModalTitle').textContent='Edit agent'; document.getElementById('ag_id').value=a.id; document.getElementById('ag_name').value=a.name; document.getElementById('ag_role').value=a.role; document.getElementById('ag_color').value=a.color; document.getElementById('ag_waname').value=a.waName||''; document.getElementById('ag_email').value=a.email||''; document.getElementById('agentModal').style.display='flex'; };
-window.deleteAgent = async function(id){ if(!confirm('Delete this agent?')) return; store.agents = store.agents.filter(a=>a.id!==id); saveLocal(); render('agents'); if(AuthService.isAuthenticated()){ try{ await ApiService.deleteAgent(id); }catch(e){} } showToast('Agent deleted'); };
-window.grAddReviewClick = function(propId) { if(!store.properties.length){ showToast('Add a property first'); render('gr-properties'); return; } grOpenAddReview(propId || store.properties[0].id); };
+window.editAgent = function(id){
+  const a=store.agents.find(x=>x.id===id);
+  if(!a) return;
+  document.getElementById('agentModalTitle').textContent='Edit agent';
+  document.getElementById('ag_id').value=a.id;
+  document.getElementById('ag_name').value=a.name;
+  document.getElementById('ag_role').value=a.role;
+  document.getElementById('ag_color').value=a.color;
+  document.getElementById('ag_waname').value=a.waName||'';
+  document.getElementById('ag_email').value=a.email||'';
+  document.getElementById('agentModal').style.display='flex';
+};
+window.deleteAgent = async function(id){
+  if(!confirm('Delete this agent?')) return;
+  store.agents = store.agents.filter(a=>a.id!==id);
+  saveLocal();
+  render('agents');
+  if(AuthService.isAuthenticated()){ try{ await ApiService.deleteAgent(id); }catch(e){} }
+  showToast('Agent deleted');
+};
+window.grAddReviewClick = function(propId) {
+  if(!store.properties.length){ showToast('Add a property first'); render('gr-properties'); return; }
+  grOpenAddReview(propId || store.properties[0].id);
+};
+
+// Expose functions globally for HTML onclick handlers
+window.render = render;
+window.editAgent = editAgent;
+window.deleteAgent = deleteAgent;
+window.grOpenAddProperty = grOpenAddProperty;
+window.grOpenEditProperty = grOpenEditProperty;
+window.grDeleteProperty = grDeleteProperty;
+window.grOpenAddReview = grOpenAddReview;
+window.grOpenEditReview = grOpenEditReview;
+window.grDeleteReview = grDeleteReview;
+window.grAddReviewClick = grAddReviewClick;
+window.applyTheme = applyTheme;
 
 // Initialize
 loadLocal();
-if(AuthService.isAuthenticated()){ currentUser = AuthService.getUser(); updateUIForUser(); syncFromBackend(); } else { updateUIForUser(); render('overview'); }
+if(AuthService.isAuthenticated()){
+  currentUser = AuthService.getUser();
+  updateUIForUser();
+  syncFromBackend();
+} else {
+  updateUIForUser();
+  render('overview');
+}
 
-function tickClock(){ const el=document.getElementById('liveClock'); if(!el) return; el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
-tickClock(); setInterval(tickClock,1000);
+function tickClock(){
+  const el=document.getElementById('liveClock');
+  if(!el) return;
+  el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+tickClock();
+setInterval(tickClock,1000);
 })();
