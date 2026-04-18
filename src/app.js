@@ -18,11 +18,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(morgan('dev'));
 
-// Serve static files from the project root (login.html, auth.js, api.js, app.js, etc.)
+// Serve static files from the project root
 app.use(express.static(path.join(__dirname, '..')));
+
 // Explicitly serve css and js folders
 app.use('/css', express.static(path.join(__dirname, '..', 'css')));
 app.use('/js', express.static(path.join(__dirname, '..', 'js')));
+
+// Serve login.html explicitly at root
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'login.html'));
+});
+
+// Redirect root to login.html
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
 
 // API routes
 app.use('/api/auth', authRoutes);
