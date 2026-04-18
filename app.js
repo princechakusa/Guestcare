@@ -1821,4 +1821,19 @@ let currentView = 'overview';
     addThemeToggle();
   }
 
+  // Expose functions globally for HTML onclick handlers
+  window.render = render;
+  window.editAgent = editAgent;
+  window.deleteAgent = deleteAgent;
+  window.grOpenAddProperty = grOpenAddProperty;
+  window.grOpenEditProperty = grOpenEditProperty;
+  window.grDeleteProperty = grDeleteProperty;
+  window.grOpenAddReview = grOpenAddReview;
+  window.grOpenEditReview = grOpenEditReview;
+  window.grDeleteReview = grDeleteReview;
+  window.grAddReviewClick = grAddReviewClick;
+  window.applyTheme = applyTheme;
+  window.openUserMgmt = openUserMgmt;
+  window.syncFromBackend = syncFromBackend;
+
 })();
