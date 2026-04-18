@@ -2,6 +2,7 @@
 // GUESTCARE DASHBOARD - CUSTOM BACKEND VERSION (COMPLETE)
 // ==================================================
 
+// Updated: Dark mode, user management, integrations, admin, help
 (function(){
 if (!AuthService.isAuthenticated()) {
   window.location.href = 'login.html';
